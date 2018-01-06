@@ -1,4 +1,4 @@
-#include "Server.h"
+#include "ServerRunner.h"
 #include "../utility/json.hpp"
 
 bool runserver = true;
@@ -75,6 +75,7 @@ void *startServer(void *serverOpts) {
         perror("Listen error");
         exit(-1);
     }
+    auto container = new Container();
     pthread_cleanup_push(cleanRoutine, (void *) 1);
         socklen_t sockSize = sizeof(struct sockaddr);
         while (runserver) {
@@ -89,15 +90,16 @@ void *startServer(void *serverOpts) {
             inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
             //pass structure with client's data port
             printf("Client connected with %s. Descriptor assigned: %d\n", remoteAddr, connection_descriptor);
-            handleConnection(connection_descriptor, &remote);
+            handleConnection(container, connection_descriptor, &remote);
         }
     pthread_cleanup_pop(true);
     close(socketNum);
+    delete container;
     exit(0);
 }
 
 //funkcja obsługująca połączenie z nowym klientem
-void handleConnection(int connection_socket_descriptor, struct sockaddr_in *remote) {
+void handleConnection(Container *container, int connection_socket_descriptor, sockaddr_in* remote) {
     pthread_t clientThread;
 
     //dane, które zostaną przekazane do wątku
@@ -106,6 +108,7 @@ void handleConnection(int connection_socket_descriptor, struct sockaddr_in *remo
     t_data = new thread_data_t;
     t_data->socketDescriptor = connection_socket_descriptor;
     t_data->remote = remote;
+    t_data->container = container;
 
     //tworzy watek dla nowego klienta
     int create_result = pthread_create(&clientThread, nullptr, connection, (void *) t_data);
@@ -134,13 +137,13 @@ void *connection(void *t_data) {
 
 void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
     auto *buffer = new char[BUFFER_SIZE];
-    auto *client = new StreamerClient(th_data->socketDescriptor);
+    auto *client = new StreamerClient(th_data->socketDescriptor, th_data->container);
     while (true) {
         memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(th_data->socketDescriptor, buffer, BUFFER_SIZE);
         if (value > 0) {
             displayRequest(th_data->socketDescriptor, buffer);
-
+            client->onNewMessage(buffer);
         } else if (buffer[0] == 0) {
             cout << RED_TEXT("Client from " << remoteAddr
                                             << ", descriptor "

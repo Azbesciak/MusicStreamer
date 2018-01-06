@@ -1,5 +1,6 @@
 #include "../utility/TerminalUtils.h"
 #include "../streamerClient/StreamerClient.h"
+#include "Container.h"
 //system includes
 #include <stdio.h>
 #include <sys/types.h>
@@ -34,11 +35,12 @@ struct thread_data_t
 {
     int socketDescriptor;
     struct sockaddr_in *remote;
+    Container* container;
 };
 
 void *startServer(void *server_opts);
 void *connection(void *t_data);
-void handleConnection(int connection_socket_descriptor, struct sockaddr_in *remote);
+void handleConnection(Container *connection_socket_descriptor, int remote, sockaddr_in *pIn);
 void parseCommand(string command);
 int createServerThread(char * addr, int port);
 void cleanRoutine(void *arg);
