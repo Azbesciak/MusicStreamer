@@ -1,14 +1,7 @@
 #include "Server.h"
-#include "json.hpp"
+#include "../utility/json.hpp"
 
 bool runserver = true;
-
-int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
-
-void onConnection(const thread_data_t *th_data, const char *remoteAddr);
-
-using json = nlohmann::json;
-using namespace std;
 
 int main(int argc, char *argv[]) {
     string command;

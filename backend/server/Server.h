@@ -1,4 +1,5 @@
-#include "utility/terminal.h"
+#include "../utility/TerminalUtils.h"
+#include "../streamerClient/StreamerClient.h"
 //system includes
 #include <stdio.h>
 #include <sys/types.h>
@@ -42,3 +43,5 @@ void parseCommand(string command);
 int createServerThread(char * addr, int port);
 void cleanRoutine(void *arg);
 void displayRequest(int socketDescriptor, char * request);
+int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
+void onConnection(const thread_data_t *th_data, const char *remoteAddr);
