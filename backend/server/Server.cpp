@@ -134,6 +134,7 @@ void *connection(void *t_data) {
 
 void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
     auto *buffer = new char[BUFFER_SIZE];
+    auto *client = new StreamerClient(th_data->socketDescriptor);
     while (true) {
         memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(th_data->socketDescriptor, buffer, BUFFER_SIZE);
@@ -145,6 +146,7 @@ void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
                                             << ", descriptor "
                                             << th_data->socketDescriptor
                                             << " has disconnected!\n");
+            delete client;
             return;
         } else {
             printf("Undefined response.\n");
