@@ -5,6 +5,8 @@ bool runserver = true;
 
 int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
 
+void onConnection(const thread_data_t *th_data, const char *remoteAddr);
+
 using json = nlohmann::json;
 using namespace std;
 
@@ -62,7 +64,6 @@ void *startServer(void *serverOpts) {
     }
     //socket tylko uzywamy do czasu accept
 
-    memset(&sockAddr, 0, sizeof(sockAddr));
     sockAddr.sin_family = AF_INET;
     inet_pton(AF_INET, options->addr, &sockAddr.sin_addr);
     sockAddr.sin_port = htons(static_cast<uint16_t>(options->port));
@@ -86,7 +87,7 @@ void *startServer(void *serverOpts) {
         while (runserver) {
             int connection_descriptor = accept(socketNum, (struct sockaddr *) &remote, &sockSize);
             if (connection_descriptor < 0) {
-                perror("Client accepting error");
+                perror("Client accepting error, shutdown server...");
                 runserver = false;
                 continue;
             }
@@ -104,10 +105,6 @@ void *startServer(void *serverOpts) {
 
 //funkcja obsługująca połączenie z nowym klientem
 void handleConnection(int connection_socket_descriptor, struct sockaddr_in *remote) {
-    //wynik funkcji tworzącej wątek
-    int create_result = 0;
-
-    //uchwyt na wątek
     pthread_t clientThread;
 
     //dane, które zostaną przekazane do wątku
@@ -118,7 +115,7 @@ void handleConnection(int connection_socket_descriptor, struct sockaddr_in *remo
     t_data->remote = remote;
 
     //tworzy watek dla nowego klienta
-    create_result = pthread_create(&clientThread, nullptr, connection, (void *) t_data);
+    int create_result = pthread_create(&clientThread, nullptr, connection, (void *) t_data);
     if (create_result != 0) {
         printf("Error while creating thread, code: %d\n", create_result);
         exit(-1);
@@ -136,28 +133,30 @@ void *connection(void *t_data) {
     cout << "Initialization successfull. Descriptor " << GREEN_TEXT(th_data->socketDescriptor) << " from "
          << GREEN_TEXT(remoteAddr) << ".\n";
 
-    auto *buffer = new char[BUFFER_SIZE];
-    int keepConnection = 1;
-
     //main client's loop
-    while (keepConnection > 0) {
+    onConnection(th_data, remoteAddr);
+    delete (struct thread_data_t *) t_data;
+    pthread_exit(nullptr);
+}
+
+void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
+    auto *buffer = new char[BUFFER_SIZE];
+    while (true) {
+        memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(th_data->socketDescriptor, buffer, BUFFER_SIZE);
         if (value > 0) {
             displayRequest(th_data->socketDescriptor, buffer);
 
         } else if (buffer[0] == 0) {
-            cout << RED_TEXT("Client from " << remoteAddr << ", descriptor " << th_data->socketDescriptor
+            cout << RED_TEXT("Client from " << remoteAddr
+                                            << ", descriptor "
+                                            << th_data->socketDescriptor
                                             << " has disconnected!\n");
-            keepConnection = 0;
-            continue;
+            return;
         } else {
             printf("Undefined response.\n");
         }
-        //czyszczenie bufora, aby uniknac pomieszania z poprzednimi komendami
-        memset(buffer, 0, BUFFER_SIZE);
     }
-    delete (struct thread_data_t *) t_data;
-    pthread_exit(NULL);
 }
 
 
