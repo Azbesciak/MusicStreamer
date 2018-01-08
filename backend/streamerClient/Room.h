@@ -20,9 +20,10 @@ public:
     explicit Room(string name);
     ~Room();
     void addClient(StreamerClient *client);
-    void removeClient(StreamerClient * client);
+    bool removeClient(StreamerClient * client);
     vector<string> getUsers();
     bool isEmpty();
+    string getName();
 
 };
 

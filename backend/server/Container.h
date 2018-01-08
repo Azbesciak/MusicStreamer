@@ -10,16 +10,21 @@
 
 class Container {
 private:
-    std::unordered_map<std::string, Room*> rooms;
-    std::recursive_mutex mut;
-    void deleteRoom(const std::string &name);
-    void createRoom(const std::string &name);
+    unordered_map<string, Room*> rooms;
+    recursive_mutex roomsMut;
+
+    unordered_map<string, StreamerClient*> clients;
+    recursive_mutex clientsMut;
+    void deleteRoom(const string &name);
+    void createRoom(const string &name);
 
 public:
     Container();
     ~Container();
-    Room* joinClientToRoom(StreamerClient* client, const std::string &name);
-
+    Room* joinClientToRoom(StreamerClient* client, const string &name);
+    bool addUserIfNotKnown(StreamerClient* client, const string &clientName);
+    void removeClient(const string &clientName);
+    vector<string> getRoomsList();
 };
 
 

@@ -44,6 +44,9 @@ void handleConnection(Container *connection_socket_descriptor, int remote, socka
 void parseCommand(string command);
 int createServerThread(char * addr, int port);
 void cleanRoutine(void *arg);
-void displayRequest(int socketDescriptor, char * request);
+void displayRequest(int socketDescriptor, const char * request);
+void displayResponse(int socketDescriptor, const char *request);
+void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, char *buffer,
+                            StreamerClient *client);
 int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
 void onConnection(const thread_data_t *th_data, const char *remoteAddr);

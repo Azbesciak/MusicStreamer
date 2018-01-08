@@ -1,7 +1,9 @@
 
 #include "Room.h"
 
-Room::Room(string name) {
+#include "../utility/synch.h"
+
+Room::Room(string name): name(std::move(name)) {
 
 }
 
@@ -9,8 +11,10 @@ Room::~Room() {
 
 }
 
-void Room::removeClient(StreamerClient *client) {
-
+bool Room::removeClient(StreamerClient *client) {
+    synchronized(mut) {
+        return clients.erase(client) != 0;
+    }
 }
 
 vector<string> Room::getUsers() {
@@ -18,9 +22,15 @@ vector<string> Room::getUsers() {
 }
 
 void Room::addClient(StreamerClient *client) {
-
+    synchronized(mut) {
+        clients.insert(client);
+    }
 }
 
 bool Room::isEmpty() {
-    return false;
+    return clients.empty();
+}
+
+string Room::getName() {
+    return name;
 }

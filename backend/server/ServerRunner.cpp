@@ -1,7 +1,9 @@
 #include "ServerRunner.h"
-#include "../utility/json.hpp"
 
 bool runserver = true;
+
+void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, const char *buffer,
+                            StreamerClient *client);
 
 int main(int argc, char *argv[]) {
     string command;
@@ -142,8 +144,7 @@ void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
         memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(th_data->socketDescriptor, buffer, BUFFER_SIZE);
         if (value > 0) {
-            displayRequest(th_data->socketDescriptor, buffer);
-            client->onNewMessage(buffer);
+            manageRequestCoroutine(th_data, remoteAddr, buffer, client);
         } else if (buffer[0] == 0) {
             cout << RED_TEXT("Client from " << remoteAddr
                                             << ", descriptor "
@@ -155,6 +156,20 @@ void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
             printf("Undefined response.\n");
         }
     }
+}
+
+void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, char *buffer,
+                            StreamerClient *client) {
+    displayRequest(th_data->socketDescriptor, buffer);
+    auto response = client->onNewMessage(buffer);
+    auto serializedResponse = response.serialize();
+    displayResponse(th_data->socketDescriptor, serializedResponse.c_str());
+    const auto wrote = write(th_data->socketDescriptor, serializedResponse.c_str(), serializedResponse.size());
+    if (wrote  == -1) {
+                cout << RED_TEXT("Error while sending client response: \n\t")
+                     << MAGENTA_TEXT(serializedResponse)
+                     << RED_TEXT("\n to " << remoteAddr);
+            }
 }
 
 
@@ -173,7 +188,13 @@ void parseCommand(string command) {
 }
 
 
-void displayRequest(int socketDescriptor, char *request) {
+void displayRequest(int socketDescriptor, const char *request) {
     cout << YELLOW_TEXT("Client " << socketDescriptor) << "\n";
     cout << "\t" << MAGENTA_TEXT("Request from " << socketDescriptor << ":\t") << GREEN_TEXT(request);
+}
+
+
+void displayResponse(int socketDescriptor, const char *response) {
+    cout << CYAN_TEXT("Client " << socketDescriptor) << "\n";
+    cout << "\t" << MAGENTA_TEXT("Response to " << socketDescriptor << ":\t") << GREEN_TEXT(response) << endl;
 }
