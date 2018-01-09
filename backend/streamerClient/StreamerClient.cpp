@@ -14,14 +14,14 @@ ClientResponse StreamerClient::onNewMessage(char *message) {
     try {
         auto request = json::parse(message);
         auto method = request.at(METHOD_KEY).get<string>();
-        if (method == "INIT") {
+        if (method == AUTHENTICATE_ACTION) {
             return authenticate(method, request);
         } else if (name.empty()) {
             return ClientResponse::error(403, "Not authenticated");
         } else if (method == JOIN_ROOM_ACTION) {
             auto roomName = request.at("roomName").get<string>();
             container->joinClientToRoom(this, roomName);
-        } else if (method == "ROOMS") {
+        } else if (method == GET_ROOMS_ACTION) {
             resp.addToBody("rooms", container->getRoomsList());
         }
         resp.fillOkResultIfNotSet();
@@ -50,7 +50,6 @@ ClientResponse StreamerClient::authenticate(const string &method, json request) 
                 resp.setError(409, "User exists");
             }
         }
-
     }
     return resp;
 
@@ -62,6 +61,6 @@ string StreamerClient::getName() {
 
 StreamerClient::~StreamerClient() {
     if (!name.empty()) {
-        container->removeClient(name);
+        container->removeClient(this, name);
     }
 }

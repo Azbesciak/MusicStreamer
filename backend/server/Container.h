@@ -16,15 +16,17 @@ private:
     unordered_map<string, StreamerClient*> clients;
     recursive_mutex clientsMut;
     void deleteRoom(const string &name);
-    void createRoom(const string &name);
+    void createRoomIfNotExists(const string &name);
 
 public:
     Container();
     ~Container();
     Room* joinClientToRoom(StreamerClient* client, const string &name);
     bool addUserIfNotKnown(StreamerClient* client, const string &clientName);
-    void removeClient(const string &clientName);
+    void removeClient(StreamerClient * client, const string &name);
     vector<string> getRoomsList();
+
+    void removeClientFromRooms(StreamerClient *client);
 };
 
 

@@ -4,21 +4,29 @@
 
 Room *Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
-        for (auto && room: rooms) {
-            auto removed = room.second->removeClient(client);
-            if (removed) break;
-        }
-        if (rooms.count(name) == 0) {
-            createRoom(name);
-        }
+        removeClientFromRooms(client);
+        createRoomIfNotExists(name);
         auto room = rooms[name];
         room->addClient(client);
         return room;
     }
 }
 
-void Container::createRoom(const std::string &name) {
-    rooms[name] = new Room(name);
+void Container::removeClientFromRooms(StreamerClient *client) {
+    for (auto && room: rooms) {
+        auto removed = room.second->removeClient(client);
+        if (removed) {
+            if (room.second->isEmpty()) {
+                rooms.erase(room.first);
+            }
+            break;
+        }
+    }
+}
+
+void Container::createRoomIfNotExists(const std::string &name) {
+    if (rooms.count(name) == 0)
+        rooms[name] = new Room(name);
 }
 
 void Container::deleteRoom(const std::string &name) {
@@ -62,8 +70,12 @@ bool Container::addUserIfNotKnown(StreamerClient * client, const string &clientN
     }
 }
 
-void Container::removeClient(const string &clientName) {
+// get name is no visible... somehow, probably due to cycle and dummy declaration in MusicStreamer.h.
+void Container::removeClient(StreamerClient * client, const string &name) {
     synchronized(clientsMut) {
-        clients.erase(clientName);
+        clients.erase(name);
+    }
+    synchronized(roomsMut) {
+        removeClientFromRooms(client);
     }
 }
