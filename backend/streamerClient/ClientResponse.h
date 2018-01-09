@@ -11,12 +11,14 @@ class ClientResponse {
     json body;
 public:
     ClientResponse();
+    ClientResponse(int status, string message);
     void setStatus(int status);
     void setBody(json body);
     string serialize();
     void addToBody(string key, vector<string> value);
     void setError(int code, string message);
     void fillOkResultIfNotSet();
+    static ClientResponse error(int status, const string &message);
 
 };
 

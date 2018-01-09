@@ -39,4 +39,13 @@ void ClientResponse::fillOkResultIfNotSet() {
     }
 }
 
+ClientResponse::ClientResponse(int status, string message)
+        : status(status), body(json(message)) {}
+
+ClientResponse ClientResponse::error(int status, const string &message) {
+    ClientResponse resp;
+    resp.setError(status, message);
+    return resp;
+}
+
 

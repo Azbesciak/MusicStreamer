@@ -5,7 +5,7 @@
 using json = nlohmann::json;
 using namespace std;
 
-StreamerClient::StreamerClient(int socketDescriptor, Container* container):
+StreamerClient::StreamerClient(int socketDescriptor, Container *container) :
         socketDescriptor(socketDescriptor),
         container(container) {}
 
@@ -14,31 +14,17 @@ ClientResponse StreamerClient::onNewMessage(char *message) {
     try {
         auto request = json::parse(message);
         auto method = request.at(METHOD_KEY).get<string>();
-        auto res = authenticate(method, request);
-        switch (res) {
-            case NOT_AUTHENTICATED: {
-                resp.setError(403, "Not authenticated");
-                return resp;
-            }
-            case NAME_EXISTS: {
-                resp.setError(409, "User exists");
-                return resp;
-            }
-            case NAME_ASSIGNED: {
-                resp.setError(403, "Name already assigned");
-                return resp;
-            }
-            case AUTHENTICATED: {
-                if (method == JOIN_ROOM_ACTION) {
-                    auto roomName = request.at("roomName").get<string>();
-                    container->joinClientToRoom(this, roomName);
-                } else if (method == "ROOMS") {
-                    resp.addToBody("rooms", container->getRoomsList());
-
-                }
-                resp.fillOkResultIfNotSet();
-            };
+        if (method == "INIT") {
+            return authenticate(method, request);
+        } else if (name.empty()) {
+            return ClientResponse::error(403, "Not authenticated");
+        } else if (method == JOIN_ROOM_ACTION) {
+            auto roomName = request.at("roomName").get<string>();
+            container->joinClientToRoom(this, roomName);
+        } else if (method == "ROOMS") {
+            resp.addToBody("rooms", container->getRoomsList());
         }
+        resp.fillOkResultIfNotSet();
 
     } catch (json::exception &e) {
         cout << e.what() << endl;
@@ -47,19 +33,27 @@ ClientResponse StreamerClient::onNewMessage(char *message) {
     return resp;
 }
 
-AuthRes StreamerClient::authenticate(string method, json request) {
-    if (method == "INIT") {
-        if (!name.empty()) {
-            return NAME_ASSIGNED;
-        }
-        auto requestedName = request.at("name").get<string>();
-        if (container->addUserIfNotKnown(this, requestedName)) {
-            name = requestedName;
+ClientResponse StreamerClient::authenticate(const string &method, json request) {
+    ClientResponse resp;
+    if (!name.empty()) {
+        resp.setError(403, "Name already assigned");
+    } else {
+        const auto iterator = request.find("name");
+        if (iterator == request.end()) {
+            resp.setError(422, "Missing argument: name");
         } else {
-            return NAME_EXISTS;
+            auto requestedName = iterator->get<string>();
+            if (container->addUserIfNotKnown(this, requestedName)) {
+                name = requestedName;
+                resp.fillOkResultIfNotSet();
+            } else {
+                resp.setError(409, "User exists");
+            }
         }
+
     }
-    return name.empty() ? NOT_AUTHENTICATED : AUTHENTICATED;
+    return resp;
+
 }
 
 string StreamerClient::getName() {

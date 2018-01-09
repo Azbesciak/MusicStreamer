@@ -10,14 +10,13 @@ static const char *const JOIN_ROOM_ACTION = "POST";
 #include "StreamerClient.h"
 #include "../server/Container.h"
 #include "ClientResponse.h"
-enum AuthRes {AUTHENTICATED, NOT_AUTHENTICATED, NAME_EXISTS, NAME_ASSIGNED};
 
 class StreamerClient {
 private:
     int socketDescriptor;
     Container* container;
     string name;
-    AuthRes authenticate(string method, json request);
+    ClientResponse authenticate(const string &method, json request);
 
 public:
     explicit StreamerClient(int socketDescriptor, Container* container);
