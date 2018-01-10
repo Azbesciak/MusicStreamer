@@ -19,13 +19,8 @@ bool Room::removeClient(StreamerClient *client) {
     }
 }
 
-vector<string> Room::getUsers() {
-    synchronized(mut) {
-        vector<string> res;
-        res.reserve(clients.size());
-        transform(clients.begin(), clients.end(),res.begin(), [](StreamerClient* cli){return cli->getName();});
-        return res;
-    }
+unordered_set<StreamerClient*> Room::getClients() {
+    return clients;
 }
 
 void Room::addClient(StreamerClient *client) {

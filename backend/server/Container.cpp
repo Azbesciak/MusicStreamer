@@ -2,14 +2,19 @@
 #include <algorithm>
 #include "Container.h"
 
-Room *Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
+
+void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
         removeClientFromRooms(client);
         createRoomIfNotExists(name);
-        auto room = rooms[name];
-        room->addClient(client);
-        return room;
+        addNewClient(client, name);
     }
+}
+
+void Container::addNewClient(StreamerClient *client, const string &name) {
+    auto room = rooms[name];
+    room->addClient(client);
+    sendListOfClientsToAllInRoom(room);
 }
 
 void Container::removeClientFromRooms(StreamerClient *client) {
@@ -18,10 +23,29 @@ void Container::removeClientFromRooms(StreamerClient *client) {
         if (removed) {
             if (room.second->isEmpty()) {
                 rooms.erase(room.first);
+                delete room.second;
+            } else {
+                sendListOfClientsToAllInRoom(room.second);
             }
             break;
         }
     }
+}
+
+
+void Container::sendListOfClientsToAllInRoom(Room *room) {
+    auto clients = room->getClients();
+    vector<string> names;
+    names.reserve(clients.size());
+    for(auto && cli: clients) {
+        names.push_back(cli ->getName());
+    }
+
+    ClientResponse resp;
+    resp.addToBody("clients", names);
+    resp.setStatus(200);
+    Message message(move(clients), resp.serialize());
+    messageSender->sendMessage(message);
 }
 
 void Container::createRoomIfNotExists(const std::string &name) {

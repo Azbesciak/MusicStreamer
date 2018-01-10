@@ -5,6 +5,7 @@
 
 #include "../utility/synch.h"
 #include "../messageSender/MessageSender.h"
+#include "../streamerClient/ClientResponse.h"
 
 #ifndef MUSICSTREAMER_CONTAINER_H
 #define MUSICSTREAMER_CONTAINER_H
@@ -19,11 +20,13 @@ private:
     recursive_mutex clientsMut;
     void deleteRoom(const string &name);
     void createRoomIfNotExists(const string &name);
+    void sendListOfClientsToAllInRoom(Room *room);
+    void addNewClient(StreamerClient *client, const string &name);
 
 public:
     Container();
     ~Container();
-    Room* joinClientToRoom(StreamerClient* client, const string &name);
+    void joinClientToRoom(StreamerClient* client, const string &name);
     bool addUserIfNotKnown(StreamerClient* client, const string &clientName);
     void removeClient(StreamerClient * client);
     vector<string> getRoomsList();
@@ -31,6 +34,7 @@ public:
     void removeClientFromRooms(StreamerClient *client);
     void sendToAll(const string &message);
 };
+
 
 
 #endif //MUSICSTREAMER_CONTAINER_H

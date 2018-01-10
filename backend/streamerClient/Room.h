@@ -21,7 +21,7 @@ public:
     ~Room();
     void addClient(StreamerClient *client);
     bool removeClient(StreamerClient * client);
-    vector<string> getUsers();
+    unordered_set<StreamerClient*> getClients();
     bool isEmpty();
     string getName();
 

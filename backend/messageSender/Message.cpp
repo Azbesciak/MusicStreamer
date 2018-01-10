@@ -1,9 +1,9 @@
 #include "Message.h"
 
-Message::Message(vector<StreamerClient *> receivers, const string &message)
+Message::Message(unordered_set<StreamerClient *> receivers, const string &message)
     :content(message), receivers(std::move(receivers)) {}
 
-vector<StreamerClient*> Message::getReceivers() const {
+unordered_set<StreamerClient*> Message::getReceivers() const {
     return receivers;
 }
 

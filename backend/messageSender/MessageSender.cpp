@@ -5,14 +5,18 @@
 MessageSender::MessageSender() {
     broadcastThread = new thread([&]() {
         while(true) {
-            Message* message;
-            synchronized(mesMut) {
-                message = &messages.front();
+            if (!messages.empty()) {
+                Message* message;
+                synchronized(mesMut) {
+                    message = &messages.front();
+                    messages.pop();
+                }
+                const string &content = message->getContent();
+                for (auto && rec: message->getReceivers()) {
+                    rec->sendMessage(content);
+                }
             }
-            const string &content = message->getContent();
-            for (auto && rec: message->getReceivers()) {
-                rec->sendMessage(content);
-            }
+            sleep(1);
         }
     });
 }
