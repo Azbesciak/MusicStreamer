@@ -5,7 +5,7 @@
 
 
 #include <unordered_set>
-class StreamerClient;
+#include "StreamerClient.h"
 
 class MusicStreamer {
 private:

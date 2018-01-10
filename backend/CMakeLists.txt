@@ -15,4 +15,14 @@ add_executable(MusicStreamer
         streamerClient/Room.h
         server/Container.cpp
         server/Container.h
-        utility/synch.h streamerClient/ClientResponse.cpp streamerClient/ClientResponse.h)
+        utility/synch.h
+        streamerClient/ClientResponse.cpp
+        streamerClient/ClientResponse.h
+        streamerClient/ClientProxy.cpp
+        streamerClient/ClientProxy.h
+        messageSender/Message.h
+        messageSender/Message.cpp
+        messageSender/MessageSender.cpp
+        messageSender/MessageSender.h
+
+        )

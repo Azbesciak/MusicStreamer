@@ -1,4 +1,5 @@
 #include "ServerRunner.h"
+#include "../streamerClient/ClientProxy.h"
 
 bool runserver = true;
 
@@ -142,19 +143,19 @@ void *connection(void *t_data) {
 }
 
 void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
-    auto *buffer = new char[BUFFER_SIZE];
-    auto *client = new StreamerClient(th_data->socketDescriptor, th_data->container);
+    auto buffer = new char[BUFFER_SIZE];
+    auto proxy = new ClientProxy(th_data->socketDescriptor, th_data->container);
     while (true) {
         memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(th_data->socketDescriptor, buffer, BUFFER_SIZE);
         if (value > 0) {
-            manageRequestCoroutine(th_data, remoteAddr, buffer, client);
+            manageRequestCoroutine(th_data, remoteAddr, buffer, proxy);
         } else if (buffer[0] == 0) {
             cout << RED_TEXT("Client from " << remoteAddr
                                             << ", descriptor "
                                             << th_data->socketDescriptor
                                             << " has disconnected!\n");
-            delete client;
+            delete proxy;
             return;
         } else {
             printf("Undefined response.\n");
@@ -163,12 +164,12 @@ void onConnection(const thread_data_t *th_data, const char *remoteAddr) {
 }
 
 void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, char *buffer,
-                            StreamerClient *client) {
+                            ClientProxy *proxy) {
     displayRequest(th_data->socketDescriptor, buffer);
-    auto response = client->onNewMessage(buffer);
+    auto response = proxy->onNewMessage(buffer);
     auto serializedResponse = response.serialize();
     displayResponse(th_data->socketDescriptor, serializedResponse.c_str());
-    const auto wrote = client->sendMessage(serializedResponse);
+    const auto wrote = proxy->sendMessage(serializedResponse);
     if (wrote  == -1) {
         cout << RED_TEXT("Error while sending client response: \n\t")
              << MAGENTA_TEXT(serializedResponse)

@@ -39,7 +39,8 @@ void Container::deleteRoom(const std::string &name) {
 
 Container::Container()
         : clients(unordered_map<string, StreamerClient*>()),
-            rooms(unordered_map<string, Room*>()) {};
+          rooms(unordered_map<string, Room*>()),
+          messageSender(new MessageSender()) {};
 
 Container::~Container() {
     synchronized(roomsMut) {
@@ -47,6 +48,7 @@ Container::~Container() {
             deleteRoom(room.first);
         }
     }
+    delete messageSender;
 }
 
 vector<string> Container::getRoomsList() {
@@ -70,10 +72,9 @@ bool Container::addUserIfNotKnown(StreamerClient * client, const string &clientN
     }
 }
 
-// get name is no visible... somehow, probably due to cycle and dummy declaration in MusicStreamer.h.
-void Container::removeClient(StreamerClient * client, const string &name) {
+void Container::removeClient(StreamerClient * client) {
     synchronized(clientsMut) {
-        clients.erase(name);
+        clients.erase(client->getName());
     }
     synchronized(roomsMut) {
         removeClientFromRooms(client);

@@ -1,6 +1,6 @@
 #include "../utility/TerminalUtils.h"
-#include "../streamerClient/StreamerClient.h"
 #include "Container.h"
+#include "../streamerClient/ClientProxy.h"
 //system includes
 #include <cstdio>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ void cleanRoutine(void *arg);
 void displayRequest(int socketDescriptor, const char * request);
 void displayResponse(int socketDescriptor, const char *request);
 void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, char *buffer,
-                            StreamerClient *client);
+                            ClientProxy *proxy);
 int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
 void onConnection(const thread_data_t *th_data, const char *remoteAddr);
 void cleanUp(int);
