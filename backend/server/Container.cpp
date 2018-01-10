@@ -79,3 +79,11 @@ void Container::removeClient(StreamerClient * client, const string &name) {
         removeClientFromRooms(client);
     }
 }
+
+void Container::sendToAll(const string &message) {
+    synchronized(clientsMut) {
+        for (auto && client: clients) {
+            client.second;
+        }
+    }
+}

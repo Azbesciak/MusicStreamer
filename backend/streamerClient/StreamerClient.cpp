@@ -1,4 +1,5 @@
 
+#include <unistd.h>
 #include "../utility/json.hpp"
 #include "StreamerClient.h"
 
@@ -63,4 +64,8 @@ StreamerClient::~StreamerClient() {
     if (!name.empty()) {
         container->removeClient(this, name);
     }
+}
+
+ssize_t StreamerClient::sendMessage(const string &message) {
+    return write(socketDescriptor, message.c_str(), message.size());
 }

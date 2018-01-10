@@ -2,19 +2,20 @@
 #include "../streamerClient/StreamerClient.h"
 #include "Container.h"
 //system includes
-#include <stdio.h>
+#include <cstdio>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
 #include <pthread.h>
 #include <dirent.h>
 #include <iostream>
+#include <csignal>
 
 #define BUFFER_SIZE 1000
 #define QUEUE_SIZE 5
@@ -28,6 +29,18 @@ struct server_opts
 {
     char * addr;
     int port;
+};
+
+class ServerRef {
+public:
+    Container* container;
+    int serverFd;
+    ServerRef(Container* con, int serverFd)
+            : container(con), serverFd(serverFd){};
+    ~ServerRef(){
+        delete container;
+        close(serverFd);
+    }
 };
 
 //struktura zawierająca dane, które zostaną przekazane do wątku
@@ -50,3 +63,4 @@ void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr
                             StreamerClient *client);
 int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
 void onConnection(const thread_data_t *th_data, const char *remoteAddr);
+void cleanUp(int);

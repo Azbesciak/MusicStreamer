@@ -26,6 +26,7 @@ public:
     ~StreamerClient();
     ClientResponse onNewMessage(char *message);
     string getName();
+    ssize_t sendMessage(const string &message);
 
 };
 

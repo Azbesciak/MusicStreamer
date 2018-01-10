@@ -27,6 +27,7 @@ public:
     vector<string> getRoomsList();
 
     void removeClientFromRooms(StreamerClient *client);
+    void sendToAll(const string &message);
 };
 
 

@@ -2,8 +2,7 @@
 
 bool runserver = true;
 
-void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr, const char *buffer,
-                            StreamerClient *client);
+ServerRef * serverRef;
 
 int main(int argc, char *argv[]) {
     string command;
@@ -78,6 +77,11 @@ void *startServer(void *serverOpts) {
         exit(-1);
     }
     auto container = new Container();
+    serverRef = new ServerRef(container, socketNum);
+
+    signal(SIGINT, cleanUp);
+    // prevent dead sockets from throwing pipe errors on write
+    signal(SIGPIPE, SIG_IGN);
     pthread_cleanup_push(cleanRoutine, (void *) 1);
         socklen_t sockSize = sizeof(struct sockaddr);
         while (runserver) {
@@ -95,8 +99,8 @@ void *startServer(void *serverOpts) {
             handleConnection(container, connection_descriptor, &remote);
         }
     pthread_cleanup_pop(true);
-    close(socketNum);
-    delete container;
+    cleanUp(0);
+    cout<<"end?"<<endl;
     exit(0);
 }
 
@@ -164,12 +168,12 @@ void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr
     auto response = client->onNewMessage(buffer);
     auto serializedResponse = response.serialize();
     displayResponse(th_data->socketDescriptor, serializedResponse.c_str());
-    const auto wrote = write(th_data->socketDescriptor, serializedResponse.c_str(), serializedResponse.size());
+    const auto wrote = client->sendMessage(serializedResponse);
     if (wrote  == -1) {
-                cout << RED_TEXT("Error while sending client response: \n\t")
-                     << MAGENTA_TEXT(serializedResponse)
-                     << RED_TEXT("\n to " << remoteAddr);
-            }
+        cout << RED_TEXT("Error while sending client response: \n\t")
+             << MAGENTA_TEXT(serializedResponse)
+             << RED_TEXT("\n to " << remoteAddr);
+    }
 }
 
 
@@ -197,4 +201,12 @@ void displayRequest(int socketDescriptor, const char *request) {
 void displayResponse(int socketDescriptor, const char *response) {
     cout << CYAN_TEXT("Client " << socketDescriptor) << "\n";
     cout << "\t" << MAGENTA_TEXT("Response to " << socketDescriptor << ":\t") << GREEN_TEXT(response) << endl;
+}
+
+void cleanUp(int) {
+    cout<< GREEN_TEXT("cleaning up server") << endl;
+    delete serverRef;
+    serverRef = nullptr;
+    runserver = false;
+    exit(0);
 }
