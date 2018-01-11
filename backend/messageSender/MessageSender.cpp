@@ -5,16 +5,13 @@
 MessageSender::MessageSender() {
     broadcastThread = new thread([&]() {
         while(true) {
-            if (!messages.empty()) {
-                Message* message;
-                synchronized(mesMut) {
-                    message = &messages.front();
-                    messages.pop();
-                }
+            while (!messages.empty()) {
+                Message* message = &messages.front();
                 const string &content = message->getContent();
                 for (auto && rec: message->getReceivers()) {
                     rec->sendMessage(content);
                 }
+                messages.pop();
             }
             sleep(1);
         }
