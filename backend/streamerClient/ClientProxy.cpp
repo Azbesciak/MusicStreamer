@@ -1,6 +1,11 @@
 
 #include "ClientProxy.h"
 
+static const char *const METHOD_KEY = "method";
+static const char *const JOIN_ROOM_ACTION = "JOIN";
+static const char *const GET_ROOMS_ACTION = "ROOMS";
+static const char *const AUTHENTICATE_ACTION = "INIT";
+static const char *const LEAVE_ACTION = "LEAVE";
 
 ClientResponse ClientProxy::onNewMessage(char *message) {
     ClientResponse resp;
@@ -9,7 +14,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
         auto method = request.at(METHOD_KEY).get<string>();
         if (method == AUTHENTICATE_ACTION) {
             return authenticate(method, request);
-        } else if (client->getName().empty()) {
+        } else if (isNotAuthorized()) {
             return ClientResponse::error(403, "Not authenticated");
         } else if (method == JOIN_ROOM_ACTION) {
             auto roomName = request.at("roomName").get<string>();
@@ -25,6 +30,8 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
     }
     return resp;
 }
+
+bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }
 
 ClientResponse ClientProxy::authenticate(const string &method, json request) {
     ClientResponse resp;

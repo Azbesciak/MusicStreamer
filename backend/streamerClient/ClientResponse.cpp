@@ -26,9 +26,6 @@ void ClientResponse::setError(int code, string message) {
 
 ClientResponse::ClientResponse(): status(-1), body(json()) {}
 
-void ClientResponse::addToBody(string key, vector<string> value) {
-    body[key] = json(value);
-}
 
 void ClientResponse::fillOkResultIfNotSet() {
     if (status < 0) {
@@ -46,6 +43,15 @@ ClientResponse ClientResponse::error(int status, const string &message) {
     ClientResponse resp;
     resp.setError(status, message);
     return resp;
+}
+
+
+void ClientResponse::addToBody(string key, vector<string> value) {
+    body[key] = json(value);
+}
+
+void ClientResponse::addToBody(string key, const string &value) {
+    body[key] = json(value);
 }
 
 

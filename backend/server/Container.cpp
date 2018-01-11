@@ -42,6 +42,7 @@ void Container::sendListOfClientsToAllInRoom(Room *room) {
     }
 
     ClientResponse resp;
+    resp.addToBody("room", room->getName());
     resp.addToBody("clients", names);
     resp.setStatus(200);
     Message message(move(clients), resp.serialize());

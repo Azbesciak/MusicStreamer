@@ -16,6 +16,7 @@ public:
     void setBody(json body);
     string serialize();
     void addToBody(string key, vector<string> value);
+    void addToBody(string key, const string &value);
     void setError(int code, string message);
     void fillOkResultIfNotSet();
     static ClientResponse error(int status, const string &message);
