@@ -1,11 +1,11 @@
 
 #include <unordered_map>
 #include <mutex>
-#include "../streamerClient/Room.h"
+#include "Room.h"
 
-#include "../utility/synch.h"
-#include "../messageSender/MessageSender.h"
-#include "../streamerClient/ClientResponse.h"
+#include "utility/synch.h"
+#include "messageSender/MessageSender.h"
+#include "streamerClient/ClientResponse.h"
 
 #ifndef MUSICSTREAMER_CONTAINER_H
 #define MUSICSTREAMER_CONTAINER_H

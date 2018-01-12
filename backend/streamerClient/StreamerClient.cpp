@@ -24,3 +24,11 @@ ssize_t StreamerClient::sendMessage(const string &message) {
 void StreamerClient::setName(const string &name) {
     this->name = name;
 }
+
+Room* StreamerClient::getCurrentRoom() {
+    return currentRoom;
+}
+
+void StreamerClient::setCurrentRoom(Room *room) {
+    this->currentRoom = room;
+}

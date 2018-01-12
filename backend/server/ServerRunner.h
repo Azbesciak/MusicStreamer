@@ -1,5 +1,9 @@
+#ifndef MUSICSTREAMER_SERVERRUNNER_H
+#define MUSICSTREAMER_SERVERRUNNER_H
+
+
 #include "../utility/TerminalUtils.h"
-#include "Container.h"
+#include "logic/Container.h"
 #include "../streamerClient/ClientProxy.h"
 //system includes
 #include <cstdio>
@@ -64,3 +68,5 @@ void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr
 int createServerThread(pthread_t &serverThread, const server_opts *serverOpts);
 void onConnection(const thread_data_t *th_data, const char *remoteAddr);
 void cleanUp(int);
+
+#endif // MUSICSTREAMER_SERVERRUNNER_H

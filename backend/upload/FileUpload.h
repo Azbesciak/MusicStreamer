@@ -13,9 +13,9 @@ private:
 
 public:
 
-    FileUpload(ClientProxy* clientProxy);
+    FileUpload(ClientProxy* clientProxy, int fileDescriptor);
 
-    void downloadFile(void (*onComplete)(ClientProxy* clientProxy, int fileDescriptor));
+    void downloadFile();
 
     ~FileUpload();
 

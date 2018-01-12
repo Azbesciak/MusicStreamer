@@ -11,12 +11,12 @@ add_executable(MusicStreamer
         utility/TerminalUtils.h
         server/ServerRunner.cpp
         streamerClient/StreamerClient.cpp
-        streamerClient/MusicStreamer.cpp
-        streamerClient/MusicStreamer.h
-        streamerClient/Room.cpp
-        streamerClient/Room.h
-        server/Container.cpp
-        server/Container.h
+        logic/MusicStreamer.cpp
+        logic/MusicStreamer.h
+        logic/Room.cpp
+        logic/Room.h
+        logic/Container.cpp
+        logic/Container.h
         utility/synch.h
         streamerClient/ClientResponse.cpp
         streamerClient/ClientResponse.h
@@ -29,4 +29,8 @@ add_executable(MusicStreamer
         upload/FileUpload.cpp
         upload/FileUpload.h
         upload/UploadHandler.cpp
-        upload/UploadHandler.h)
+        upload/UploadHandler.h
+        server/SocketFactory.cpp
+        server/SocketFactory.h
+        logic/MusicTrack.cpp
+        logic/MusicTrack.h)

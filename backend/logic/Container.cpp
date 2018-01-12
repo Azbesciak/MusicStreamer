@@ -12,8 +12,12 @@ void Container::joinClientToRoom(StreamerClient *client, const std::string &name
 }
 
 void Container::addNewClient(StreamerClient *client, const string &name) {
+
     auto room = rooms[name];
+
     room->addClient(client);
+    client->setCurrentRoom(room);
+
     sendListOfClientsToAllInRoom(room);
 }
 
@@ -30,6 +34,8 @@ void Container::removeClientFromRooms(StreamerClient *client) {
             break;
         }
     }
+
+    client->setCurrentRoom(nullptr);
 }
 
 
@@ -57,7 +63,14 @@ void Container::createRoomIfNotExists(const std::string &name) {
 void Container::deleteRoom(const std::string &name) {
     auto iterator = rooms.find(name);
     if (iterator != rooms.end()) {
-        delete(iterator->second);
+
+        Room* room = iterator->second;
+
+        // Probably unnecessary, but added for the sake of safety
+        for (StreamerClient* client : room->getClients())
+            client->setCurrentRoom(nullptr);
+
+        delete(room);
         rooms.erase(name);
     }
 }

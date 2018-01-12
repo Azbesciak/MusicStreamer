@@ -2,8 +2,8 @@
 #include <algorithm>
 #include "Room.h"
 
-#include "../utility/synch.h"
-#include "StreamerClient.h"
+#include "utility/synch.h"
+#include "streamerClient/StreamerClient.h"
 
 Room::Room(string name): name(std::move(name)) {
 
@@ -35,4 +35,20 @@ bool Room::isEmpty() {
 
 string Room::getName() {
     return name;
+}
+
+MusicTrack* Room::reserveTrackSlot() {
+
+    MusicTrack* track = nullptr;
+
+    synchronized(mut) {
+
+        if (tracks.size() < MAX_TRACK_NUMBER) {
+
+            track = new MusicTrack();
+            tracks.push_back(track);
+        }
+    }
+
+    return track;
 }

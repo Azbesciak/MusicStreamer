@@ -1,8 +1,12 @@
 #include "FileUpload.h"
 
 
-FileUpload::FileUpload(ClientProxy *clientProxy) {}
+FileUpload::FileUpload(ClientProxy *clientProxy, int fileDescriptor) {
 
-void FileUpload::downloadFile(void (*onComplete)(ClientProxy *, int)) {}
+    this->clientProxy = clientProxy;
+    this->fileDescriptor = fileDescriptor;
+}
+
+void FileUpload::downloadFile() {}
 
 FileUpload::~FileUpload() {}

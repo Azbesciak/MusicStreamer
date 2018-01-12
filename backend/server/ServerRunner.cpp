@@ -1,5 +1,6 @@
 #include "ServerRunner.h"
 #include "../streamerClient/ClientProxy.h"
+#include "SocketFactory.h"
 
 bool runserver = true;
 
@@ -46,32 +47,11 @@ void cleanRoutine(void *arg) {
 
 //strtok - rozbija string z delimiterem
 void *startServer(void *serverOpts) {
-    auto *options = (server_opts *) serverOpts;
-    printf("Server works at %s:%d\n", options->addr, options->port);
 
-    struct sockaddr_in sockAddr{};
-    struct sockaddr_in remote{};
+    server_opts *options = (server_opts *) serverOpts;
+    printf("Server works at port %d\n", options->port);
 
-    int socketNum = socket(AF_INET, SOCK_STREAM, 0);
-    if (socketNum < 0) {
-        printf("Socket error\n");
-        exit(-1);
-    }
-    //socket tylko uzywamy do czasu accept
-
-    sockAddr.sin_family = AF_INET;
-    inet_pton(AF_INET, options->addr, &sockAddr.sin_addr);
-    sockAddr.sin_port = htons(static_cast<uint16_t>(options->port));
-    sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    //bindowanie do socketu
-    int time = 1;
-    setsockopt(socketNum, SOL_SOCKET, SO_REUSEADDR, (char *) &time, sizeof(time));
-    if (bind(socketNum, (struct sockaddr *) &sockAddr, sizeof(sockAddr)) < 0) {
-        perror("Binding error");
-        exit(-1);
-    }
-
+    int socketNum = SocketFactory::createTcpSocket(options->port);
 
     if (listen(socketNum, QUEUE_SIZE) < 0) {
         perror("Listen error");
@@ -79,6 +59,8 @@ void *startServer(void *serverOpts) {
     }
     auto container = new Container();
     serverRef = new ServerRef(container, socketNum);
+
+    struct sockaddr_in remote{};
 
     signal(SIGINT, cleanUp);
     // prevent dead sockets from throwing pipe errors on write

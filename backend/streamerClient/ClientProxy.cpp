@@ -37,12 +37,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == UPLOAD_ACTION) {
 
-            FileUpload* upload = UploadHandler::getInstance()->acceptUpload(client);
-
-            if (upload == nullptr)
-                return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
-
-            upload->downloadFile(ClientProxy::onUploadCompleted);
+            return handleTrackUpload();
         }
 
         resp.fillOkResultIfNotSet();
@@ -56,7 +51,30 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
     return resp;
 }
 
-void ClientProxy::onUploadCompleted(ClientProxy* clientProxy, int fileDescriptor) {
+ClientResponse ClientProxy::handleTrackUpload() {
+
+    bool reservation = reserveRoomFileSlot();
+
+    if (!reservation)
+        return ClientResponse::error(403, "Room tracks limit exceeded");
+
+    bool status = UploadHandler::getInstance()->acceptUpload(this);
+
+    if (!status)
+        return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
+}
+
+bool ClientProxy::reserveRoomFileSlot() {
+
+    Room* room = client->getCurrentRoom();
+
+
+}
+
+void ClientProxy::onUploadCompleted() {
+}
+
+void ClientProxy::onUploadFailed() {
 }
 
 bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }

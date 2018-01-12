@@ -6,16 +6,30 @@
 
 #include <unordered_set>
 #include <mutex>
-#include "MusicStreamer.h"
+#include <logic/MusicStreamer.h>
+#include <logic/MusicTrack.h>
 
 using namespace std;
 
+class StreamerClient;
+class MusicStreamer;
+
 class Room {
+
 private:
-    MusicStreamer *streamer;
-    std::unordered_set<StreamerClient*> clients;
+
+    static const int MAX_TRACK_NUMBER = 20;
+
     std::recursive_mutex mut;
+
+    std::unordered_set<StreamerClient*> clients;
+
+    MusicStreamer *streamer;
+    std::vector<MusicTrack*> tracks;
+    std::vector<MusicTrack*> trackQueue;
+
     string name;
+
 public:
     explicit Room(string name);
     ~Room();
@@ -25,6 +39,7 @@ public:
     bool isEmpty();
     string getName();
 
+    MusicTrack* reserveTrackSlot();
 };
 
 

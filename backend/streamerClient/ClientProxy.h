@@ -4,13 +4,18 @@
 
 
 #include "ClientResponse.h"
-#include "../server/Container.h"
+#include "logic/Container.h"
 
 
 class ClientProxy {
     Container* container;
     StreamerClient* client;
     ClientResponse authenticate(const string &method, json request);
+
+    void onUploadCompleted();
+    void onUploadFailed();
+    bool reserveRoomFileSlot();
+
 public:
     ClientProxy(int clientFd, Container * container);
     ~ClientProxy();
@@ -20,7 +25,7 @@ public:
 
     bool isNotAuthorized() const;
 
-    static void onUploadCompleted(ClientProxy* clientProxy, int fileDescriptor);
+    ClientResponse handleTrackUpload();
 };
 
 

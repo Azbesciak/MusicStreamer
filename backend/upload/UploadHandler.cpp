@@ -1,9 +1,16 @@
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <server/SocketFactory.h>
+#include <fcntl.h>
 #include "UploadHandler.h"
 
+using namespace std;
+
+
+const char* UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
 
 UploadHandler* UploadHandler::instance = nullptr;
+std::recursive_mutex UploadHandler::mut;
+int UploadHandler::nextFileNo = 1;
 
 UploadHandler* UploadHandler::getInstance() {
 
@@ -14,15 +21,56 @@ UploadHandler* UploadHandler::getInstance() {
 }
 
 UploadHandler::UploadHandler() {
+    // Just for singleton purpose
 }
 
-FileUpload* UploadHandler::acceptUpload(StreamerClient *client) {}
+bool UploadHandler::acceptUpload(ClientProxy *client) {
+
+    FileUpload* fileUpload = nullptr;
+
+    synchronized(mut) {
+
+        int receiverSocket = createReceiverSocket();
+        sockets.push_back(receiverSocket);
+
+        int file = createFile();
+
+        fileUpload = new FileUpload(client, file);
+        uploads.push_back(fileUpload);
+    }
+
+    return fileUpload != nullptr;
+}
+
+int UploadHandler::createFile() {
+
+    string fileName = resolveNewFilename();
+
+    int fd = creat(fileName.c_str(), O_WRONLY);
+
+    if (fd < 0) {
+
+        perror("Cannot create new file.\n");
+        return -1;
+    }
+
+    close(fd);
+
+    return fd;
+}
+
+string UploadHandler::resolveNewFilename() {
+    return to_string(nextFileNo++);
+}
 
 int UploadHandler::createReceiverSocket() {
-
-    int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-    return sock;
+    return SocketFactory::createTcpSocket(UPLOAD_PORT);
 }
 
-UploadHandler::~UploadHandler() {}
+UploadHandler::~UploadHandler() {
+
+    for (int socket : sockets) {
+
+        close(socket);
+    }
+}
