@@ -1,4 +1,5 @@
 
+#include <upload/UploadHandler.h>
 #include "ClientProxy.h"
 
 static const char *const METHOD_KEY = "method";
@@ -6,29 +7,56 @@ static const char *const JOIN_ROOM_ACTION = "JOIN";
 static const char *const GET_ROOMS_ACTION = "ROOMS";
 static const char *const AUTHENTICATE_ACTION = "INIT";
 static const char *const LEAVE_ACTION = "LEAVE";
+static const char* const UPLOAD_ACTION = "UPLOAD";
 
 ClientResponse ClientProxy::onNewMessage(char *message) {
+
     ClientResponse resp;
+
     try {
+
         auto request = json::parse(message);
         auto method = request.at(METHOD_KEY).get<string>();
+
         if (method == AUTHENTICATE_ACTION) {
+
             return authenticate(method, request);
+
         } else if (isNotAuthorized()) {
+
             return ClientResponse::error(403, "Not authenticated");
+
         } else if (method == JOIN_ROOM_ACTION) {
+
             auto roomName = request.at("roomName").get<string>();
             container->joinClientToRoom(client, roomName);
+
         } else if (method == GET_ROOMS_ACTION) {
+
             resp.addToBody("rooms", container->getRoomsList());
+
+        } else if (method == UPLOAD_ACTION) {
+
+            FileUpload* upload = UploadHandler::getInstance()->acceptUpload(client);
+
+            if (upload == nullptr)
+                return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
+
+            upload->downloadFile(ClientProxy::onUploadCompleted);
         }
+
         resp.fillOkResultIfNotSet();
 
     } catch (json::exception &e) {
+
         cout << e.what() << endl;
         resp.setError(500, "Malformed input data");
     }
+
     return resp;
+}
+
+void ClientProxy::onUploadCompleted(ClientProxy* clientProxy, int fileDescriptor) {
 }
 
 bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }

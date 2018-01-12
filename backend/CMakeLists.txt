@@ -4,6 +4,8 @@ project(MusicStreamer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-pthread -std=c++17")
 
+include_directories(.)
+
 add_executable(MusicStreamer
         utility/json.hpp
         utility/TerminalUtils.h
@@ -24,5 +26,7 @@ add_executable(MusicStreamer
         messageSender/Message.cpp
         messageSender/MessageSender.cpp
         messageSender/MessageSender.h
-
-        )
+        upload/FileUpload.cpp
+        upload/FileUpload.h
+        upload/UploadHandler.cpp
+        upload/UploadHandler.h)

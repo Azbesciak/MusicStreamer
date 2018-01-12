@@ -1,3 +1,7 @@
+# CLion
+backend/.idea/
+backend/cmake-build-debug/
+
 # Prerequisites
 *.d
 

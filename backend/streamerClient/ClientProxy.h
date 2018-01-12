@@ -19,6 +19,8 @@ public:
     ssize_t sendMessage(const string &message);
 
     bool isNotAuthorized() const;
+
+    static void onUploadCompleted(ClientProxy* clientProxy, int fileDescriptor);
 };
 
 
