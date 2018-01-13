@@ -1,9 +1,10 @@
-#ifndef MUSICSTREAMER_UPLOADHANDLERFACTORY_H
-#define MUSICSTREAMER_UPLOADHANDLERFACTORY_H
+#ifndef MUSICSTREAMER_UPLOADHANDLER_H
+#define MUSICSTREAMER_UPLOADHANDLER_H
 
 
 #include <upload/FileUpload.h>
 #include <logic/Room.h>
+#include <set>
 
 class UploadHandler {
 
@@ -14,32 +15,45 @@ private:
     static const int UPLOAD_TIMEOUT_MILLIS = 60000; // 60 s
 
     static const int UPLOAD_PORT = 21212;
+    static const int TOKEN_SIZE = 20;
 
-    static const char* FILE_UPLOAD_DIRECTORY;
+    static const char* const FILE_UPLOAD_DIRECTORY;
 
+
+    static std::recursive_mutex singlMut;
     static UploadHandler* instance;
-    static std::recursive_mutex mut;
 
-    static int nextFileNo;
+    std::recursive_mutex mut;
+    pthread_t* listenerThread;
+
+    int nextFileNo;
 
     std::vector<FileUpload*> uploads;
-    std::vector<int> sockets;
+    std::set<std::string> usedTokens;
+
+    int receiverSocket;
 
     UploadHandler();
 
-    int createReceiverSocket();
-    int createFile();
+    void spawnHandlerThread();
+    static void* listenerLoop(void*);
+    void runLooper();
 
-    std::string resolveNewFilename();
+    std::string generateToken();
+
+    int createFile();
+    std::string resolveNewFilePath();
+
+    void logUploadConnection(sockaddr_in clientAddress);
 
 public:
 
     static UploadHandler* getInstance();
 
-    bool acceptUpload(ClientProxy* client);
+    std::string acceptUpload(ClientProxy* client);
 
     ~UploadHandler();
 };
 
 
-#endif //MUSICSTREAMER_UPLOADHANDLERFACTORY_H
+#endif //MUSICSTREAMER_UPLOADHANDLER_H

@@ -1,50 +1,105 @@
 #include <sys/socket.h>
 #include <server/SocketFactory.h>
 #include <fcntl.h>
+#include <utility/token.hpp>
 #include "UploadHandler.h"
 
 using namespace std;
 
 
-const char* UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
+const char* const UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
 
+recursive_mutex UploadHandler::singlMut;
 UploadHandler* UploadHandler::instance = nullptr;
-std::recursive_mutex UploadHandler::mut;
-int UploadHandler::nextFileNo = 1;
 
 UploadHandler* UploadHandler::getInstance() {
 
-    if (instance == nullptr)
-        instance = new UploadHandler();
+    if (instance == nullptr) {
+
+        synchronized(singlMut) {
+
+            if (instance == nullptr)
+                instance = new UploadHandler();
+        }
+    }
 
     return instance;
 }
 
 UploadHandler::UploadHandler() {
-    // Just for singleton purpose
+
+    this->nextFileNo = 1;
+
+    receiverSocket = SocketFactory::createTcpSocket(UPLOAD_PORT);
+
+    spawnHandlerThread();
 }
 
-bool UploadHandler::acceptUpload(ClientProxy *client) {
+void UploadHandler::spawnHandlerThread() {
 
-    FileUpload* fileUpload = nullptr;
+    listenerThread = new pthread_t();
+    pthread_create(listenerThread, nullptr, listenerLoop, nullptr);
+}
+
+void* UploadHandler::listenerLoop(void*) {
+    getInstance()->runLooper();
+}
+
+void UploadHandler::runLooper() {
+
+    while (true) {
+
+        sockaddr_in clientAddress;
+        socklen_t addressSize = sizeof(sockaddr_in);
+
+        int clientSocket = accept(receiverSocket, (sockaddr*) &clientAddress, &addressSize);
+
+        if (clientSocket < 0) {
+
+            perror("Client socket accept error.\n");
+            continue;
+        }
+
+        logUploadConnection(clientAddress);
+    }
+}
+
+void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
+
+    char address[INET_ADDRSTRLEN];
+
+    inet_ntop(AF_INET, &(clientAddress.sin_addr), address, INET_ADDRSTRLEN);
+    printf("File upload from: %s\n", address);
+}
+
+string UploadHandler::generateToken() {
+
+    return TokenGenerator::alfanumeric(TOKEN_SIZE);
+}
+
+string UploadHandler::acceptUpload(ClientProxy *client) {
+
+    string token;
 
     synchronized(mut) {
 
-        int receiverSocket = createReceiverSocket();
-        sockets.push_back(receiverSocket);
-
         int file = createFile();
 
-        fileUpload = new FileUpload(client, file);
-        uploads.push_back(fileUpload);
+        if (file != -1) {
+
+            token = generateToken();
+            FileUpload* fileUpload = new FileUpload(client, token, file);
+
+            uploads.push_back(fileUpload);
+        }
     }
 
-    return fileUpload != nullptr;
+    return token;
 }
 
 int UploadHandler::createFile() {
 
-    string fileName = resolveNewFilename();
+    string fileName = resolveNewFilePath();
 
     int fd = creat(fileName.c_str(), O_WRONLY);
 
@@ -59,18 +114,19 @@ int UploadHandler::createFile() {
     return fd;
 }
 
-string UploadHandler::resolveNewFilename() {
-    return to_string(nextFileNo++);
-}
+string UploadHandler::resolveNewFilePath() {
 
-int UploadHandler::createReceiverSocket() {
-    return SocketFactory::createTcpSocket(UPLOAD_PORT);
+    string filename = to_string(nextFileNo++);
+
+    return string(FILE_UPLOAD_DIRECTORY) + filename;
 }
 
 UploadHandler::~UploadHandler() {
 
-    for (int socket : sockets) {
+    for (FileUpload* upload : uploads)
+        upload->cancel();
 
-        close(socket);
-    }
+    close(receiverSocket);
+
+    pthread_cancel(*listenerThread);
 }

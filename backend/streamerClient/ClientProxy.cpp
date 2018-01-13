@@ -37,7 +37,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == UPLOAD_ACTION) {
 
-            return handleTrackUpload();
+            resp = handleTrackUpload();
         }
 
         resp.fillOkResultIfNotSet();
@@ -58,23 +58,28 @@ ClientResponse ClientProxy::handleTrackUpload() {
     if (!reservation)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    bool status = UploadHandler::getInstance()->acceptUpload(this);
+    string token = UploadHandler::getInstance()->acceptUpload(this);
 
-    if (!status)
+    if (token.empty())
         return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
+
+    ClientResponse resp;
+
+    resp.addToBody("uploadToken", token);
+
+    return resp;
 }
 
 bool ClientProxy::reserveRoomFileSlot() {
 
     Room* room = client->getCurrentRoom();
-
-
+    MusicTrack* trackSlot = room->reserveTrackSlot();
 }
 
-void ClientProxy::onUploadCompleted() {
+void ClientProxy::onUploadCompleted(FileUpload* fileUpload) {
 }
 
-void ClientProxy::onUploadFailed() {
+void ClientProxy::onUploadFailed(FileUpload* fileUpload) {
 }
 
 bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }

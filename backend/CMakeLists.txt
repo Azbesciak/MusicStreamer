@@ -33,4 +33,4 @@ add_executable(MusicStreamer
         server/SocketFactory.cpp
         server/SocketFactory.h
         logic/MusicTrack.cpp
-        logic/MusicTrack.h)
+        logic/MusicTrack.h utility/token.hpp)

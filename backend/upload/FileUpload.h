@@ -1,5 +1,5 @@
-#ifndef MUSICSTREAMER_UPLOADHANDLER_H
-#define MUSICSTREAMER_UPLOADHANDLER_H
+#ifndef MUSICSTREAMER_FILEUPLOAD_H
+#define MUSICSTREAMER_FILEUPLOAD_H
 
 
 #include <streamerClient/ClientProxy.h>
@@ -11,11 +11,14 @@ private:
     ClientProxy* clientProxy;
     int fileDescriptor;
 
+    std::string token;
+
 public:
 
-    FileUpload(ClientProxy* clientProxy, int fileDescriptor);
+    FileUpload(ClientProxy* clientProxy, std::string token, int fileDescriptor);
 
     void downloadFile();
+    void cancel();
 
     ~FileUpload();
 

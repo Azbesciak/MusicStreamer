@@ -1,7 +1,9 @@
 #include "FileUpload.h"
 
+using namespace std;
 
-FileUpload::FileUpload(ClientProxy *clientProxy, int fileDescriptor) {
+
+FileUpload::FileUpload(ClientProxy *clientProxy, string token, int fileDescriptor) {
 
     this->clientProxy = clientProxy;
     this->fileDescriptor = fileDescriptor;
@@ -9,4 +11,6 @@ FileUpload::FileUpload(ClientProxy *clientProxy, int fileDescriptor) {
 
 void FileUpload::downloadFile() {}
 
-FileUpload::~FileUpload() {}
+void FileUpload::cancel() {}
+
+FileUpload::~FileUpload() = default;

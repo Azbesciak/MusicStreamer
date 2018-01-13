@@ -3,17 +3,19 @@
 #define MUSICSTREAMER_CLIENTCOMMAND_H
 
 
+#include <upload/FileUpload.h>
 #include "ClientResponse.h"
 #include "logic/Container.h"
 
+class FileUpload;
 
 class ClientProxy {
     Container* container;
     StreamerClient* client;
     ClientResponse authenticate(const string &method, json request);
 
-    void onUploadCompleted();
-    void onUploadFailed();
+    void onUploadCompleted(FileUpload* fileUpload);
+    void onUploadFailed(FileUpload* fileUpload);
     bool reserveRoomFileSlot();
 
 public:
