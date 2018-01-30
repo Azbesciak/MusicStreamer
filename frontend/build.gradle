@@ -1,11 +1,22 @@
 buildscript {
-    ext.kotlin_version = '1.2.21'
+    ext {
+        kotlinVersion = '1.2.21'
+        springBootVersion = '2.0.0.M7'
+        springBootJavafxVersion = "2.1.5"
+        coroutinesVersion = '0.22.1'
+    }
 
     repositories {
         mavenCentral()
+        maven { url "https://repo.spring.io/snapshot" }
+        maven { url "https://repo.spring.io/milestone" }
+        maven { url "http://repo.spring.io/libs-milestone-local" }
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$springBootVersion"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
+        classpath 'org.springframework:springloaded:1.2.6.RELEASE'
     }
 }
 
@@ -13,17 +24,46 @@ group 'cs.sk'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'idea'
+apply plugin: "kotlin-allopen"
 
 repositories {
     mavenCentral()
+    jcenter()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+    maven { url "http://repo.spring.io/libs-milestone-local" }
+}
+dependencyManagement {
+    imports {
+        mavenBom "io.projectreactor:reactor-bom:Bismuth-SR4"
+    }
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.springframework.boot:spring-boot-starter:$springBootVersion"
+    compile('com.fasterxml.jackson.module:jackson-module-kotlin:2.9.3')
+    compile("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
+    compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    compile "de.roskenet:springboot-javafx-support:$springBootJavafxVersion"
+
     compile 'no.tornado:tornadofx:1.7.14'
     compile 'com.jfoenix:jfoenix:8.0.1'
     compile 'io.github.microutils:kotlin-logging:1.4.9'
-    compile 'com.natpryce:konfig:1.6.1.0'
+    compile 'com.beust:klaxon:2.1.2'
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutinesVersion"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-io:$coroutinesVersion"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$coroutinesVersion"
+    compile group: 'org.projectreactor', name: 'reactor-spring', version: '1.0.1.RELEASE'
+    compile 'io.projectreactor:reactor-core'
+
+
 }
 
 compileKotlin {
@@ -31,4 +71,9 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
 }

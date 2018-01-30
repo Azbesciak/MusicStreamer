@@ -5,6 +5,7 @@
 #include <upload/FileUpload.h>
 #include <logic/Room.h>
 #include <set>
+#include <netinet/in.h>
 
 class UploadHandler {
 

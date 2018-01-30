@@ -4,10 +4,10 @@
 
 
 #include <upload/FileUpload.h>
+#include <upload/UploadHandler.h>
 #include "ClientResponse.h"
 #include "logic/Container.h"
 
-class FileUpload;
 
 class ClientProxy {
     Container* container;

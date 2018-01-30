@@ -8,16 +8,16 @@ import javax.sound.sampled.DataLine
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.LineUnavailableException
 import java.io.IOException
-import java.io.InputStream
 
 
 class Client @Throws(IOException::class, LineUnavailableException::class)
-constructor(private val serverName: String = "127.0.0.1") {
+constructor(private val serverName: String = "127.0.0.1", private val port: Int = 10001) {
 
     private lateinit var speaker: SourceDataLine
-    private lateinit var streamIn: InputStream
-    private lateinit var server: Socket
     private var running = true
+
+
+    companion object : KLogging()
 
     init {
         init()
@@ -43,42 +43,42 @@ constructor(private val serverName: String = "127.0.0.1") {
 
     fun start() {
         try {
-            logger.info { "Connecting to server @$serverName:$PORT" }
+            Socket(serverName, port).use {
+                logger.info { "Connecting to server @$serverName:$port" }
 
-            //  creating the socket and connect to the server
-            server = Socket(serverName, PORT)
-            logger.info { "Connected to: " + server.remoteSocketAddress }
+                //  creating the socket and connect to the server
+                logger.info { "Connected to: " + it.remoteSocketAddress }
 
-            //  gettting the server stream
-            streamIn = server.getInputStream()
+                //  gettting the server stream
+                it.getInputStream().use {input ->
 
-            speaker.start()
+                    speaker.start()
 
-            val data = ByteArray(8000)
-            logger.info { "Waiting for data..." }
-            while (running) {
+                    val data = ByteArray(8000)
+                    logger.info { "Waiting for data..." }
+                    while (running) {
 
-                //  checking if the data is available to speak
-                if (streamIn.available() <= 0)
-                    continue   //  data not available so continue back to start of loop
+                        //  checking if the data is available to speak
+                        if (input.available() <= 0)
+                            continue   //  data not available so continue back to start of loop
 
-                //  count of the data bytes read
-                val readCount = streamIn.read(data, 0, data.size)
+                        //  count of the data bytes read
+                        val readCount = input.read(data, 0, data.size)
 
-                if (readCount > 0) {
-                    speaker.write(data, 0, readCount)
+                        if (readCount > 0) {
+                            speaker.write(data, 0, readCount)
+                        }
+                    }
                 }
+
+
             }
-            //honestly.... the control never reaches here.
-            speaker.drain()
-            speaker.close()
-        } catch (e: Exception) {
-           logger.error { e }
+        } catch (e :Exception) {
+            logger.error { e }
         }
+        //honestly.... the control never reaches here.
+        speaker.drain()
+        speaker.close()
 
-    }
-
-    companion object : KLogging() {
-        var PORT = 3000
     }
 }
