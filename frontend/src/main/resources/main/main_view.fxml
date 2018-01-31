@@ -4,10 +4,11 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
+            xmlns:fx="http://javafx.com/fxml/1">
     <Label layoutX="99.0" layoutY="109.0" prefHeight="34.0" prefWidth="394.0">
         <font>
-            <Font size="26.0" />
+            <Font size="26.0"/>
         </font>
     </Label>
 

@@ -1,7 +1,8 @@
-package cs.sk.musicstreamer
+package cs.sk.musicstreamer.connection
 
 import com.beust.klaxon.Klaxon
 import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.nio.aConnect
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import mu.KLogging
@@ -27,16 +28,18 @@ class ServerConnector(
 
     private val queue = ConcurrentLinkedQueue<ConnectionRequest>()
     private val isRunning = AtomicBoolean(true)
+    private val serverDescription = "$host:$port"
 
     init {
-        logger.info { "INIT" }
+        logger.info { "Loading server connector..." }
         launch {
             connect({ socket ->
+                logger.info { "Successfully connected with $serverDescription" }
                 while (isRunning.get()) {
                     queue.whileNotEmpty {
                         val wrote = socket.write(it.request)
                         if (wrote <= 0) {
-                            logger.error { "Could not write" }
+                            logger.error { "Could not write to $serverDescription" }
                             it.onError(ErrorResponse(body = Error("Couldn't send request to server")))
                         } else {
                             socket.read(it.onResponse, it.onError)
@@ -45,24 +48,25 @@ class ServerConnector(
                     }
                 }
             }, {
-                logger.error("error with $host:$port", it)
+                logger.error("Could not create connection with serverDescription", it)
             })
         }
     }
 
+
     private suspend fun connect(onSuccess: suspend (AsynchronousSocketChannel) -> Unit, onError: (Exception) -> Unit = {}) {
         try {
             AsynchronousSocketChannel.open().use {
-                it.connect(InetSocketAddress(InetAddress.getByName(host), port))
+                it.aConnect(InetSocketAddress(InetAddress.getByName(host), port))
                 onSuccess(it)
             }
         } catch (e: Exception) {
             onError(e)
-            isRunning.set(false) // just ok...
+            shutdown() // just ok...
         }
     }
 
-    fun close() = isRunning.set(false)
+    fun shutdown() = isRunning.set(false)
 
     fun send(request: Request, onResponse: (Response<*>) -> Unit) =
             queue.add(ConnectionRequest(request, onResponse))

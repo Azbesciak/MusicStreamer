@@ -1,4 +1,4 @@
-package cs.sk.musicstreamer
+package cs.sk.musicstreamer.connection
 
 
 sealed class Response<T>(private val status: Int, private val body: T)

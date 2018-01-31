@@ -1,4 +1,4 @@
-package cs.sk.musicstreamer
+package cs.sk.musicstreamer.connection
 
 import mu.KLogging
 import java.net.Socket

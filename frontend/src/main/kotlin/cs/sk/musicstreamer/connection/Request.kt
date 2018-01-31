@@ -1,4 +1,4 @@
-package cs.sk.musicstreamer
+package cs.sk.musicstreamer.connection
 
 
 sealed class Request(private val method: String)
