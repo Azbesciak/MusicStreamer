@@ -1,11 +1,8 @@
 package cs.sk.musicstreamer.homepage
 
-import de.felixroske.jfxsupport.FXMLView
+import javafx.scene.layout.AnchorPane
 import tornadofx.*
 
-@FXMLView
 class HomePageView : View() {
-    override val root = hbox {
-
-    }
+    override val root: AnchorPane by fxml("/homepage/homepage.fxml")
 }

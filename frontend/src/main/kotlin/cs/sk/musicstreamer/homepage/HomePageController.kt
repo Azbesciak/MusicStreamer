@@ -1,12 +1,10 @@
 package cs.sk.musicstreamer.homepage
 
-import de.felixroske.jfxsupport.FXMLController
 import javafx.event.Event
 import javafx.fxml.FXML
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 
-@FXMLController
 class HomePageController {
 
     @FXML

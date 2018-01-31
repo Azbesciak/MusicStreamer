@@ -2,7 +2,6 @@ buildscript {
     ext {
         kotlinVersion = '1.2.21'
         springBootVersion = '2.0.0.M7'
-        springBootJavafxVersion = "2.1.5"
         coroutinesVersion = '0.22.1'
     }
 
@@ -51,7 +50,6 @@ dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     compile("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
     compile("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    compile "de.roskenet:springboot-javafx-support:$springBootJavafxVersion"
 
     compile 'no.tornado:tornadofx:1.7.14'
     compile 'com.jfoenix:jfoenix:8.0.1'

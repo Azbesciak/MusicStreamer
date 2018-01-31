@@ -3,18 +3,40 @@ package cs.sk.musicstreamer
 import cs.sk.musicstreamer.homepage.HomePageView
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
-import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport
+import javafx.application.Application
+import org.springframework.boot.SpringApplication
+import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.context.annotation.ComponentScan
 import tornadofx.*
+import kotlin.reflect.KClass
 
 @SpringBootApplication
-class MusicStreamer(val serverConnector: ServerConnector) : App(HomePageView::class) {
+//@ComponentScan(basePackages = ["cs.sk.musicstreamer"])
+class MusicStreamer : App(HomePageView::class) {
 
     // github -> npryce/konfig
     //           sam016/J-Mic-Stream-Over-Socket
     //  https://www.felixroske.de/page/programmierung/index.html
+    private lateinit var context: ConfigurableApplicationContext
 
-}
+    override fun init() {
+        context = SpringApplication.run(this.javaClass)
+        context.autowireCapableBeanFactory.autowireBean(this)
+        FX.dicontainer = object : DIContainer {
+            override fun <T : Any> getInstance(type: KClass<T>): T = context.getBean(type.java)
+        }
+    }
 
-fun main(args: Array<String>) {
-    AbstractJavaFxApplicationSupport.launch(MusicStreamer::class.java, *args)
+    override fun stop() {
+        super.stop()
+        context.close()
+    }
+
+    companion object {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            Application.launch(MusicStreamer::class.java, *args)
+        }
+    }
+
 }
