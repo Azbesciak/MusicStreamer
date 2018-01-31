@@ -6,12 +6,11 @@ import javafx.fxml.Initializable
 import javafx.scene.layout.AnchorPane
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import mu.KLogging
-import org.springframework.stereotype.Controller
 import tornadofx.*
 import java.net.URL
 import java.util.*
 
-@Controller
+// cannot be a @Controller because is created statically...
 class MainView : View(), Initializable {
     override val root: AnchorPane by fxml("/main/main_view.fxml")
     private val serverConnector: ServerConnector by di()
