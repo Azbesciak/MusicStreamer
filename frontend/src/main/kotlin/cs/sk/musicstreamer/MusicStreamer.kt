@@ -1,18 +1,17 @@
 package cs.sk.musicstreamer
 
-import cs.sk.musicstreamer.homepage.HomePageView
+import cs.sk.musicstreamer.homepage.MainView
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
 import javafx.application.Application
 import org.springframework.boot.SpringApplication
 import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.context.annotation.ComponentScan
 import tornadofx.*
 import kotlin.reflect.KClass
 
 @SpringBootApplication
 //@ComponentScan(basePackages = ["cs.sk.musicstreamer"])
-class MusicStreamer : App(HomePageView::class) {
+class MusicStreamer : App(MainView::class) {
 
     // github -> npryce/konfig
     //           sam016/J-Mic-Stream-Over-Socket
