@@ -74,7 +74,6 @@ ClientResponse ClientProxy::handleTrackUpload() {
     }
 
     ClientResponse resp;
-
     resp.addToBody("uploadToken", token);
 
     return resp;

@@ -77,19 +77,58 @@ void UploadHandler::handleClientUpload(int clientSocket, sockaddr_in clientAddre
     pthread_t* thread = new pthread_t();
     UploadMeta* uploadMeta = new UploadMeta(this, thread, clientSocket, clientAddress);
 
-    pthread_create(thread, nullptr, downloadFile, uploadMeta);
+    pthread_create(thread, nullptr, handleFileDownload, uploadMeta);
 }
 
 
-void* UploadHandler::downloadFile(void* metadata) {
+void* UploadHandler::handleFileDownload(void* metadata) {
 
     UploadMeta* uploadMeta = static_cast<UploadMeta*>(metadata);
     UploadHandler* handler = uploadMeta->getUploadHandlerInstance();
 
-    string token = acceptToken(uploadMeta->getClientSocket());
-    FileUpload* upload =
+    handler->downloadFile(uploadMeta);
 
     return nullptr;
+}
+
+
+void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
+
+    string token = acceptToken(uploadMeta->getClientSocket());
+    FileUpload* upload = getUploadByToken(token);
+
+    int fileDescriptor = acceptFileBytes(uploadMeta->getClientSocket());
+
+    if (fileDescriptor >= 0)
+        upload->onUploadCompleted(fileDescriptor);
+    else
+        upload->onUploadFailed();
+
+    // Todo cleanup procedure (mainly tokens)
+}
+
+
+int UploadHandler::acceptFileBytes(int clientSocket) {
+
+    // Todo read track bytes
+    // Todo handle upload timeout
+    // Todo handle upload bytes limit exceeded
+}
+
+
+FileUpload* UploadHandler::getUploadByToken(string token) {
+
+    FileUpload* upload = nullptr;
+
+    synchronized(mut) {
+
+        auto tokenUpload = uploads.find(token);
+
+        if (tokenUpload != uploads.end())
+            upload = tokenUpload->second;
+    }
+
+    return upload;
 }
 
 
@@ -113,6 +152,20 @@ void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
 }
 
 
+string UploadHandler::prepareUpload(FileUpload* fileUpload) {
+
+    string token = "";
+
+    synchronized(mut) {
+
+        token = generateToken();
+        uploads[token] = fileUpload;
+    }
+
+    return token;
+}
+
+
 string UploadHandler::generateToken() {
 
     string token = "";
@@ -124,20 +177,6 @@ string UploadHandler::generateToken() {
     } while(usedTokens.find(token) != usedTokens.end());
 
     usedTokens.insert(token);
-
-    return token;
-}
-
-
-string UploadHandler::prepareUpload(FileUpload* fileUpload) {
-
-    string token = "";
-
-    synchronized(mut) {
-
-        token = generateToken();
-        uploads[token] = fileUpload;
-    }
 
     return token;
 }

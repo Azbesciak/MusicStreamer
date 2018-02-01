@@ -7,6 +7,7 @@
 #include <set>
 #include <netinet/in.h>
 #include <map>
+#include "UploadMeta.h"
 
 class UploadHandler {
 
@@ -43,17 +44,19 @@ private:
     void runLooper();
 
     std::string generateToken();
-    FileUpload* processUploadByToken(std::string token);
+    FileUpload* getUploadByToken(std::string token);
+
+    void downloadFile(UploadMeta* uploadMeta);
+    std::string acceptToken(int clientSocket);
+    int acceptFileBytes(int clientSocket);
 
     int createFile();
     std::string resolveNewFilePath();
 
     void logUploadConnection(sockaddr_in clientAddress);
-
     void handleClientUpload(int clientSocket, sockaddr_in clientAddress);
 
-    static void* downloadFile(void* data);
-    static std::string acceptToken(int clientSocket);
+    static void* handleFileDownload(void* data);
 
 public:
 

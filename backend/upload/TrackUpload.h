@@ -21,6 +21,9 @@ public:
     }
 
     void downloadFile() override;
+
+    void onUploadCompleted(int fileDescriptor) override;
+    void onUploadFailed() override;
 };
 
 
