@@ -8,9 +8,16 @@ class ClientProxy;
 
 class FileUpload {
 
+private:
+
+    long fileSize;
+
 public:
 
     virtual void downloadFile() = 0;
+
+    virtual void onUploadCompleted(int fileDescriptor);
+    virtual void onUploadFailed();
 
     ~FileUpload();
 };

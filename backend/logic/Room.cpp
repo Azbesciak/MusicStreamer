@@ -52,3 +52,18 @@ MusicTrack* Room::reserveTrackSlot() {
 
     return track;
 }
+
+void Room::cancelTrackReservation(MusicTrack* musicTrack) {
+
+    synchronized(mut) {
+
+        // Huehue long
+        long trackIndex = distance(tracks.begin(), find(tracks.begin(), tracks.end(), musicTrack));
+
+        if (trackIndex < tracks.size()) {
+
+            tracks.erase(tracks.begin() + trackIndex);
+            delete musicTrack;
+        }
+    }
+}

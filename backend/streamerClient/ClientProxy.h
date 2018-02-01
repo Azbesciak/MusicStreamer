@@ -14,9 +14,7 @@ class ClientProxy {
     StreamerClient* client;
     ClientResponse authenticate(const string &method, json request);
 
-    void onUploadCompleted(FileUpload* fileUpload);
-    void onUploadFailed(FileUpload* fileUpload);
-    bool reserveRoomFileSlot();
+    MusicTrack* reserveRoomFileSlot();
 
 public:
     ClientProxy(int clientFd, Container * container);

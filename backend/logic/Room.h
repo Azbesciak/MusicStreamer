@@ -40,6 +40,7 @@ public:
     string getName();
 
     MusicTrack* reserveTrackSlot();
+    void cancelTrackReservation(MusicTrack* musicTrack);
 };
 
 

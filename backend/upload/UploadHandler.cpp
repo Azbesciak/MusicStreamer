@@ -1,9 +1,10 @@
-#include <sys/socket.h>
-#include <server/SocketFactory.h>
-#include <fcntl.h>
-#include <utility/token.hpp>
 #include "UploadHandler.h"
-#include "UploadMeta.h"
+
+#include <server/SocketFactory.h>
+#include <upload/UploadMeta.h>
+#include <utility/token.hpp>
+
+#include <fcntl.h>
 
 using namespace std;
 
@@ -27,14 +28,15 @@ UploadHandler* UploadHandler::getInstance() {
     return instance;
 }
 
+
 UploadHandler::UploadHandler() {
 
     this->nextFileNo = 1;
-
-    receiverSocket = SocketFactory::createTcpSocket(UPLOAD_PORT);
+    this->receiverSocket = SocketFactory::createTcpSocket(UPLOAD_PORT);
 
     spawnHandlerThread();
 }
+
 
 void UploadHandler::spawnHandlerThread() {
 
@@ -42,9 +44,11 @@ void UploadHandler::spawnHandlerThread() {
     pthread_create(listenerThread, nullptr, listenerLoop, nullptr);
 }
 
+
 void* UploadHandler::listenerLoop(void*) {
     getInstance()->runLooper();
 }
+
 
 void UploadHandler::runLooper() {
 
@@ -83,6 +87,7 @@ void* UploadHandler::downloadFile(void* metadata) {
     UploadHandler* handler = uploadMeta->getUploadHandlerInstance();
 
     string token = acceptToken(uploadMeta->getClientSocket());
+    FileUpload* upload =
 
     return nullptr;
 }
@@ -107,40 +112,55 @@ void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
     printf("File upload from: %s\n", address);
 }
 
+
 string UploadHandler::generateToken() {
 
-    return TokenGenerator::alfanumeric(TOKEN_SIZE);
+    string token = "";
+
+    do {
+
+        token = TokenGenerator::alfanumeric(TOKEN_SIZE);
+
+    } while(usedTokens.find(token) != usedTokens.end());
+
+    usedTokens.insert(token);
+
+    return token;
 }
+
 
 string UploadHandler::prepareUpload(FileUpload* fileUpload) {
 
-    string token;
+    string token = "";
 
     synchronized(mut) {
 
         token = generateToken();
-        uploads.push_back(fileUpload);
+        uploads[token] = fileUpload;
     }
 
     return token;
 }
 
+
 int UploadHandler::createFile() {
 
-    string fileName = resolveNewFilePath();
+    int fd = -1;
 
-    int fd = creat(fileName.c_str(), O_WRONLY);
+    synchronized(mut) {
 
-    if (fd < 0) {
+        string fileName = resolveNewFilePath();
+        fd = creat(fileName.c_str(), O_WRONLY);
 
-        perror("Cannot create new file.\n");
-        return -1;
+        if (fd < 0)
+            perror("Cannot create new file.\n");
+
+        close(fd);
     }
-
-    close(fd);
 
     return fd;
 }
+
 
 string UploadHandler::resolveNewFilePath() {
 
@@ -149,12 +169,15 @@ string UploadHandler::resolveNewFilePath() {
     return string(FILE_UPLOAD_DIRECTORY) + filename;
 }
 
+
 UploadHandler::~UploadHandler() {
 
-    for (FileUpload* upload : uploads)
-        delete upload;
+    for (auto tokenUpload : uploads) {
 
-    close(receiverSocket);
+        FileUpload* upload = tokenUpload.second;
+        delete upload;
+    }
 
     pthread_cancel(*listenerThread);
+    close(receiverSocket);
 }

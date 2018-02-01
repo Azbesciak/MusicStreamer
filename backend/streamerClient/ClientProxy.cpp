@@ -1,4 +1,5 @@
 
+#include <upload/TrackUpload.h>
 #include "ClientProxy.h"
 
 
@@ -53,16 +54,24 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
 ClientResponse ClientProxy::handleTrackUpload() {
 
-    bool reservation = reserveRoomFileSlot();
+    if (client->getCurrentRoom())
+        return ClientResponse::error(403, "Client has no assigned room");
 
-    if (!reservation)
+    MusicTrack* reservedTrack = reserveRoomFileSlot();
+
+    if (reservedTrack == nullptr)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    // Todo replace nullptr with file upload (track upload object)
-    string token = UploadHandler::getInstance()->prepareUpload(nullptr);
+    TrackUpload* trackUpload = new TrackUpload(reservedTrack, this);
+    string token = UploadHandler::getInstance()->prepareUpload(trackUpload);
 
-    if (token.empty())
+    if (token.empty()) {
+
+        delete trackUpload;
+        client->getCurrentRoom()->cancelTrackReservation(reservedTrack);
+
         return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
+    }
 
     ClientResponse resp;
 
@@ -71,19 +80,20 @@ ClientResponse ClientProxy::handleTrackUpload() {
     return resp;
 }
 
-bool ClientProxy::reserveRoomFileSlot() {
+
+MusicTrack* ClientProxy::reserveRoomFileSlot() {
 
     Room* room = client->getCurrentRoom();
-    MusicTrack* trackSlot = room->reserveTrackSlot();
+
+    if (room == nullptr)
+        return nullptr;
+
+    return room->reserveTrackSlot();
 }
 
-void ClientProxy::onUploadCompleted(FileUpload* fileUpload) {
-}
-
-void ClientProxy::onUploadFailed(FileUpload* fileUpload) {
-}
 
 bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }
+
 
 ClientResponse ClientProxy::authenticate(const string &method, json request) {
     ClientResponse resp;

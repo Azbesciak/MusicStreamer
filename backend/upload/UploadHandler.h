@@ -6,6 +6,7 @@
 #include <logic/Room.h>
 #include <set>
 #include <netinet/in.h>
+#include <map>
 
 class UploadHandler {
 
@@ -29,10 +30,11 @@ private:
 
     int nextFileNo;
 
-    std::vector<FileUpload*> uploads;
+    std::map<std::string, FileUpload*> uploads;
     std::set<std::string> usedTokens;
 
     int receiverSocket;
+
 
     UploadHandler();
 
@@ -41,6 +43,7 @@ private:
     void runLooper();
 
     std::string generateToken();
+    FileUpload* processUploadByToken(std::string token);
 
     int createFile();
     std::string resolveNewFilePath();
