@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <utility/token.hpp>
 #include "UploadHandler.h"
+#include "UploadMeta.h"
 
 using namespace std;
 
@@ -60,9 +61,43 @@ void UploadHandler::runLooper() {
             continue;
         }
 
-        logUploadConnection(clientAddress);
+        handleClientUpload(clientSocket, clientAddress);
     }
 }
+
+
+void UploadHandler::handleClientUpload(int clientSocket, sockaddr_in clientAddress) {
+
+    logUploadConnection(clientAddress);
+
+    pthread_t* thread = new pthread_t();
+    UploadMeta* uploadMeta = new UploadMeta(this, thread, clientSocket, clientAddress);
+
+    pthread_create(thread, nullptr, downloadFile, uploadMeta);
+}
+
+
+void* UploadHandler::downloadFile(void* metadata) {
+
+    UploadMeta* uploadMeta = static_cast<UploadMeta*>(metadata);
+    UploadHandler* handler = uploadMeta->getUploadHandlerInstance();
+
+    string token = acceptToken(uploadMeta->getClientSocket());
+
+    return nullptr;
+}
+
+
+string UploadHandler::acceptToken(int clientSocket) {
+
+    char* tokenBuffer = new char[TOKEN_SIZE + 1];
+
+    if (read(clientSocket, tokenBuffer, TOKEN_SIZE) != 0)
+        return "";
+
+    return tokenBuffer;
+}
+
 
 void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
 
@@ -77,21 +112,14 @@ string UploadHandler::generateToken() {
     return TokenGenerator::alfanumeric(TOKEN_SIZE);
 }
 
-string UploadHandler::acceptUpload(ClientProxy *client) {
+string UploadHandler::prepareUpload(FileUpload* fileUpload) {
 
     string token;
 
     synchronized(mut) {
 
-        int file = createFile();
-
-        if (file != -1) {
-
-            token = generateToken();
-            FileUpload* fileUpload = new FileUpload(client, token, file);
-
-            uploads.push_back(fileUpload);
-        }
+        token = generateToken();
+        uploads.push_back(fileUpload);
     }
 
     return token;
@@ -124,7 +152,7 @@ string UploadHandler::resolveNewFilePath() {
 UploadHandler::~UploadHandler() {
 
     for (FileUpload* upload : uploads)
-        upload->cancel();
+        delete upload;
 
     close(receiverSocket);
 

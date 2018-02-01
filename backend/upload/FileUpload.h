@@ -8,22 +8,11 @@ class ClientProxy;
 
 class FileUpload {
 
-private:
-
-    ClientProxy* clientProxy;
-    int fileDescriptor;
-
-    std::string token;
-
 public:
 
-    FileUpload(ClientProxy * clientProxy, std::string token, int fileDescriptor);
-
-    void downloadFile();
-    void cancel();
+    virtual void downloadFile() = 0;
 
     ~FileUpload();
-
 };
 
 

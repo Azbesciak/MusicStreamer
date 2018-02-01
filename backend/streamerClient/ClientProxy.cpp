@@ -58,7 +58,8 @@ ClientResponse ClientProxy::handleTrackUpload() {
     if (!reservation)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    string token = UploadHandler::getInstance()->acceptUpload(this);
+    // Todo replace nullptr with file upload (track upload object)
+    string token = UploadHandler::getInstance()->prepareUpload(nullptr);
 
     if (token.empty())
         return ClientResponse::error(409, "Cannot initiate file upload. Please try later");

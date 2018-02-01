@@ -47,11 +47,16 @@ private:
 
     void logUploadConnection(sockaddr_in clientAddress);
 
+    void handleClientUpload(int clientSocket, sockaddr_in clientAddress);
+
+    static void* downloadFile(void* data);
+    static std::string acceptToken(int clientSocket);
+
 public:
 
     static UploadHandler* getInstance();
 
-    std::string acceptUpload(ClientProxy* client);
+    std::string prepareUpload(FileUpload* fileUpload);
 
     ~UploadHandler();
 };
