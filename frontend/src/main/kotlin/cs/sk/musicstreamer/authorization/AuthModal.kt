@@ -1,20 +1,35 @@
 package cs.sk.musicstreamer.authorization
 
+import com.jfoenix.controls.JFXButton
 import cs.sk.musicstreamer.connection.ServerConnector
-import javafx.scene.Parent
-import javafx.scene.control.TextField
-import javafx.stage.Modality
-import org.springframework.stereotype.Controller
 import tornadofx.*
+import com.jfoenix.controls.JFXDialog
+import com.jfoenix.controls.JFXTextField
+import javafx.fxml.Initializable
+import mu.KLogging
+import javafx.scene.layout.StackPane
+import org.springframework.stereotype.Component
+import java.net.URL
+import java.util.*
 
-@Controller
+
+@Component
 class AuthModal(
         private val serverConnector: ServerConnector
-): View() {
-    override val root: Parent by fxml("/auth/auth_view.fxml")
-    private val username: TextField by fxid()
+): View(), Initializable {
+    override fun initialize(location: URL?, resources: ResourceBundle?) {
+        logger.info { "Initialized..." }
+    }
 
-    suspend fun showLoginModal() {
-        openModal(modality = Modality.NONE)
+    companion object : KLogging()
+
+    override val root: StackPane by fxml("/auth/auth_view.fxml")
+    private val username: JFXTextField by fxid()
+    private val dialog: JFXDialog by fxid()
+    private val acceptButton: JFXButton by fxid()
+
+    suspend fun showLoginModal(container: StackPane) {
+        dialog.overlayCloseProperty().set(false)
+        dialog.show(container)
     }
 }
