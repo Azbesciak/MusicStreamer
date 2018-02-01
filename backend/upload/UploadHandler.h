@@ -3,11 +3,13 @@
 
 
 #include <upload/FileUpload.h>
+#include <upload/UploadMeta.h>
 #include <logic/Room.h>
 #include <set>
 #include <netinet/in.h>
 #include <map>
-#include "UploadMeta.h"
+
+class UploadMeta;
 
 class UploadHandler {
 
@@ -15,10 +17,11 @@ private:
 
     static const int MAX_SIMULTANEOUS_UPLOADS = 20;
     static const int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-    static const int UPLOAD_TIMEOUT_MILLIS = 60000; // 60 s
+    static const int UPLOAD_TIMEOUT_MILLIS = 5000; // 5 s
 
     static const int UPLOAD_PORT = 21212;
     static const int TOKEN_SIZE = 20;
+    static const int BYTE_BUFFER_SIZE = 1024;
 
     static const char* const FILE_UPLOAD_DIRECTORY;
 
@@ -27,6 +30,7 @@ private:
     static UploadHandler* instance;
 
     std::recursive_mutex mut;
+    std::recursive_mutex fileMut;
     pthread_t* listenerThread;
 
     int nextFileNo;
@@ -44,11 +48,12 @@ private:
     void runLooper();
 
     std::string generateToken();
-    FileUpload* getUploadByToken(std::string token);
+    FileUpload* retrieveUploadByToken(std::string token);
 
     void downloadFile(UploadMeta* uploadMeta);
     std::string acceptToken(int clientSocket);
-    int acceptFileBytes(int clientSocket);
+    int acceptFileBytes(int clientSocket, int fileSize);
+
 
     int createFile();
     std::string resolveNewFilePath();

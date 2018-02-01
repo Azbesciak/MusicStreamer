@@ -57,6 +57,7 @@ void *startServer(void *serverOpts) {
         perror("Listen error");
         exit(-1);
     }
+
     auto container = new Container();
     serverRef = new ServerRef(container, socketNum);
 

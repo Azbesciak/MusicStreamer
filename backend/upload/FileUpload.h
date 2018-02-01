@@ -14,7 +14,11 @@ private:
 
 public:
 
+    FileUpload(long fileSize);
+
     virtual void downloadFile() = 0;
+
+    long getFileSize();
 
     virtual void onUploadCompleted(int fileDescriptor);
     virtual void onUploadFailed();

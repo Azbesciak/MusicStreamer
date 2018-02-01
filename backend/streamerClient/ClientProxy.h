@@ -25,7 +25,7 @@ public:
 
     bool isNotAuthorized() const;
 
-    ClientResponse handleTrackUpload();
+    ClientResponse handleTrackUpload(int fileSize);
 };
 
 

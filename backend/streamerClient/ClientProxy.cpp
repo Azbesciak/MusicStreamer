@@ -38,7 +38,9 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == UPLOAD_ACTION) {
 
-            resp = handleTrackUpload();
+            int fileSize = request.at("trackFileSize").get<int>();
+
+            resp = handleTrackUpload(fileSize);
         }
 
         resp.fillOkResultIfNotSet();
@@ -46,13 +48,13 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
     } catch (json::exception &e) {
 
         cout << e.what() << endl;
-        resp.setError(500, "Malformed input data");
+        resp.setError(400, "Malformed input data");
     }
 
     return resp;
 }
 
-ClientResponse ClientProxy::handleTrackUpload() {
+ClientResponse ClientProxy::handleTrackUpload(int fileSize) {
 
     if (client->getCurrentRoom())
         return ClientResponse::error(403, "Client has no assigned room");
@@ -62,7 +64,7 @@ ClientResponse ClientProxy::handleTrackUpload() {
     if (reservedTrack == nullptr)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    TrackUpload* trackUpload = new TrackUpload(reservedTrack, this);
+    TrackUpload* trackUpload = new TrackUpload(reservedTrack, this, fileSize);
     string token = UploadHandler::getInstance()->prepareUpload(trackUpload);
 
     if (token.empty()) {

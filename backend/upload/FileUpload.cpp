@@ -4,7 +4,15 @@
 using namespace std;
 
 
-FileUpload::~FileUpload() = default;
+FileUpload::FileUpload(long fileSize) {
+
+    this->fileSize = fileSize;
+}
+
+
+long FileUpload::getFileSize() {
+    return fileSize;
+}
 
 
 void FileUpload::onUploadCompleted(int fileDescriptor) {
@@ -15,3 +23,6 @@ void FileUpload::onUploadCompleted(int fileDescriptor) {
 void FileUpload::onUploadFailed() {
     // No action by default
 }
+
+
+FileUpload::~FileUpload() = default;

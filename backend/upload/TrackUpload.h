@@ -14,7 +14,8 @@ private:
 
 public:
 
-    TrackUpload(MusicTrack* track, ClientProxy* clientProxy) {
+    TrackUpload(MusicTrack* track, ClientProxy* clientProxy, int fileSize)
+        : FileUpload(fileSize) {
 
         this->track = track;
         this->clientProxy = clientProxy;

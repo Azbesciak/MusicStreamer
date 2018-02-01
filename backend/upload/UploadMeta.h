@@ -3,7 +3,10 @@
 
 
 #include <sys/types.h>
-#include "UploadHandler.h"
+#include <netdb.h>
+#include <upload/UploadHandler.h>
+
+class UploadHandler;
 
 class UploadMeta {
 
