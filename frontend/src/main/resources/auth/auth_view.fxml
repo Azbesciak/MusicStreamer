@@ -4,6 +4,8 @@
 <?import com.jfoenix.controls.*?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import com.jfoenix.validation.RequiredFieldValidator?>
 <StackPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1"
            xmlns="http://javafx.com/javafx/2.2">
     <JFXDialog fx:id="dialog">
@@ -12,7 +14,11 @@
                 <Label>Type your name</Label>
             </heading>
             <body>
-                <JFXTextField fx:id="username"/>
+                <JFXTextField fx:id="username" labelFloat="true"><validators>
+                    <RequiredFieldValidator message="Name is Required!">
+                        <FontAwesomeIconView glyphName="WARNING" style="-fx-font-family: FontAwesome;"/>
+                    </RequiredFieldValidator>
+                </validators></JFXTextField>
             </body>
             <actions>
                 <JFXButton fx:id="acceptButton" styleClass="dialog-accept">Accept</JFXButton>

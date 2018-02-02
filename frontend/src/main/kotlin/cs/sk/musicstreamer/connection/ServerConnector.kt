@@ -1,6 +1,6 @@
 package cs.sk.musicstreamer.connection
 
-import com.beust.klaxon.Klaxon
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.nio.aConnect
 import kotlinx.coroutines.experimental.nio.aRead
@@ -24,6 +24,7 @@ class ServerConnector(
 
     companion object : KLogging() {
         const val MAX_BUF_CAP = 512
+        val objectMapper = ObjectMapper()
     }
 
     private val queue = ConcurrentLinkedQueue<ConnectionRequest>()
@@ -40,7 +41,7 @@ class ServerConnector(
                         val wrote = socket.write(it.request)
                         if (wrote <= 0) {
                             logger.error { "Could not write to $serverDescription" }
-                            it.onError(ErrorResponse(body = Error("Couldn't send request to server")))
+                            it.onError(ErrorResponse(body = "Couldn't send request to server"))
                         } else {
                             socket.read(it.onResponse, it.onError)
                         }
@@ -68,8 +69,8 @@ class ServerConnector(
 
     fun shutdown() = isRunning.set(false)
 
-    fun send(request: Request, onResponse: (Response<*>) -> Unit) =
-            queue.add(ConnectionRequest(request, onResponse))
+    fun send(request: Request, onResponse: (Response<*>) -> Unit, onError: (ErrorResponse) -> Unit) =
+            queue.add(ConnectionRequest(request, onResponse, onError))
 
     private inline fun <T> ConcurrentLinkedQueue<T>.whileNotEmpty(f: (T) -> Unit) {
         while (isNotEmpty()) {
@@ -78,7 +79,7 @@ class ServerConnector(
     }
 
     private suspend fun AsynchronousSocketChannel.write(request: Request): Int {
-        val requestString = Klaxon().toJsonString(request)
+        val requestString = objectMapper.writeValueAsString(request)
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
         return aWrite(buf = bytes)
     }
@@ -86,15 +87,15 @@ class ServerConnector(
 
     private suspend fun AsynchronousSocketChannel.read(
             onResponse: (Response<*>) -> Unit,
-            onError: (ErrorResponse<*>) -> Unit) {
+            onError: (ErrorResponse) -> Unit) {
         val buffer = ByteBuffer.allocate(MAX_BUF_CAP)
         val read = aRead(buffer)
         if (read <= 0) {
-            onError(ErrorResponse(500, Error("Error while reading response")))
+            onError(ErrorResponse(500, "Error while reading response"))
         } else {
             val response = buffer.parse()
             when (response) {
-                is ErrorResponse<*> -> onError(response)
+                is ErrorResponse -> onError(response)
                 else -> onResponse(response)
             }
         }
@@ -102,14 +103,23 @@ class ServerConnector(
     }
 
     private fun ByteBuffer.parse(): Response<*> {
-        this.asCharBuffer().toString()
-        return StringResponse(200, "OK")
+        with(objectMapper.readTree(String(array()))) {
+            val status = get("status").asInt()
+            val body = get("body")
+            return when(status) {
+                in 400..500 -> ErrorResponse(status, body.get("error").asText())
+                // TODO
+                else -> StringResponse(status, body.asText())
+            }
+        }
+
+//        return StringResponse(200, "OK")
     }
 
     data class ConnectionRequest(
             val request: Request,
             val onResponse: (Response<*>) -> Unit = {},
-            val onError: (ErrorResponse<*>) -> Unit = {}
+            val onError: (ErrorResponse) -> Unit = {}
     )
 
 }

@@ -61,6 +61,7 @@ dependencies {
     compile group: 'org.projectreactor', name: 'reactor-spring', version: '1.0.1.RELEASE'
     compile 'io.projectreactor:reactor-core'
 
+    compile 'de.jensd:fontawesomefx-fontawesome:4.7.0-5'
 
 }
 
