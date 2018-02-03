@@ -28,42 +28,53 @@ class ServerConnector(
     }
 
     private val queue = ConcurrentLinkedQueue<ConnectionRequest>()
-    private val isRunning = AtomicBoolean(true)
+    private val isRunning = AtomicBoolean(false)
     private val serverDescription = "$host:$port"
 
     init {
-        logger.info { "Loading server connector..." }
-        launch {
-            connect({ socket ->
-                logger.info { "Successfully connected with $serverDescription" }
-                while (isRunning.get()) {
-                    queue.whileNotEmpty {
-                        val wrote = socket.write(it.request)
-                        if (wrote <= 0) {
-                            logger.error { "Could not write to $serverDescription" }
-                            it.onError(ErrorResponse(body = "Couldn't send request to server"))
-                        } else {
-                            socket.read(it.onResponse, it.onError)
+        initializeConnection(
+                { logger.info { "Successfully connected with $serverDescription" } },
+                { logger.error("Could not create connection with $serverDescription", it) }
+        )
+    }
+
+    final fun initializeConnection(onSuccess: (Boolean) -> Unit, onError: (Exception) -> Unit) {
+        if (isRunning.get().not()) {
+            logger.info { "Initializing connection" }
+            launch {
+                connect({ socket ->
+                    onSuccess(false)
+                    while (isRunning.get()) {
+                        queue.whileNotEmpty {
+                            val wrote = socket.write(it.request)
+                            if (wrote <= 0) {
+                                logger.error { "Could not write to $serverDescription" }
+                                it.onError(ErrorResponse(body = "Couldn't send request to server"))
+                            } else {
+                                socket.read(it.onResponse, it.onError)
+                            }
                         }
                     }
-                }
-            }, {
-                logger.error("Could not create connection with serverDescription", it)
-            })
+                }, onError = onError)
+            }
+        } else {
+            onSuccess(true)
         }
     }
 
+    fun isRunning() = isRunning.get()
 
     private suspend fun connect(onSuccess: suspend (AsynchronousSocketChannel) -> Unit, onError: (Exception) -> Unit = {}) {
         try {
+            isRunning.set(true)
             AsynchronousSocketChannel.open().use {
                 it.aConnect(InetSocketAddress(InetAddress.getByName(host), port))
                 onSuccess(it)
             }
         } catch (e: Exception) {
             onError(e)
-            shutdown() // just ok...
         }
+        shutdown() // just ok...
     }
 
     fun shutdown() = isRunning.set(false)

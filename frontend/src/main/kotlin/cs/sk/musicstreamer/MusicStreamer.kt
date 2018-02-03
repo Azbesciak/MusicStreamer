@@ -24,6 +24,7 @@ class MusicStreamer : App(MainView::class) {
         FX.dicontainer = object : DIContainer {
             override fun <T : Any> getInstance(type: KClass<T>): T = context.getBean(type.java)
         }
+        importStylesheet("/css/style.css")
     }
 
     override fun stop() {
