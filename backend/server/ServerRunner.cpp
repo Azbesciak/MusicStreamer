@@ -1,8 +1,10 @@
 #include "ServerRunner.h"
 #include "SocketFactory.h"
 #include <streamerClient/ClientProxy.h>
+#include <atomic>
 
-bool runserver = true;
+
+std::atomic<bool> runserver(true);
 
 ServerRef * serverRef;
 
@@ -48,7 +50,7 @@ void cleanRoutine(void *arg) {
 //strtok - rozbija string z delimiterem
 void *startServer(void *serverOpts) {
 
-    server_opts *options = (server_opts *) serverOpts;
+    auto *options = (server_opts *) serverOpts;
     printf("Server works at port %d\n", options->port);
 
     int socketNum = SocketFactory::createTcpSocket(options->port);
@@ -68,7 +70,7 @@ void *startServer(void *serverOpts) {
     signal(SIGPIPE, SIG_IGN);
     pthread_cleanup_push(cleanRoutine, (void *) 1);
         socklen_t sockSize = sizeof(struct sockaddr);
-        while (runserver) {
+        while (runserver.load()) {
             int connection_descriptor = accept(socketNum, (struct sockaddr *) &remote, &sockSize);
             if (connection_descriptor < 0) {
 
@@ -165,12 +167,7 @@ void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr
 
 
 void parseCommand(string command) {
-    if (command.find("restart") != string::npos) {
-        cout << GREEN_TEXT("Server restart.\n");
-        runserver = false;
-        sleep(1);
-        runserver = true;
-    } else if (command.find("stop") != string::npos) {
+    if (command.find("stop") != string::npos) {
         cout << GREEN_TEXT("Stopping server....\n");
         runserver = false;
     } else {
