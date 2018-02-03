@@ -45,7 +45,6 @@ class ServerConnector(
                         } else {
                             socket.read(it.onResponse, it.onError)
                         }
-
                     }
                 }
             }, {
@@ -99,29 +98,26 @@ class ServerConnector(
                 else -> onResponse(response)
             }
         }
-
     }
 
     private fun ByteBuffer.parse(): Response<*> {
         with(objectMapper.readTree(String(array()))) {
-            val status = get("status").asInt()
             val body = get("body")
-            return when(status) {
-                in 400..500 -> ErrorResponse(status, body.get("error").asText())
-                // TODO
+            val status = get("status").asInt()
+            return when {
+                status in 400..499 -> ErrorResponse(status, body.get("error").asText())
+                status >= 500 -> ErrorResponse(status, "Internal server error")
+                        .also { logger.error { body.get("error") } }
                 else -> StringResponse(status, body.asText())
             }
         }
-
-//        return StringResponse(200, "OK")
     }
 
-    data class ConnectionRequest(
+    private data class ConnectionRequest(
             val request: Request,
             val onResponse: (Response<*>) -> Unit = {},
             val onError: (ErrorResponse) -> Unit = {}
     )
-
 }
 
 

@@ -21,7 +21,8 @@ class MainView : View(), Initializable {
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         logger.info { "Requested authorization..." }
         kotlinx.coroutines.experimental.launch(JavaFx) {
-            authService.requestAuthorization(root)
+            val username = authService.requestAuthorization(root)
+            logger.info { "Username: $username" }
         }
     }
 }
