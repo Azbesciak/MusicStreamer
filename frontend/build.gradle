@@ -53,6 +53,8 @@ dependencies {
 
     compile 'no.tornado:tornadofx:1.7.14'
     compile 'com.jfoenix:jfoenix:8.0.1'
+    compile 'io.datafx:datafx:8.0.1'
+    compile 'io.datafx:flow:8.0.1'
     compile 'io.github.microutils:kotlin-logging:1.4.9'
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-nio:$coroutinesVersion"
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-io:$coroutinesVersion"

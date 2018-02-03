@@ -12,8 +12,8 @@
 <?import javafx.scene.layout.VBox?>
 <?import com.jfoenix.controls.JFXToolbar?>
 <?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
-<StackPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
-           xmlns:fx="http://javafx.com/fxml/1" >
+<StackPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1"
+           xmlns="http://javafx.com/javafx/2.2" prefHeight="600" prefWidth="800">
     <BorderPane>
         <top>
             <VBox spacing="20">

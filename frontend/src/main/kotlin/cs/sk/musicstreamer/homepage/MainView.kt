@@ -3,6 +3,7 @@ package cs.sk.musicstreamer.homepage
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
 import cs.sk.musicstreamer.connection.ServerConnector
+import io.datafx.controller.ViewController
 import javafx.fxml.Initializable
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.javafx.JavaFx
@@ -12,6 +13,7 @@ import java.net.URL
 import java.util.*
 
 // cannot be a @Controller because is created statically...
+@ViewController("/main/main_view.fxml")
 class MainView : View(), Initializable {
 
     override val root: StackPane by fxml("/main/main_view.fxml")
