@@ -26,6 +26,7 @@
 
 #define DEFAULT_PORT 10001
 #define DEFAULT_ADDR "127.0.0.1"
+#define DEFAULT_CONFIG_PATH "../server.properties"
 
 using namespace std;
 
@@ -58,8 +59,8 @@ struct thread_data_t
 void *startServer(void *server_opts);
 void *connection(void *t_data);
 void handleConnection(Container *connection_socket_descriptor, int remote, sockaddr_in *pIn);
-void parseCommand(string command);
-int createServerThread(char * addr, int port);
+void parseCommand(const string &command);
+int createServerThread(const string &addr, int port);
 void cleanRoutine(void *arg);
 void displayRequest(int socketDescriptor, const char * request);
 void displayResponse(int socketDescriptor, const char *request);

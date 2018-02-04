@@ -1,7 +1,7 @@
 #include "ServerRunner.h"
 #include "SocketFactory.h"
-#include <streamerClient/ClientProxy.h>
 #include <atomic>
+#include <utility/Config.h>
 
 
 std::atomic<bool> runserver(true);
@@ -10,10 +10,14 @@ ServerRef * serverRef;
 
 int main(int argc, char *argv[]) {
     string command;
-    char *serverAddr = argc == 3 ? argv[1] : (char *) DEFAULT_ADDR;
-    int port = argc == 2 ? atoi(argv[1]) : (argc == 3 ? atoi(argv[2]) : DEFAULT_PORT);
 
-    int serverThread = createServerThread(serverAddr, port);
+    string configPath = argc == 2 ? argv[1] : DEFAULT_CONFIG_PATH;
+
+    auto config = Config(configPath);
+    auto host = config.get("server.host", DEFAULT_ADDR);
+    auto port = config.get("server.port", DEFAULT_PORT);
+
+    int serverThread = createServerThread(host, port);
 
     do {
         cin >> command;
@@ -23,12 +27,12 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-int createServerThread(char *addr, int port) {
+int createServerThread(const string & host, int port) {
     //uchwyt na wątek
     pthread_t serverThread;
     server_opts *serverOpts;
     serverOpts = new server_opts;
-    serverOpts->addr = addr;
+    serverOpts->addr = (char *)host.c_str();
     serverOpts->port = port;
     return createServerThread(serverThread, serverOpts);
 }
@@ -51,7 +55,7 @@ void cleanRoutine(void *arg) {
 void *startServer(void *serverOpts) {
 
     auto *options = (server_opts *) serverOpts;
-    printf("Server works at port %d\n", options->port);
+    printf("Server works at %s:%d\n", options->addr, options->port);
 
     int socketNum = SocketFactory::createTcpSocket(options->port);
 
@@ -166,7 +170,7 @@ void manageRequestCoroutine(const thread_data_t *th_data, const char *remoteAddr
 }
 
 
-void parseCommand(string command) {
+void parseCommand(const string &command) {
     if (command.find("stop") != string::npos) {
         cout << GREEN_TEXT("Stopping server....\n");
         runserver = false;
