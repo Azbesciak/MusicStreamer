@@ -1,14 +1,18 @@
 #include "ServerRunner.h"
 #include "SocketFactory.h"
+#include "ServerManager.h"
 #include <atomic>
 #include <utility/Config.h>
 
 
 std::atomic<bool> runserver(true);
 
-ServerRef * serverRef;
+ServerManager * serverRef;
 
 int main(int argc, char *argv[]) {
+
+    auto container = new Container();
+    serverRef = new ServerManager(container);
     string command;
 
     string configPath = argc == 2 ? argv[1] : DEFAULT_CONFIG_PATH;
@@ -58,15 +62,11 @@ void *startServer(void *serverOpts) {
     printf("Server works at %s:%d\n", options->addr, options->port);
 
     int socketNum = SocketFactory::createTcpSocket(options->port);
-
+    serverRef->serverFd = socketNum;
     if (listen(socketNum, QUEUE_SIZE) < 0) {
         perror("Listen error");
         exit(-1);
     }
-
-    auto container = new Container();
-    serverRef = new ServerRef(container, socketNum);
-
     struct sockaddr_in remote{};
 
     signal(SIGINT, cleanUp);
@@ -85,7 +85,7 @@ void *startServer(void *serverOpts) {
             inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
             //pass structure with client's data port
             printf("Client connected with %s. Descriptor assigned: %d\n", remoteAddr, connection_descriptor);
-            handleConnection(container, connection_descriptor, &remote);
+            handleConnection(connection_descriptor, &remote);
         }
     pthread_cleanup_pop(true);
     cleanUp(0);
@@ -94,7 +94,7 @@ void *startServer(void *serverOpts) {
 }
 
 //funkcja obsługująca połączenie z nowym klientem
-void handleConnection(Container *container, int connection_socket_descriptor, sockaddr_in* remote) {
+void handleConnection(int connection_socket_descriptor, sockaddr_in* remote) {
     pthread_t clientThread;
 
     //dane, które zostaną przekazane do wątku
@@ -103,7 +103,7 @@ void handleConnection(Container *container, int connection_socket_descriptor, so
     t_data = new thread_data_t;
     t_data->socketDescriptor = connection_socket_descriptor;
     t_data->remote = remote;
-    t_data->container = container;
+    t_data->container = serverRef->container;
 
     //tworzy watek dla nowego klienta
     int create_result = pthread_create(&clientThread, nullptr, connection, (void *) t_data);

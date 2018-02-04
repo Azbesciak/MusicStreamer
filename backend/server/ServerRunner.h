@@ -35,19 +35,6 @@ struct server_opts
     char * addr;
     int port;
 };
-
-class ServerRef {
-public:
-    Container* container;
-    int serverFd;
-    ServerRef(Container* con, int serverFd)
-            : container(con), serverFd(serverFd){};
-    ~ServerRef(){
-        delete container;
-        close(serverFd);
-    }
-};
-
 //struktura zawierająca dane, które zostaną przekazane do wątku
 struct thread_data_t
 {
@@ -58,7 +45,7 @@ struct thread_data_t
 
 void *startServer(void *server_opts);
 void *connection(void *t_data);
-void handleConnection(Container *connection_socket_descriptor, int remote, sockaddr_in *pIn);
+void handleConnection(int connection_socket_descriptor, sockaddr_in *remote);
 void parseCommand(const string &command);
 int createServerThread(const string &addr, int port);
 void cleanRoutine(void *arg);

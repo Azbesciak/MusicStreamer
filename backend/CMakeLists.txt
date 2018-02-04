@@ -33,4 +33,4 @@ add_executable(MusicStreamer
         server/SocketFactory.cpp
         server/SocketFactory.h
         logic/MusicTrack.cpp
-        logic/MusicTrack.h utility/token.hpp upload/TrackUpload.cpp upload/TrackUpload.h upload/UploadMeta.cpp upload/UploadMeta.h upload/exception/FileUploadException.cpp upload/exception/FileUploadException.h utility/Config.cpp utility/Config.h)
+        logic/MusicTrack.h utility/token.hpp upload/TrackUpload.cpp upload/TrackUpload.h upload/UploadMeta.cpp upload/UploadMeta.h upload/exception/FileUploadException.cpp upload/exception/FileUploadException.h utility/Config.cpp utility/Config.h server/ServerManager.cpp server/ServerManager.h)
