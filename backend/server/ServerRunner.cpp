@@ -77,11 +77,7 @@ void *startServer(void *serverOpts) {
         while (runserver.load()) {
             int connection_descriptor = accept(socketNum, (struct sockaddr *) &remote, &sockSize);
             if (connection_descriptor < 0) {
-
-                perror("Client accepting error, shutdown server...");
-
-                // Todo server should not be shutdown on client accept error - just log it
-                runserver = false;
+                perror("Client accepting error");
                 continue;
             }
 
