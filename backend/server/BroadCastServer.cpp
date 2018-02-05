@@ -7,20 +7,29 @@ BroadCastServer::BroadCastServer(const string &host, int port, ServerManager *ma
 
 void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr) {
     auto reader = new RequestReader(clientSocket);
-    auto request = reader->readRequest();
-    if (request != nullptr) {
-        auto processor = new BroadCastRequestProcessor(manager, clientSocket);
-        auto response = processor->onNewRequest(request);
-        processor->respond(&response);
-        if (response.isError()) {
+    auto processor = new BroadCastRequestProcessor(manager, clientSocket);
+    int tries = 3;
+    while (tries-- > 0) {
+        auto request = reader->readRequest();
+        if (request != nullptr) {
+            auto response = processor->onNewRequest(request);
+            if (response.isError()) {
+                response.addToBody("tries", tries);
+            }
+            processor->respond(&response);
+            if (!response.isError()) {
+                delete request;
+                break;
+            }
+        }
+        if (request == nullptr || tries <= 0) {
+            cout << "Socket " << clientSocket << " was closed." << endl;
             close(clientSocket);
         }
-        delete processor;
         delete request;
-    } else {
-        close(clientSocket);
     }
-
+    delete processor;
+    delete reader;
 }
 
 ClientResponse BroadCastRequestProcessor::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
@@ -30,7 +39,7 @@ ClientResponse BroadCastRequestProcessor::onNewRequest(Request *request, const s
         if (client != nullptr) {
             cout<< MAGENTA_TEXT("CLIENT " << name << "(fd " << clientSocket << ") subscribed for messages") <<endl;
         } else {
-            response->setError(404, "User not found. Connection will be closed");
+            response->setError(404, "User not found.");
         }
     }
     return *response;

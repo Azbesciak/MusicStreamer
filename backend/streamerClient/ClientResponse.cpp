@@ -36,7 +36,7 @@ void ClientResponse::fillOkResultIfNotSet() {
     }
 }
 
-ClientResponse::ClientResponse(int status, string message)
+ClientResponse::ClientResponse(int status, const string &message)
         : status(status), body(json(message)) {}
 
 ClientResponse ClientResponse::error(int status, const string &message) {
@@ -46,11 +46,15 @@ ClientResponse ClientResponse::error(int status, const string &message) {
 }
 
 
-void ClientResponse::addToBody(string key, vector<string> value) {
+void ClientResponse::addToBody(const string &key, vector<string> value) {
     body[key] = json(value);
 }
 
-void ClientResponse::addToBody(string key, const string &value) {
+void ClientResponse::addToBody(const string &key, const string &value) {
+    body[key] = json(value);
+}
+
+void ClientResponse::addToBody(const string &key, int value) {
     body[key] = json(value);
 }
 
