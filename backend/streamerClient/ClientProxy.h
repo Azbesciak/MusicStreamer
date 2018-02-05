@@ -7,12 +7,13 @@
 #include <upload/UploadHandler.h>
 #include <streamerClient/ClientResponse.h>
 #include <logic/Container.h>
+#include "Request.h"
 
 
 class ClientProxy {
     Container* container;
     StreamerClient* client;
-    ClientResponse authenticate(const string &method, json request);
+    ClientResponse authenticate(const string &method, Request * request);
 
     MusicTrack* reserveRoomFileSlot();
 

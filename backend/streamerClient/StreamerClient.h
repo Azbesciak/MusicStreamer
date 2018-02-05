@@ -4,6 +4,7 @@
 #define MUSICSTREAMER_STREAMERCLIENT_H
 
 #include <logic/Room.h>
+#include "Socket.h"
 
 using namespace std;
 
@@ -11,7 +12,8 @@ class Room;
 
 class StreamerClient {
 private:
-    int socketDescriptor;
+    Socket * connectionSocket;
+    Socket * broadCastSocket;
     string name;
     Room* currentRoom;
 public:
@@ -24,6 +26,8 @@ public:
     void setCurrentRoom(Room* room);
 
     ssize_t sendMessage(const string &mes);
+
+    void removeSocket(Socket *&socket);
 };
 
 

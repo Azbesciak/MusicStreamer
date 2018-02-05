@@ -4,6 +4,6 @@
 BroadCastServer::BroadCastServer(const string &host, int port, ServerManager *manager)
         : TcpServer(host, port, manager, "BroadCast server") {}
 
-void BroadCastServer::onConnection(int clientSocket, const char *remoteAddr) {
+void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr) {
 
 }

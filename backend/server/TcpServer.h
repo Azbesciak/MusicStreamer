@@ -16,7 +16,7 @@ protected:
     int createSocket() override;
 
     void manageServer(sockaddr_in &remote, socklen_t &sockSize) override;
-    virtual void onConnection(int clientSocket, const char *remoteAddr) = 0;
+    virtual void onNewConnection(int clientSocket, const string &remoteAddr) = 0;
 };
 
 

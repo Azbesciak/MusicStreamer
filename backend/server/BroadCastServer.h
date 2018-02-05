@@ -10,7 +10,7 @@ public:
     BroadCastServer(const string &host, int port, ServerManager *manager);
 
 protected:
-    void onConnection(int clientSocket, const char *remoteAddr) override;
+    void onNewConnection(int clientSocket, const string &remoteAddr) override;
 
 };
 

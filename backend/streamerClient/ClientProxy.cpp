@@ -1,9 +1,9 @@
 
 #include <upload/TrackUpload.h>
 #include "ClientProxy.h"
+#include "Request.h"
 
 
-static const char *const METHOD_KEY = "method";
 static const char *const JOIN_ROOM_ACTION = "JOIN";
 static const char *const GET_ROOMS_ACTION = "ROOMS";
 static const char *const AUTHENTICATE_ACTION = "INIT";
@@ -15,13 +15,12 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
     ClientResponse resp;
 
     try {
-
-        auto request = json::parse(message);
-        auto method = request.at(METHOD_KEY).get<string>();
+        Request req(message);
+        string method = req.getMethod();
 
         if (method == AUTHENTICATE_ACTION) {
 
-            return authenticate(method, request);
+            return authenticate(method, &req);
 
         } else if (isNotAuthorized()) {
 
@@ -29,7 +28,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == JOIN_ROOM_ACTION) {
 
-            auto roomName = request.at("roomName").get<string>();
+            auto roomName = req.getStr("roomName");
             container->joinClientToRoom(client, roomName);
 
         } else if (method == GET_ROOMS_ACTION) {
@@ -38,7 +37,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == UPLOAD_ACTION) {
 
-            auto fileSize = request.at("trackFileSize").get<int>();
+            auto fileSize = req.getInt("trackFileSize");
 
             resp = handleTrackUpload(fileSize);
         }
@@ -96,16 +95,15 @@ MusicTrack* ClientProxy::reserveRoomFileSlot() {
 bool ClientProxy::isNotAuthorized() const { return client->getName().empty(); }
 
 
-ClientResponse ClientProxy::authenticate(const string &method, json request) {
+ClientResponse ClientProxy::authenticate(const string &method, Request * request) {
     ClientResponse resp;
     if (!client->getName().empty()) {
         resp.setError(403, "Name already assigned");
     } else {
-        const auto iterator = request.find("name");
-        if (iterator == request.end()) {
+        if (!request->has("name")) {
             resp.setError(422, "Missing argument: name");
         } else {
-            auto requestedName = iterator->get<string>();
+            auto requestedName = request->getStr("name");
             if (container->addUserIfNotKnown(client, requestedName)) {
                 client->setName(requestedName);
                 resp.fillOkResultIfNotSet();

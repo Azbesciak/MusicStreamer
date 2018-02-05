@@ -1,24 +1,23 @@
-
-#include <unistd.h>
-#include "../utility/json.hpp"
 #include "StreamerClient.h"
 
-using json = nlohmann::json;
 using namespace std;
 
 StreamerClient::StreamerClient(int socketDescriptor) :
-        socketDescriptor(socketDescriptor){}
+        connectionSocket(new Socket(socketDescriptor)){}
 
 string StreamerClient::getName() const {
     return name;
 }
 
 StreamerClient::~StreamerClient() {
-    close(socketDescriptor);
+    removeSocket(connectionSocket);
+    removeSocket(broadCastSocket);
 }
 
 ssize_t StreamerClient::sendMessage(const string &message) {
-    return write(socketDescriptor, message.c_str(), message.size());
+    if (connectionSocket != nullptr)
+        return write(connectionSocket->get(), message.c_str(), message.size());
+    return 0;
 }
 
 void StreamerClient::setName(const string &name) {
@@ -31,4 +30,9 @@ Room* StreamerClient::getCurrentRoom() {
 
 void StreamerClient::setCurrentRoom(Room *room) {
     this->currentRoom = room;
+}
+
+void StreamerClient::removeSocket(Socket *& socket) {
+    delete socket;
+    socket = nullptr;
 }

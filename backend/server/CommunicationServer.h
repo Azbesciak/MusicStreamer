@@ -9,8 +9,8 @@ public:
     CommunicationServer(const string &host, int port, ServerManager *manager);
 
 protected:
-    void onConnection(int clientSocket, const char *remoteAddr) override;
-    void manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy);
+    void onNewConnection(int clientSocket, const string &remoteAddr) override;
+    void manageRequestCoroutine(int clientSocket, const string &remoteAddr, char *buffer, ClientProxy *proxy);
 };
 
 
