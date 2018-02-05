@@ -17,7 +17,7 @@ AbstractServer::AbstractServer(const string &host, int port, ServerManager *mana
 }
 
 void AbstractServer::startServer() {
-    printf("Server works at %s:%d\n", this->host.c_str(), this->port);
+    cout << GREEN_TEXT("Server works at " <<  this->host << ":" << this->port << "\n");
 
     int socketNum = createSocket();
     if (listen(socketNum, QUEUE_SIZE) < 0) {
@@ -36,7 +36,8 @@ void AbstractServer::startServer() {
         char remoteAddr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
         //pass structure with client's data port
-        printf("Client connected with %s. Descriptor assigned: %d\n", remoteAddr, connection_descriptor);
+        cout << "Client connected with " << remoteAddr
+             << ". Descriptor assigned: " << connection_descriptor << endl;
         thread([&]() {
             cout << "Initialization successfull. Descriptor " << GREEN_TEXT(connection_descriptor) << " from "
                  << GREEN_TEXT(remoteAddr) << ".\n";
@@ -63,7 +64,7 @@ void AbstractServer::onConnection(int clientSocket, const char *remoteAddr) {
             delete proxy;
             return;
         } else {
-            printf("Undefined response.\n");
+            cout <<"Undefined response." << endl;
         }
     }
 }
