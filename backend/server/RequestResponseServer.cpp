@@ -1,13 +1,8 @@
 #include "RequestResponseServer.h"
 
-RequestResponseServer::~RequestResponseServer() {
-
-}
-
-
 RequestResponseServer::RequestResponseServer(
-        const string &host, int port, Container *container, atomic<bool> *isRunning)
-        : AbstractServer(host, port, container, isRunning) {
+        const string &host, int port, ServerManager *manager)
+        : AbstractServer(host, port, manager, "Request-Response server") {
 }
 
 

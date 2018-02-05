@@ -3,19 +3,20 @@
 #include "AbstractServer.h"
 
 AbstractServer::~AbstractServer() {
-    delete (serverThread);
     close(serverFd);
+    delete serverThread;
+    cout << MAGENTA_TEXT(this->serverName << " was closed.\n");
 }
 
-AbstractServer::AbstractServer(const string &host, int port, Container *container, atomic<bool> *isRunning)
-        : port(port), host(host), container(container), isRunning(isRunning) {
+AbstractServer::AbstractServer(const string &host, int port, ServerManager *manager, const string &serverName)
+        : port(port), host(host), manager(manager), serverName(serverName) {
     this->serverThread = new thread([&]() {
         startServer();
     });
+    this->serverThread->detach();
 }
 
 void AbstractServer::startServer() {
-
     printf("Server works at %s:%d\n", this->host.c_str(), this->port);
 
     int socketNum = createSocket();
@@ -24,9 +25,8 @@ void AbstractServer::startServer() {
         exit(-1);
     }
     struct sockaddr_in remote{};
-
     socklen_t sockSize = sizeof(struct sockaddr);
-    while (this->isRunning->load()) {
+    while (this->manager->isRunning.load()) {
         int connection_descriptor = accept(socketNum, (struct sockaddr *) &remote, &sockSize);
         if (connection_descriptor < 0) {
             perror("Client accepting error");
@@ -49,7 +49,7 @@ void AbstractServer::startServer() {
 
 void AbstractServer::onConnection(int clientSocket, const char *remoteAddr) {
     auto buffer = new char[BUFFER_SIZE];
-    auto proxy = new ClientProxy(clientSocket, this->container);
+    auto proxy = new ClientProxy(clientSocket, this->manager->container);
     while (true) {
         memset(buffer, 0, BUFFER_SIZE);
         ssize_t value = read(clientSocket, buffer, BUFFER_SIZE);

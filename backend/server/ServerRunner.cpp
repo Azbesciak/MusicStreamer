@@ -1,8 +1,6 @@
 #include "ServerRunner.h"
 
 
-atomic<bool> runserver(true);
-
 ServerManager * serverRef;
 
 int main(int argc, char *argv[]) {
@@ -19,13 +17,13 @@ int main(int argc, char *argv[]) {
     auto host = config.get("server.host", DEFAULT_ADDR);
     auto port = config.get("server.port", DEFAULT_PORT);
 
-    auto reqResServ = new RequestResponseServer(host, port, serverRef->container, &runserver);
+    serverRef->communicationServer = new RequestResponseServer(host, port, serverRef);
 
     do {
         cin >> command;
         parseCommand(command);
     } while (command != "stop");
-    delete reqResServ;
+    cleanUp(0);
     return 0;
 }
 
@@ -33,18 +31,21 @@ int main(int argc, char *argv[]) {
 void parseCommand(const string &command) {
     if (command.find("stop") != string::npos) {
         cout << GREEN_TEXT("Stopping server....\n");
-        runserver = false;
+        serverRef->isRunning = false;
     } else {
         cout << RED_TEXT("No such function ") << WHITE_TEXT(command) << "\n";
     }
 }
 
 
-
 void cleanUp(int) {
     cout<< GREEN_TEXT("cleaning up server") << endl;
+    delete serverRef->communicationServer;
+    delete serverRef->streamer;
+    delete serverRef->broadCaster;
+    delete serverRef->uploader;
+    delete serverRef->container;
     delete serverRef;
     serverRef = nullptr;
-    runserver = false;
     exit(0);
 }

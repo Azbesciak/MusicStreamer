@@ -16,6 +16,7 @@ MessageSender::MessageSender() {
             sleep(1);
         }
     });
+    broadcastThread->detach();
 }
 
 MessageSender::~MessageSender() {

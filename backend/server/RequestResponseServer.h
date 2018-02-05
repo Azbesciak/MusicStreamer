@@ -4,10 +4,10 @@
 #include "AbstractServer.h"
 #include "SocketFactory.h"
 
+
 class RequestResponseServer: AbstractServer {
 public:
-    RequestResponseServer(const string &host, int port, Container *container, atomic<bool> *isRunning);
-    ~RequestResponseServer();
+    RequestResponseServer(const string &host, int port, ServerManager *manager);
 
 private:
     int createSocket() override;

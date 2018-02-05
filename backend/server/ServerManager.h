@@ -3,24 +3,29 @@
 #define MUSICSTREAMER_SERVERMANAGER_H
 
 
-#define NOT_INITIALIZED (-1)
-
-#include <logic/Container.h>
 #include <unistd.h>
+#include <atomic>
+
+#pragma once
+class AbstractServer;
+#pragma once
+class RequestResponseServer;
+#pragma once
+class Container;
 
 class ServerManager {
 public:
-    int serverFd = NOT_INITIALIZED;
-    int broadCastFd = NOT_INITIALIZED;
-    int streamerFd = NOT_INITIALIZED;
-    int uploadFd = NOT_INITIALIZED;
+    RequestResponseServer *communicationServer;
+    AbstractServer *broadCaster;
+    AbstractServer *streamer;
+    AbstractServer *uploader;
     Container* container;
+    std::atomic<bool> isRunning;
 
     explicit ServerManager(Container* con)
-            : container(con){};
-    ~ServerManager();
+            : container(con), isRunning(true){};
 
-    void closeIfOpened(int fd);
 };
+
 
 #endif //MUSICSTREAMER_SERVERMANAGER_H

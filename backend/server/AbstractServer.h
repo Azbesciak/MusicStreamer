@@ -23,25 +23,24 @@
 #include "../utility/TerminalUtils.h"
 #include "logic/Container.h"
 #include "../streamerClient/ClientProxy.h"
+#include "ServerManager.h"
 
 #define BUFFER_SIZE 1000
 #define QUEUE_SIZE 5
-
 
 using namespace std;
 
 
 class AbstractServer {
 protected:
-    AbstractServer(const string &host, int port, Container *container, atomic<bool> *isRunning);
-    virtual ~AbstractServer();
+    AbstractServer(const string &host, int port, ServerManager *manager, const string &serverName);
 
     int port;
     string host;
     thread *serverThread;
     int serverFd;
-    Container * container;
-    atomic<bool> *isRunning;
+    ServerManager * manager;
+    string serverName;
 
     virtual int createSocket() = 0;
 
@@ -51,6 +50,8 @@ protected:
     void onConnection(int clientSocket, const char *remoteAddr);
     void startServer();
 
+public:
+    virtual ~AbstractServer();
 };
 
 
