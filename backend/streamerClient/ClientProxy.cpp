@@ -38,7 +38,7 @@ ClientResponse ClientProxy::onNewMessage(char *message) {
 
         } else if (method == UPLOAD_ACTION) {
 
-            int fileSize = request.at("trackFileSize").get<int>();
+            auto fileSize = request.at("trackFileSize").get<int>();
 
             resp = handleTrackUpload(fileSize);
         }
@@ -64,7 +64,7 @@ ClientResponse ClientProxy::handleTrackUpload(int fileSize) {
     if (reservedTrack == nullptr)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    TrackUpload* trackUpload = new TrackUpload(reservedTrack, this, fileSize);
+    auto * trackUpload = new TrackUpload(reservedTrack, this, fileSize);
     string token = UploadHandler::getInstance()->prepareUpload(trackUpload);
 
     if (token.empty()) {

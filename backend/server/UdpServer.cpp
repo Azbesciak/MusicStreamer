@@ -5,5 +5,5 @@ UdpServer::UdpServer(const string &host, int port, ServerManager *manager, const
         host, port, manager, serverName) {}
 
 int UdpServer::createSocket() {
-    return SocketFactory::createUdpSocket(port);
+    return SocketFactory::createUdpSocket(host, port);
 }

@@ -1,8 +1,9 @@
 #include <utility/Config.h>
 #include "../logic/Container.h"
-#include "RequestResponseServer.h"
+#include "CommunicationServer.h"
 #include <csignal>
 #include "ServerRunner.h"
+#include "BroadCastServer.h"
 
 ServerManager * serverRef;
 
@@ -13,13 +14,15 @@ int main(int argc, char *argv[]) {
     serverRef = new ServerManager(new Container());
     string command;
 
-    string configPath = argc == 2 ? argv[1] : DEFAULT_CONFIG_PATH;
+    string configPath = argc == 2 ? argv[1] : DEF_CONFIG_PATH;
 
     auto config = Config(configPath);
-    auto host = config.get("server.host", DEFAULT_ADDR);
-    auto port = config.get("server.port", DEFAULT_PORT);
+    auto host = config.get("server.host", DEF_ADDR);
+    auto port = config.get("server.communication.port", DEF_COMMUN_PORT);
+    auto broadCastPort = config.get("server.broadcast.port", DEF_BROAD_PORT);
 
-    serverRef->communicationServer = new RequestResponseServer(host, port, serverRef);
+    serverRef->communicationServer = new CommunicationServer(host, port, serverRef);
+    serverRef->broadCaster = new BroadCastServer(host, broadCastPort, serverRef);
 
     do {
         cin >> command;

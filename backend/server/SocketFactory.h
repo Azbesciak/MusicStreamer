@@ -5,15 +5,17 @@
 #include <cstdio>
 #include <sys/socket.h>
 #include <cstdlib>
+#include <string>
+
 
 #define QUEUE_SIZE 128
 
 class SocketFactory {
-static int createSocket(int port, int type);
+static int createSocket(const std::string &host, int port, int type);
 
 public:
-    static int createTcpSocket(int port);
-    static int createUdpSocket(int port);
+    static int createTcpSocket(const std::string &host, int port);
+    static int createUdpSocket(const std::string &host, int port);
 };
 
 

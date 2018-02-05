@@ -1,12 +1,12 @@
-#include "RequestResponseServer.h"
+#include "CommunicationServer.h"
 
-RequestResponseServer::RequestResponseServer(
+CommunicationServer::CommunicationServer(
         const string &host, int port, ServerManager *manager)
-        : TcpServer(host, port, manager, "Request-Response server") {
+        : TcpServer(host, port, manager, "Communication server") {
 }
 
 
-void RequestResponseServer::onConnection(int clientSocket, const char *remoteAddr) {
+void CommunicationServer::onConnection(int clientSocket, const char *remoteAddr) {
     auto buffer = new char[BUFFER_SIZE];
     auto proxy = new ClientProxy(clientSocket, this->manager->container);
     while (true) {
@@ -15,10 +15,6 @@ void RequestResponseServer::onConnection(int clientSocket, const char *remoteAdd
         if (value > 0) {
             manageRequestCoroutine(clientSocket, remoteAddr, buffer, proxy);
         } else if (buffer[0] == 0) {
-            cout << RED_TEXT("Client from " << remoteAddr
-                                            << ", descriptor "
-                                            << clientSocket
-                                            << " has disconnected!\n");
             delete proxy;
             return;
         } else {
@@ -27,7 +23,7 @@ void RequestResponseServer::onConnection(int clientSocket, const char *remoteAdd
     }
 }
 
-void RequestResponseServer::manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy) {
+void CommunicationServer::manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy) {
     displayRequest(clientSocket, buffer);
     auto response = proxy->onNewMessage(buffer);
     auto serializedResponse = response.serialize();

@@ -36,7 +36,7 @@ UploadHandler* UploadHandler::getInstance() {
 UploadHandler::UploadHandler() {
 
     this->nextFileNo = 1;
-    this->receiverSocket = SocketFactory::createTcpSocket(UPLOAD_PORT);
+    this->receiverSocket = SocketFactory::createTcpSocket("127.0.0.1", UPLOAD_PORT); //TODO
 
     spawnHandlerThread();
 }

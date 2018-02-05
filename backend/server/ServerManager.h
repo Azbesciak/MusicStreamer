@@ -7,13 +7,13 @@
 #pragma once
 class AbstractServer;
 #pragma once
-class RequestResponseServer;
+class CommunicationServer;
 #pragma once
 class Container;
 
 class ServerManager {
 public:
-    RequestResponseServer *communicationServer;
+    CommunicationServer *communicationServer;
     AbstractServer *broadCaster;
     AbstractServer *streamer;
     AbstractServer *uploader;

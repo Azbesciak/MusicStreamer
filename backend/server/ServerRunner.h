@@ -3,9 +3,10 @@
 
 #include <iostream>
 
-#define DEFAULT_PORT 10001
-#define DEFAULT_ADDR "127.0.0.1"
-#define DEFAULT_CONFIG_PATH "../server.properties"
+#define DEF_COMMUN_PORT 10001
+#define DEF_BROAD_PORT 10002
+#define DEF_ADDR "127.0.0.1"
+#define DEF_CONFIG_PATH "../server.properties"
 
 using namespace std;
 

@@ -4,9 +4,9 @@
 
 #include "TcpServer.h"
 
-class RequestResponseServer : public TcpServer {
+class CommunicationServer : public TcpServer {
 public:
-    RequestResponseServer(const string &host, int port, ServerManager *manager);
+    CommunicationServer(const string &host, int port, ServerManager *manager);
 
 protected:
     void onConnection(int clientSocket, const char *remoteAddr) override;
