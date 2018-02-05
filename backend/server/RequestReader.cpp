@@ -4,7 +4,6 @@
 
 RequestReader::RequestReader(int socketFd)
         :socketFd(socketFd), buffer(new char[BUFFER_SIZE]) {
-
 }
 
 Request *RequestReader::readRequest() {

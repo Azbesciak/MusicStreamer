@@ -20,6 +20,7 @@ public:
     void setError(int code, string message);
     void fillOkResultIfNotSet();
     static ClientResponse error(int status, const string &message);
+    bool isError();
 
 };
 

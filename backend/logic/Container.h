@@ -30,7 +30,7 @@ public:
     bool addUserIfNotKnown(StreamerClient* client, const string &clientName);
     void removeClient(StreamerClient * client);
     vector<string> getRoomsList();
-    void subscribeClientForMessages(const string &clientName, int messageSocketFd);
+    StreamerClient * subscribeClientForMessages(const string &clientName, int messageSocketFd);
 
     void removeClientFromRooms(StreamerClient *client);
     void sendToAll(const string &message);

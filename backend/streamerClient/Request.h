@@ -22,5 +22,4 @@ public:
     bool isCorrect();
 };
 
-
 #endif //MUSICSTREAMER_REQUEST_H

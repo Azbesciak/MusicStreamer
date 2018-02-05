@@ -1,7 +1,6 @@
 
 #include <upload/TrackUpload.h>
 #include "ClientProxy.h"
-#include "Request.h"
 
 
 static const char *const JOIN_ROOM_ACTION = "JOIN";
@@ -10,42 +9,31 @@ static const char *const AUTHENTICATE_ACTION = "INIT";
 static const char *const LEAVE_ACTION = "LEAVE";
 static const char *const UPLOAD_ACTION = "UPLOAD";
 
-ClientResponse ClientProxy::onNewMessage(Request *req) {
-    ClientResponse resp;
+ClientResponse ClientProxy::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
+    if (method == AUTHENTICATE_ACTION) {
 
-    if (!req->isCorrect()) {
-        resp.setError(400, "Malformed input data");
-    } else {
-        string method = req->getMethod();
+        return authenticate(method, request);
 
-        if (method == AUTHENTICATE_ACTION) {
+    } else if (isNotAuthorized()) {
 
-            return authenticate(method, req);
+        return ClientResponse::error(403, "Not authenticated");
 
-        } else if (isNotAuthorized()) {
+    } else if (method == JOIN_ROOM_ACTION) {
 
-            return ClientResponse::error(403, "Not authenticated");
+        auto roomName = request->getStr("roomName");
+        container->joinClientToRoom(client, roomName);
 
-        } else if (method == JOIN_ROOM_ACTION) {
+    } else if (method == GET_ROOMS_ACTION) {
 
-            auto roomName = req->getStr("roomName");
-            container->joinClientToRoom(client, roomName);
+        response->addToBody("rooms", container->getRoomsList());
 
-        } else if (method == GET_ROOMS_ACTION) {
+    } else if (method == UPLOAD_ACTION) {
 
-            resp.addToBody("rooms", container->getRoomsList());
+        auto fileSize = request->getInt("trackFileSize");
 
-        } else if (method == UPLOAD_ACTION) {
-
-            auto fileSize = req->getInt("trackFileSize");
-
-            resp = handleTrackUpload(fileSize);
-        }
-
-        resp.fillOkResultIfNotSet();
+        *response = handleTrackUpload(fileSize);
     }
-
-    return resp;
+    return *response;
 }
 
 ClientResponse ClientProxy::handleTrackUpload(int fileSize) {
@@ -120,8 +108,13 @@ ClientProxy::~ClientProxy() {
     delete client;
 }
 
-ssize_t ClientProxy::sendMessage(const string &message) {
+ClientResponse ClientProxy::onNewRequest(Request *request) {
+    return RequestProcessor::onNewRequest(request);
+}
+
+ssize_t ClientProxy::respond(const string &message) {
     return client->sendMessage(message);
 }
+
 
 

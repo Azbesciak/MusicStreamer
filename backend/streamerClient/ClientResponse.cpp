@@ -54,4 +54,8 @@ void ClientResponse::addToBody(string key, const string &value) {
     body[key] = json(value);
 }
 
+bool ClientResponse::isError() {
+    return status >= 400;
+}
+
 

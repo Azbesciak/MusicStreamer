@@ -8,25 +8,26 @@
 #include <streamerClient/ClientResponse.h>
 #include <logic/Container.h>
 #include "Request.h"
+#include "RequestProcessor.h"
 
 
-class ClientProxy {
+class ClientProxy: public RequestProcessor {
     Container* container;
     StreamerClient* client;
     ClientResponse authenticate(const string &method, Request * request);
-
+    ClientResponse onNewRequest(Request *request, const string &method, ClientResponse *&response) override;
     MusicTrack* reserveRoomFileSlot();
 
 public:
     ClientProxy(int clientFd, Container * container);
     ~ClientProxy();
-    ClientResponse onNewMessage(Request * request);
 
-    ssize_t sendMessage(const string &message);
+    ssize_t respond(const string &message);
 
     bool isNotAuthorized() const;
-
     ClientResponse handleTrackUpload(int fileSize);
+
+    ClientResponse onNewRequest(Request *request) override;
 };
 
 

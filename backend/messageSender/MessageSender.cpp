@@ -9,7 +9,7 @@ MessageSender::MessageSender() {
                 Message* message = &messages.front();
                 const string &content = message->getContent();
                 for (auto && rec: message->getReceivers()) {
-                    rec->sendMessage(content);
+                    rec->sendOnBroadCast(content);
                 }
                 messages.pop();
             }

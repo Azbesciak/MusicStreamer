@@ -127,11 +127,14 @@ void Container::sendToAll(const string &message) {
     }
 }
 
-void Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
+StreamerClient * Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
     synchronized(clientsMut) {
-        StreamerClient *&client = clients[clientName];
-        if (client != nullptr) {
-            client -> subscribeForMessages(messageSocketFd);
+        auto client = clients.find(clientName);
+
+        if (client != clients.end()) {
+            client->second -> subscribeForMessages(messageSocketFd);
+            return client->second;
         }
+        return nullptr;
     }
 }

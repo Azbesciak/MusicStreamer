@@ -18,5 +18,7 @@ void TcpServer::manageServer(sockaddr_in &remote, socklen_t &sockSize) {
     inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
     cout << "Client connected with " << remoteAddr
          << ". Descriptor assigned: " << clientSocket << endl;
-    onNewConnection(clientSocket, remoteAddr);
+    thread([&]() {
+        onNewConnection(clientSocket, remoteAddr);
+    }).detach();
 }

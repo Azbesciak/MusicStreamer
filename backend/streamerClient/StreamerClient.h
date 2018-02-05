@@ -12,10 +12,13 @@ class Room;
 
 class StreamerClient {
 private:
-    Socket * connectionSocket;
+    Socket * communicationSocket;
     Socket * broadCastSocket;
+    Socket * uploadSocket;
+    Socket * streamingSocket;
     string name;
     Room* currentRoom;
+    ssize_t sendMessage(const string &mes, Socket * socket);
 public:
     explicit StreamerClient(int socketDescriptor);
     ~StreamerClient();
@@ -26,9 +29,11 @@ public:
     void setCurrentRoom(Room* room);
 
     ssize_t sendMessage(const string &mes);
+    ssize_t sendOnBroadCast(const string &mes);
 
     void removeSocket(Socket *&socket);
     void subscribeForMessages(int fd);
+
 };
 
 

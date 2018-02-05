@@ -3,20 +3,31 @@
 using namespace std;
 
 StreamerClient::StreamerClient(int socketDescriptor) :
-        connectionSocket(new Socket(socketDescriptor)){}
+        communicationSocket(new Socket(socketDescriptor)){}
 
 string StreamerClient::getName() const {
     return name;
 }
 
 StreamerClient::~StreamerClient() {
-    removeSocket(connectionSocket);
+    removeSocket(communicationSocket);
     removeSocket(broadCastSocket);
+    removeSocket(uploadSocket);
+    removeSocket(streamingSocket);
 }
 
 ssize_t StreamerClient::sendMessage(const string &message) {
-    if (connectionSocket != nullptr)
-        return write(connectionSocket->get(), message.c_str(), message.size());
+    return sendMessage(message, communicationSocket);
+}
+
+ssize_t StreamerClient::sendOnBroadCast(const string &mes) {
+    return sendMessage(mes, broadCastSocket);
+}
+
+ssize_t StreamerClient::sendMessage(const string &mes, Socket *socket) {
+    if (socket != nullptr) {
+        return write(socket->get(), mes.c_str(), mes.size());
+    }
     return 0;
 }
 
@@ -41,4 +52,5 @@ void StreamerClient::subscribeForMessages(int fd) {
     removeSocket(broadCastSocket);
     broadCastSocket = new Socket(fd);
 }
+
 
