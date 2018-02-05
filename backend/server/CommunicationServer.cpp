@@ -1,4 +1,5 @@
 #include "CommunicationServer.h"
+#include "RequestReader.h"
 
 CommunicationServer::CommunicationServer(
         const string &host, int port, ServerManager *manager)
@@ -10,14 +11,14 @@ void CommunicationServer::onNewConnection(int clientSocket, const string &remote
         cout << "Initialization successfull. Descriptor "
              << BLUE_TEXT(clientSocket) << " from "
              << BLUE_TEXT(remoteAddr) << endl;
-        auto buffer = new char[BUFFER_SIZE];
+        auto reader = new RequestReader(clientSocket);
         auto proxy = new ClientProxy(clientSocket, this->manager->container);
         while (true) {
-            memset(buffer, 0, BUFFER_SIZE);
-            ssize_t value = read(clientSocket, buffer, BUFFER_SIZE);
-            if (value > 0) {
-                manageRequestCoroutine(clientSocket, remoteAddr, buffer, proxy);
-            } else if (buffer[0] == 0) {
+            Request *request = reader->readRequest();
+            if (request != nullptr) {
+                manageRequestCoroutine(clientSocket, remoteAddr, request, proxy);
+                delete request;
+            } else {
                 cout << RED_TEXT("Client from " << remoteAddr
                                                 << ", descriptor "
                                                 << clientSocket
@@ -26,18 +27,16 @@ void CommunicationServer::onNewConnection(int clientSocket, const string &remote
                                                 << ")!\n");
                 delete proxy;
                 return;
-            } else {
-                cout << "Undefined response." << endl;
             }
         }
     }).detach();
 }
 
-void CommunicationServer::manageRequestCoroutine(int clientSocket, const string &remoteAddr, char *buffer, ClientProxy *proxy) {
-    displayRequest(clientSocket, buffer);
-    auto response = proxy->onNewMessage(buffer);
+void CommunicationServer::manageRequestCoroutine(int clientSocket, const string &remoteAddr, Request * request, ClientProxy *proxy) {
+    displayRequest(clientSocket, request);
+    auto response = proxy->onNewMessage(request);
     auto serializedResponse = response.serialize();
-    displayResponse(clientSocket, serializedResponse.c_str());
+    displayResponse(clientSocket, serializedResponse);
     const auto wrote = proxy->sendMessage(serializedResponse);
     if (wrote == -1) {
         cout << RED_TEXT("Error while sending client response: \n\t")

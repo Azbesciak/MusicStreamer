@@ -11,8 +11,6 @@
 #include "ServerManager.h"
 
 
-#define BUFFER_SIZE 1000
-
 using namespace std;
 
 
@@ -30,8 +28,8 @@ protected:
     virtual int createSocket() = 0;
     virtual void manageServer(sockaddr_in & remote, socklen_t & sockSize) = 0;
 
-    void displayRequest(int socketDescriptor, const char * request);
-    void displayResponse(int socketDescriptor, const char *request);
+    void displayRequest(int socketDescriptor, Request * request);
+    void displayResponse(int socketDescriptor,const string &response);
     void startServer();
 
 public:

@@ -6,7 +6,6 @@
 
 #include "AbstractServer.h"
 #include "SocketFactory.h"
-#include "unistd.h"
 
 class TcpServer : public AbstractServer {
 public:

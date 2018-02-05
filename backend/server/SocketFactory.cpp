@@ -8,7 +8,7 @@ int SocketFactory::createSocket(const std::string &host, int port, int type) {
         printf("Socket error\n");
         exit(-1);
     }
-    sockaddr_in sockAddr{
+    sockaddr_in sockAddr {
             .sin_family = AF_INET,
             .sin_port = htons(port),
             .sin_addr = {inet_addr(host.c_str())}

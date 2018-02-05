@@ -36,3 +36,9 @@ void StreamerClient::removeSocket(Socket *& socket) {
     delete socket;
     socket = nullptr;
 }
+
+void StreamerClient::subscribeForMessages(int fd) {
+    removeSocket(broadCastSocket);
+    broadCastSocket = new Socket(fd);
+}
+

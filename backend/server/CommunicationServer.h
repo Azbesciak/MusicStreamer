@@ -10,7 +10,7 @@ public:
 
 protected:
     void onNewConnection(int clientSocket, const string &remoteAddr) override;
-    void manageRequestCoroutine(int clientSocket, const string &remoteAddr, char *buffer, ClientProxy *proxy);
+    void manageRequestCoroutine(int clientSocket, const string &remoteAddr, Request * request, ClientProxy *proxy);
 };
 
 

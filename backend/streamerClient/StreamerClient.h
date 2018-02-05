@@ -28,6 +28,7 @@ public:
     ssize_t sendMessage(const string &mes);
 
     void removeSocket(Socket *&socket);
+    void subscribeForMessages(int fd);
 };
 
 

@@ -20,7 +20,7 @@ class ClientProxy {
 public:
     ClientProxy(int clientFd, Container * container);
     ~ClientProxy();
-    ClientResponse onNewMessage(char *message);
+    ClientResponse onNewMessage(Request * request);
 
     ssize_t sendMessage(const string &message);
 

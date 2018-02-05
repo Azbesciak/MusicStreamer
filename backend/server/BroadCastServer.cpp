@@ -6,4 +6,5 @@ BroadCastServer::BroadCastServer(const string &host, int port, ServerManager *ma
 
 void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr) {
 
+//    manager->container->subscribeClientForMessages()
 }

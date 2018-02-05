@@ -10,31 +10,31 @@ AbstractServer::~AbstractServer() {
 
 AbstractServer::AbstractServer(const string &host, int port, ServerManager *manager, const string &serverName)
         : port(port), host(host), manager(manager), serverName(serverName) {
-    this->serverThread = new thread([&]() {
+    serverThread = new thread([&]() {
         startServer();
     });
-    this->serverThread->detach();
+    serverThread->detach();
 }
 
 void AbstractServer::startServer() {
-    cout << GREEN_TEXT(this->serverName << " works at " <<  this->host << ":" << this->port << "\n");
+    cout << GREEN_TEXT(serverName << " works at " <<  host << ":" << port << "\n");
 
     serverFd = createSocket();
     sockaddr_in remote{};
     socklen_t sockSize = sizeof(sockaddr);
-    while (this->manager->isRunning.load()) {
+    while (manager->isRunning.load()) {
         manageServer(remote, sockSize);
     }
     exit(0);
 }
 
-void AbstractServer::displayRequest(int socketDescriptor, const char *request) {
+void AbstractServer::displayRequest(int socketDescriptor, Request *request) {
     cout << YELLOW_TEXT("Client " << socketDescriptor) << "\n";
-    cout << "\t" << MAGENTA_TEXT("Request from " << socketDescriptor << ":\t") << GREEN_TEXT(request);
+    cout << "\t" << MAGENTA_TEXT("Request from " << socketDescriptor << ":\t") << GREEN_TEXT(request->serialize());
 }
 
 
-void AbstractServer::displayResponse(int socketDescriptor, const char *response) {
+void AbstractServer::displayResponse(int socketDescriptor, const string &response) {
     cout << CYAN_TEXT("Client " << socketDescriptor) << "\n";
     cout << "\t" << MAGENTA_TEXT("Response to " << socketDescriptor << ":\t") << GREEN_TEXT(response) << endl;
 }
