@@ -6,10 +6,12 @@
 #include <sys/socket.h>
 #include <cstdlib>
 
+#define QUEUE_SIZE 128
+
 class SocketFactory {
+static int createSocket(int port, int type);
 
 public:
-
     static int createTcpSocket(int port);
     static int createUdpSocket(int port);
 };

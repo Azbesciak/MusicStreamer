@@ -17,69 +17,16 @@ AbstractServer::AbstractServer(const string &host, int port, ServerManager *mana
 }
 
 void AbstractServer::startServer() {
-    cout << GREEN_TEXT("Server works at " <<  this->host << ":" << this->port << "\n");
+    cout << GREEN_TEXT(this->serverName << " works at " <<  this->host << ":" << this->port << "\n");
 
-    int socketNum = createSocket();
-    if (listen(socketNum, QUEUE_SIZE) < 0) {
-        perror("Listen error");
-        exit(-1);
-    }
-    struct sockaddr_in remote{};
-    socklen_t sockSize = sizeof(struct sockaddr);
+    serverFd = createSocket();
+    sockaddr_in remote{};
+    socklen_t sockSize = sizeof(sockaddr);
     while (this->manager->isRunning.load()) {
-        int connection_descriptor = accept(socketNum, (struct sockaddr *) &remote, &sockSize);
-        if (connection_descriptor < 0) {
-            perror("Client accepting error");
-            continue;
-        }
-
-        char remoteAddr[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
-        cout << "Client connected with " << remoteAddr
-             << ". Descriptor assigned: " << connection_descriptor << endl;
-        thread([&]() {
-            cout << "Initialization successfull. Descriptor " << GREEN_TEXT(connection_descriptor) << " from "
-                 << GREEN_TEXT(remoteAddr) << ".\n";
-            onConnection(connection_descriptor, remoteAddr);
-        }).detach();
+        manageServer(remote, sockSize);
     }
     exit(0);
 }
-
-void AbstractServer::onConnection(int clientSocket, const char *remoteAddr) {
-    auto buffer = new char[BUFFER_SIZE];
-    auto proxy = new ClientProxy(clientSocket, this->manager->container);
-    while (true) {
-        memset(buffer, 0, BUFFER_SIZE);
-        ssize_t value = read(clientSocket, buffer, BUFFER_SIZE);
-        if (value > 0) {
-            manageRequestCoroutine(clientSocket, remoteAddr, buffer, proxy);
-        } else if (buffer[0] == 0) {
-            cout << RED_TEXT("Client from " << remoteAddr
-                                            << ", descriptor "
-                                            << clientSocket
-                                            << " has disconnected!\n");
-            delete proxy;
-            return;
-        } else {
-            cout <<"Undefined response." << endl;
-        }
-    }
-}
-
-void AbstractServer::manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy) {
-    displayRequest(clientSocket, buffer);
-    auto response = proxy->onNewMessage(buffer);
-    auto serializedResponse = response.serialize();
-    displayResponse(clientSocket, serializedResponse.c_str());
-    const auto wrote = proxy->sendMessage(serializedResponse);
-    if (wrote == -1) {
-        cout << RED_TEXT("Error while sending client response: \n\t")
-             << MAGENTA_TEXT(serializedResponse)
-             << RED_TEXT("\n to " << remoteAddr);
-    }
-}
-
 
 void AbstractServer::displayRequest(int socketDescriptor, const char *request) {
     cout << YELLOW_TEXT("Client " << socketDescriptor) << "\n";

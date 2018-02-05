@@ -12,7 +12,6 @@
 
 
 #define BUFFER_SIZE 1000
-#define QUEUE_SIZE 5
 
 using namespace std;
 
@@ -29,11 +28,10 @@ protected:
     string serverName;
 
     virtual int createSocket() = 0;
+    virtual void manageServer(sockaddr_in & remote, socklen_t & sockSize) = 0;
 
     void displayRequest(int socketDescriptor, const char * request);
     void displayResponse(int socketDescriptor, const char *request);
-    void manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy);
-    void onConnection(int clientSocket, const char *remoteAddr);
     void startServer();
 
 public:

@@ -1,9 +1,10 @@
 #include "SocketFactory.h"
 
-int SocketFactory::createTcpSocket(int port) {
+
+int SocketFactory::createSocket(int port, int type) {
     struct sockaddr_in sockAddr{};
 
-    int socketNum = socket(AF_INET, SOCK_STREAM, 0);
+    int socketNum = socket(AF_INET, type, 0);
     if (socketNum < 0) {
         printf("Socket error\n");
         exit(-1);
@@ -23,6 +24,16 @@ int SocketFactory::createTcpSocket(int port) {
     return socketNum;
 }
 
-int SocketFactory::createUdpSocket(int port) {
-    return 0;
+int SocketFactory::createTcpSocket(int port) {
+    int socket = createSocket(port, SOCK_STREAM);
+    if (listen(socket, QUEUE_SIZE) < 0) {
+        perror("Listen error");
+        exit(-1);
+    }
+    return socket;
 }
+
+int SocketFactory::createUdpSocket(int port) {
+    return createSocket(port, SOCK_DGRAM);
+}
+
