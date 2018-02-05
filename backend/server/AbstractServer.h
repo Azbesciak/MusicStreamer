@@ -2,28 +2,14 @@
 #define MUSICSTREAMER_ABSTRACTSERVER_H
 
 #include <iostream>
-#include <utility>
-#include <netinet/in.h>
-#include <cstdio>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <thread>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <cstring>
-#include <cstdlib>
-#include <ctime>
-#include <pthread.h>
-#include <dirent.h>
-#include <iostream>
-#include <csignal>
-
 
 #include "../utility/TerminalUtils.h"
-#include "logic/Container.h"
 #include "../streamerClient/ClientProxy.h"
 #include "ServerManager.h"
+
 
 #define BUFFER_SIZE 1000
 #define QUEUE_SIZE 5
@@ -46,7 +32,7 @@ protected:
 
     void displayRequest(int socketDescriptor, const char * request);
     void displayResponse(int socketDescriptor, const char *request);
-    void manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer,ClientProxy *proxy);
+    void manageRequestCoroutine(int clientSocket, const char *remoteAddr, char *buffer, ClientProxy *proxy);
     void onConnection(int clientSocket, const char *remoteAddr);
     void startServer();
 

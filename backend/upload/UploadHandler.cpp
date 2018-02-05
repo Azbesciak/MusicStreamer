@@ -1,11 +1,14 @@
 #include "UploadHandler.h"
 
-#include <upload/UploadMeta.h>
 #include <server/SocketFactory.h>
 #include <upload/exception/FileUploadException.h>
 #include <utility/token.hpp>
 
 #include <fcntl.h>
+#include <utility/synch.h>
+#include <streamerClient/ClientResponse.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -84,11 +87,11 @@ void UploadHandler::handleClientUpload(int clientSocket, sockaddr_in clientAddre
 
 void* UploadHandler::handleFileDownload(void* metadata) {
 
-    UploadMeta* uploadMeta = static_cast<UploadMeta*>(metadata);
+    auto * uploadMeta = static_cast<UploadMeta*>(metadata);
     UploadHandler* handler = uploadMeta->getUploadHandlerInstance();
 
     // Set socket read timeout
-    timeval timeout;
+    timeval timeout{};
     timeout.tv_sec = UPLOAD_TIMEOUT_MILLIS / 1000;
     timeout.tv_usec = (UPLOAD_TIMEOUT_MILLIS % 1000) * 1000;
     setsockopt(uploadMeta->getClientSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
@@ -143,7 +146,7 @@ int UploadHandler::acceptFileBytes(int clientSocket, int fileSize) {
         throw FileUploadException(500, "Unexpected file upload error");
 
     int remainingSize = fileSize;
-    char* buffer = new char[BYTE_BUFFER_SIZE + 1];
+    auto * buffer = new char[BYTE_BUFFER_SIZE + 1];
 
     try {
 
@@ -207,10 +210,10 @@ FileUpload* UploadHandler::retrieveUploadByToken(string token) {
 
 string UploadHandler::acceptToken(int clientSocket) {
 
-    char* tokenBuffer = new char[TOKEN_SIZE + 1];
+    auto * tokenBuffer = new char[TOKEN_SIZE + 1];
     size_t remainingBytes = TOKEN_SIZE;
 
-    string token = "";
+    string token;
 
     while (remainingBytes > 0) {
 

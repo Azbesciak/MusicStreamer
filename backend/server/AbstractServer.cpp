@@ -1,5 +1,5 @@
 
-#include <atomic>
+#include <unistd.h>
 #include "AbstractServer.h"
 
 AbstractServer::~AbstractServer() {
@@ -35,7 +35,6 @@ void AbstractServer::startServer() {
 
         char remoteAddr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(remote.sin_addr), remoteAddr, INET_ADDRSTRLEN);
-        //pass structure with client's data port
         cout << "Client connected with " << remoteAddr
              << ". Descriptor assigned: " << connection_descriptor << endl;
         thread([&]() {
@@ -44,7 +43,6 @@ void AbstractServer::startServer() {
             onConnection(connection_descriptor, remoteAddr);
         }).detach();
     }
-    cout << "end?" << endl;
     exit(0);
 }
 

@@ -1,5 +1,8 @@
+#include <utility/Config.h>
+#include "../logic/Container.h"
+#include "RequestResponseServer.h"
+#include <csignal>
 #include "ServerRunner.h"
-
 
 ServerManager * serverRef;
 
@@ -7,8 +10,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, cleanUp);
     // prevent dead sockets from throwing pipe errors on write
     signal(SIGPIPE, SIG_IGN);
-    auto container = new Container();
-    serverRef = new ServerManager(container);
+    serverRef = new ServerManager(new Container());
     string command;
 
     string configPath = argc == 2 ? argv[1] : DEFAULT_CONFIG_PATH;
@@ -41,7 +43,6 @@ void parseCommand(const string &command) {
 void cleanUp(int) {
     cout<< GREEN_TEXT("cleaning up server") << endl;
     serverRef -> isRunning = false;
-    sleep(1);
     delete serverRef->communicationServer;
     delete serverRef->streamer;
     delete serverRef->broadCaster;

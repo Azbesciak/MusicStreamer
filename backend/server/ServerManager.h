@@ -2,8 +2,6 @@
 #ifndef MUSICSTREAMER_SERVERMANAGER_H
 #define MUSICSTREAMER_SERVERMANAGER_H
 
-
-#include <unistd.h>
 #include <atomic>
 
 #pragma once
@@ -23,7 +21,9 @@ public:
     std::atomic<bool> isRunning;
 
     explicit ServerManager(Container* con)
-            : container(con), isRunning(true){};
+            : container(con), isRunning(true),
+              communicationServer(nullptr), broadCaster(nullptr),
+              streamer(nullptr), uploader(nullptr){};
 
 };
 

@@ -3,11 +3,6 @@
 
 #include <iostream>
 
-#include "ServerManager.h"
-#include "RequestResponseServer.h"
-#include <atomic>
-#include <utility/Config.h>
-
 #define DEFAULT_PORT 10001
 #define DEFAULT_ADDR "127.0.0.1"
 #define DEFAULT_CONFIG_PATH "../server.properties"

@@ -1,16 +1,12 @@
 
 #ifndef MUSICSTREAMER_REQUESTRESPONSESERVER_H
 #define MUSICSTREAMER_REQUESTRESPONSESERVER_H
-#include "AbstractServer.h"
-#include "SocketFactory.h"
 
+#include "TcpServer.h"
 
-class RequestResponseServer: AbstractServer {
+class RequestResponseServer : public TcpServer {
 public:
     RequestResponseServer(const string &host, int port, ServerManager *manager);
-
-private:
-    int createSocket() override;
 
 };
 
