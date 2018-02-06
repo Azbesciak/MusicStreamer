@@ -1,6 +1,7 @@
 
 #include <unordered_map>
 #include <mutex>
+#include <atomic>
 #include "Room.h"
 
 #include "utility/synch.h"
@@ -9,6 +10,22 @@
 
 #ifndef MUSICSTREAMER_CONTAINER_H
 #define MUSICSTREAMER_CONTAINER_H
+class Container;
+
+class StateChangeWatcher {
+    thread * watchThread;
+    atomic<bool> changeMark;
+    Container * container;
+    unordered_set<StreamerClient *> receivers;
+    recursive_mutex receiversMut;
+    void spreadChangeStateInfo();
+
+public:
+    explicit StateChangeWatcher(Container * container);
+    ~StateChangeWatcher();
+    void markGlobalChange();
+    void requestUpdate(StreamerClient * client);
+};
 
 
 class Container {
@@ -18,6 +35,7 @@ private:
     MessageSender* messageSender;
     unordered_map<string, StreamerClient*> clients;
     recursive_mutex clientsMut;
+    StateChangeWatcher * watcher;
     void deleteRoom(const string &name);
     void createRoomIfNotExists(const string &name);
     void sendListOfClientsToAllInRoom(Room *room);
@@ -33,7 +51,11 @@ public:
     StreamerClient * subscribeClientForMessages(const string &clientName, int messageSocketFd);
 
     void removeClientFromRooms(StreamerClient *client);
-    void sendToAll(const string &message);
+    void sendToAll(ClientResponse &resp);
+
+    ClientResponse createRoomsResponse();
+
+    void sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const;
 };
 
 

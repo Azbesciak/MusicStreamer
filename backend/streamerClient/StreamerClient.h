@@ -17,7 +17,7 @@ private:
     Socket * uploadSocket;
     Socket * streamingSocket;
     string name;
-    Room* currentRoom;
+    Room * currentRoom;
     ssize_t sendMessage(const string &mes, Socket * socket);
 public:
     explicit StreamerClient(int socketDescriptor);

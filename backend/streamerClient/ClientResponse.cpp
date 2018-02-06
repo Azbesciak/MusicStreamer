@@ -62,4 +62,8 @@ bool ClientResponse::isError() {
     return status >= 400;
 }
 
+void ClientResponse::asUnknownResponse() {
+    setError(404, "Unknown Request");
+}
+
 

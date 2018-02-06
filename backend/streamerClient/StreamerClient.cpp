@@ -3,7 +3,10 @@
 using namespace std;
 
 StreamerClient::StreamerClient(int socketDescriptor) :
-        communicationSocket(new Socket(socketDescriptor)){}
+        communicationSocket(new Socket(socketDescriptor)),
+        broadCastSocket(nullptr),
+        uploadSocket(nullptr),
+        streamingSocket(nullptr){}
 
 string StreamerClient::getName() const {
     return name;

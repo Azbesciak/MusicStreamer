@@ -1,5 +1,4 @@
 
-#include <algorithm>
 #include "Container.h"
 
 
@@ -26,8 +25,7 @@ void Container::removeClientFromRooms(StreamerClient *client) {
         auto removed = room.second->removeClient(client);
         if (removed) {
             if (room.second->isEmpty()) {
-                rooms.erase(room.first);
-                delete room.second;
+                deleteRoom(room.first);
             } else {
                 sendListOfClientsToAllInRoom(room.second);
             }
@@ -51,13 +49,19 @@ void Container::sendListOfClientsToAllInRoom(Room *room) {
     resp.addToBody("room", room->getName());
     resp.addToBody("clients", names);
     resp.setStatus(200);
+    sendResponseToClients(clients, resp);
+}
+
+void Container::sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const {
     Message message(move(clients), resp.serialize());
     messageSender->sendMessage(message);
 }
 
 void Container::createRoomIfNotExists(const std::string &name) {
-    if (rooms.count(name) == 0)
+    if (rooms.count(name) == 0) {
         rooms[name] = new Room(name);
+        watcher->markGlobalChange();
+    }
 }
 
 void Container::deleteRoom(const std::string &name) {
@@ -72,21 +76,31 @@ void Container::deleteRoom(const std::string &name) {
 
         delete(room);
         rooms.erase(name);
+        watcher->markGlobalChange();
     }
+}
+
+ClientResponse Container::createRoomsResponse() {
+    auto response = ClientResponse();
+    response.setStatus(200);
+    response.addToBody("rooms", getRoomsList());
+    return response;
 }
 
 Container::Container()
         : clients(unordered_map<string, StreamerClient*>()),
           rooms(unordered_map<string, Room*>()),
-          messageSender(new MessageSender()) {};
+          messageSender(new MessageSender()),
+          watcher(new StateChangeWatcher(this)){};
 
 Container::~Container() {
+    delete watcher;
+    delete messageSender;
     synchronized(roomsMut) {
-        for(auto&& room: rooms) {
+        for (auto&& room: rooms) {
             deleteRoom(room.first);
         }
     }
-    delete messageSender;
 }
 
 vector<string> Container::getRoomsList() {
@@ -119,22 +133,72 @@ void Container::removeClient(StreamerClient * client) {
     }
 }
 
-void Container::sendToAll(const string &message) {
+void Container::sendToAll(ClientResponse &resp) {
     synchronized(clientsMut) {
-        for (auto && client: clients) {
-            client.second;
-        }
+        unordered_set<StreamerClient*> clientsSet;
+        transform(clients.begin(), clients.end(), inserter(clientsSet, clientsSet.begin()),
+                       [](const pair<string, StreamerClient*>& key_value) {
+                           return key_value.second;
+                       });
+        sendResponseToClients(clientsSet, resp);
     }
 }
 
 StreamerClient * Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
     synchronized(clientsMut) {
-        auto client = clients.find(clientName);
+        auto clientEntry = clients.find(clientName);
 
-        if (client != clients.end()) {
-            client->second -> subscribeForMessages(messageSocketFd);
-            return client->second;
+        if (clientEntry != clients.end()) {
+            auto client = clientEntry->second;
+            client-> subscribeForMessages(messageSocketFd);
+            watcher->requestUpdate(client);
+            return client;
         }
         return nullptr;
+    }
+}
+
+void StateChangeWatcher::spreadChangeStateInfo() {
+    auto message = container->createRoomsResponse();
+    container->sendToAll(message);
+}
+
+StateChangeWatcher::StateChangeWatcher(Container *container)
+        : container(container),
+          changeMark(false) {
+    watchThread = new thread([=]() {
+        while (true) {
+            if (changeMark) {
+                changeMark = false;
+                spreadChangeStateInfo();
+                synchronized(receiversMut) {
+                    receivers.clear();
+                }
+            } else {
+                synchronized(receiversMut) {
+                    if (!receivers.empty()) {
+                        auto message = container->createRoomsResponse();
+                        container->sendResponseToClients(receivers, message);
+                        receivers.clear();
+                    }
+                }
+            }
+            sleep(1);
+        } 
+    });
+    watchThread->detach();
+}
+
+StateChangeWatcher::~StateChangeWatcher() {
+    delete(watchThread);
+}
+
+void StateChangeWatcher::markGlobalChange() {
+    changeMark = true;
+}
+
+void StateChangeWatcher::requestUpdate(StreamerClient *client) {
+    synchronized(receiversMut) {
+        receivers.insert(client);
     }
 }

@@ -22,6 +22,7 @@ public:
     void fillOkResultIfNotSet();
     static ClientResponse error(int status, const string &message);
     bool isError();
+    void asUnknownResponse();
 
 };
 

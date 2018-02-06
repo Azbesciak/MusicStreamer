@@ -41,6 +41,8 @@ ClientResponse BroadCastRequestProcessor::onNewRequest(Request *request, const s
         } else {
             response->setError(404, "User not found.");
         }
+    } else {
+        response->asUnknownResponse();
     }
     return *response;
 }

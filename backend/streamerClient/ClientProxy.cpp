@@ -25,13 +25,15 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
     } else if (method == GET_ROOMS_ACTION) {
 
-        response->addToBody("rooms", container->getRoomsList());
+        return container->createRoomsResponse();
 
     } else if (method == UPLOAD_ACTION) {
 
         auto fileSize = request->getInt("trackFileSize");
 
         *response = handleTrackUpload(fileSize);
+    } else {
+        response->asUnknownResponse();
     }
     return *response;
 }
