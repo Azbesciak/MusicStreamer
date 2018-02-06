@@ -4,7 +4,7 @@
 
 void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
-        removeClientFromRooms(client);
+        removeClientFromRoomsUnsync(client);
         createRoomIfNotExists(name);
         addNewClient(client, name);
     }
@@ -20,7 +20,14 @@ void Container::addNewClient(StreamerClient *client, const string &name) {
     sendListOfClientsToAllInRoom(room);
 }
 
+
 void Container::removeClientFromRooms(StreamerClient *client) {
+    synchronized(roomsMut) {
+        removeClientFromRoomsUnsync(client);
+    }
+}
+
+void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
     for (auto && room: rooms) {
         auto removed = room.second->removeClient(client);
         if (removed) {
@@ -32,7 +39,7 @@ void Container::removeClientFromRooms(StreamerClient *client) {
             break;
         }
     }
-
+    // FIXME sense of problems...
     client->setCurrentRoom(nullptr);
 }
 
@@ -129,7 +136,7 @@ void Container::removeClient(StreamerClient * client) {
         clients.erase(client->getName());
     }
     synchronized(roomsMut) {
-        removeClientFromRooms(client);
+        removeClientFromRoomsUnsync(client);
     }
 }
 
@@ -157,6 +164,7 @@ StreamerClient * Container::subscribeClientForMessages(const string &clientName,
         return nullptr;
     }
 }
+
 
 void StateChangeWatcher::spreadChangeStateInfo() {
     auto message = container->createRoomsResponse();

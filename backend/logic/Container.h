@@ -40,6 +40,7 @@ private:
     void createRoomIfNotExists(const string &name);
     void sendListOfClientsToAllInRoom(Room *room);
     void addNewClient(StreamerClient *client, const string &name);
+    void removeClientFromRoomsUnsync(StreamerClient *client);
 
 public:
     Container();
@@ -54,7 +55,6 @@ public:
     void sendToAll(ClientResponse &resp);
 
     ClientResponse createRoomsResponse();
-
     void sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const;
 };
 

@@ -23,6 +23,10 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
         auto roomName = request->getStr("roomName");
         container->joinClientToRoom(client, roomName);
 
+    } else if (method == LEAVE_ACTION) {
+
+        container->removeClientFromRooms(client);
+
     } else if (method == GET_ROOMS_ACTION) {
 
         return container->createRoomsResponse();
