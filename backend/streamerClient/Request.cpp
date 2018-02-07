@@ -4,14 +4,20 @@
 
 static const char *const METHOD_KEY = "method";
 
-Request::Request(char *message) {
-    original = std::string(message);
-    try {
-        request = json::parse(message);
-        method = request.at(METHOD_KEY).get<std::string>();
-    } catch (json::exception &e) {
-        std::cerr<< "ERROR parsing message:" << e.what() <<std::endl;
-        correct = false;
+Request::Request(char *message): Request(std::string(message)) {}
+
+Request::Request(const std::string &message, bool correct) {
+    original = message;
+    if (correct) {
+        try {
+            request = json::parse(message);
+            method = request.at(METHOD_KEY).get<std::string>();
+        } catch (json::exception &e) {
+            std::cerr<< "ERROR parsing message:" << e.what() <<std::endl;
+            this->correct = false;
+        }
+    } else {
+        this->correct = false;
     }
 }
 
@@ -38,3 +44,4 @@ std::string Request::serialize() {
 bool Request::isCorrect() {
     return correct;
 }
+

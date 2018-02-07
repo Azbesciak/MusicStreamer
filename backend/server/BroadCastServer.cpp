@@ -25,6 +25,7 @@ void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr
         if (request == nullptr || tries <= 0) {
             cout << "Socket " << clientSocket << " was closed." << endl;
             close(clientSocket);
+            tries = -1;
         }
         delete request;
     }

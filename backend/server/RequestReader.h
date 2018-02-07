@@ -5,14 +5,18 @@
 
 #include <streamerClient/Request.h>
 
-#define BUFFER_SIZE 1000
+#define BUFFER_SIZE 1
+#define MAX_READ_SIZE 4096
 
 class RequestReader {
     char *buffer;
     int socketFd;
+    ssize_t readFromSocket();
+
 public:
     explicit RequestReader(int socketFd);
     Request* readRequest();
+
 };
 
 
