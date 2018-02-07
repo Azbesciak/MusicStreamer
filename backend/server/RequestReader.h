@@ -5,8 +5,7 @@
 
 #include <streamerClient/Request.h>
 
-#define BUFFER_SIZE 1
-#define MAX_READ_SIZE 4096
+#define BUFFER_SIZE 128
 
 class RequestReader {
     char *buffer;
@@ -15,8 +14,7 @@ class RequestReader {
 
 public:
     explicit RequestReader(int socketFd);
-    Request* readRequest();
-
+    std::vector<Request*> readRequest();
 };
 
 

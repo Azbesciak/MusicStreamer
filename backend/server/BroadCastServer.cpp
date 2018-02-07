@@ -8,26 +8,32 @@ BroadCastServer::BroadCastServer(const string &host, int port, ServerManager *ma
 void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr) {
     auto reader = new RequestReader(clientSocket);
     auto processor = new BroadCastRequestProcessor(manager, clientSocket);
+    bool shouldStop = false;
     int tries = 3;
-    while (tries-- > 0) {
-        auto request = reader->readRequest();
-        if (request != nullptr) {
-            auto response = processor->onNewRequest(request);
-            if (response.isError()) {
-                response.addToBody("tries", tries);
+    while (tries > 0 && !shouldStop) {
+        auto requests = reader->readRequest();
+        for (auto request : requests) {
+            tries--;
+            if (request != nullptr) {
+                auto response = processor->onNewRequest(request);
+                if (response.isError()) {
+                    response.addToBody("tries", tries);
+                }
+                processor->respond(&response);
+                if (!response.isError()) {
+                    shouldStop = true;
+                    break;
+                }
             }
-            processor->respond(&response);
-            if (!response.isError()) {
-                delete request;
-                break;
+            if (request == nullptr || tries <= 0) {
+                cout << "Socket " << clientSocket << " was closed." << endl;
+                close(clientSocket);
+                tries = -1;
             }
         }
-        if (request == nullptr || tries <= 0) {
-            cout << "Socket " << clientSocket << " was closed." << endl;
-            close(clientSocket);
-            tries = -1;
+        for (auto req: requests) {
+           delete req;
         }
-        delete request;
     }
     delete processor;
     delete reader;

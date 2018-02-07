@@ -1,3 +1,5 @@
+#include <iostream>
+#include <utility/TerminalUtils.h>
 #include "StreamerClient.h"
 
 using namespace std;
@@ -24,7 +26,15 @@ ssize_t StreamerClient::sendMessage(const string &message) {
 }
 
 ssize_t StreamerClient::sendOnBroadCast(const string &mes) {
-    return sendMessage(mes, broadCastSocket);
+    auto wrote = sendMessage(mes, broadCastSocket);
+    if (wrote < 0) {
+        cout << "Broadcast socket for "
+             << MAGENTA_TEXT((name.empty() ? "ANONYMOUS" : name))
+             << (broadCastSocket != nullptr ? (string("(") + to_string(broadCastSocket->get()) + ")"): "")
+             << " was closed."
+             << endl;
+        removeSocket(broadCastSocket);
+    }
 }
 
 ssize_t StreamerClient::sendMessage(const string &mes, Socket *socket) {

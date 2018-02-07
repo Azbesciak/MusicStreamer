@@ -12,30 +12,42 @@ void CommunicationServer::onNewConnection(int clientSocket, const string &remote
          << BLUE_TEXT(remoteAddr) << endl;
     auto *reader = new RequestReader(clientSocket);
     auto proxy = new ClientProxy(clientSocket, manager->container);
-    while (true) {
-        Request *request = reader->readRequest();
-        if (request != nullptr) {
-            manageRequestCoroutine(clientSocket, remoteAddr, request, proxy);
-            delete request;
-        } else {
-            cout << RED_TEXT("Client from " << remoteAddr << ", descriptor " << clientSocket
-                                            << " has disconnected (" << serverName << ")!\n");
-            delete proxy;
-            return;
+    bool hasDisconnected = false;
+    while (!hasDisconnected) {
+        auto requests = reader->readRequest();
+        for (auto req : requests) {
+            auto wasSuccessful = false;
+            if (req != nullptr) {
+                wasSuccessful = manageRequest(clientSocket, remoteAddr, req, proxy);
+            } else {
+                cout << RED_TEXT("Client from " << remoteAddr << ", descriptor " << clientSocket
+                                                << " has disconnected (" << serverName << ")!\n");
+            }
+            if (!wasSuccessful) {
+                cout << BLUE_TEXT("Closing connection with " << clientSocket) << endl;
+                delete proxy;
+                hasDisconnected = true;
+                break;
+            }
+        }
+        for (auto req: requests) {
+            delete req;
         }
     }
 }
 
-void CommunicationServer::manageRequestCoroutine(int clientSocket, const string &remoteAddr, Request *request,
+bool CommunicationServer::manageRequest(int clientSocket, const string &remoteAddr, Request *request,
                                                  ClientProxy *proxy) {
     displayRequest(clientSocket, request);
     auto response = proxy->onNewRequest(request);
     auto serializedResponse = response.serialize();
     displayResponse(clientSocket, serializedResponse);
-    const auto wrote = proxy->respond(serializedResponse);
-    if (wrote == -1) {
+    bool wrote = proxy->respond(serializedResponse) >= 0;
+    if (!wrote) {
         cout << RED_TEXT("Error while sending client response: \n\t")
              << MAGENTA_TEXT(serializedResponse)
-             << RED_TEXT("\n to " << remoteAddr);
+             << RED_TEXT("\n to " << remoteAddr)
+             << endl;
     }
+    return wrote;
 }
