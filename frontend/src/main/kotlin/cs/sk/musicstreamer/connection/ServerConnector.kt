@@ -89,7 +89,7 @@ class ServerConnector(
     }
 
     private suspend fun AsynchronousSocketChannel.write(request: Request): Int {
-        val requestString = objectMapper.writeValueAsString(request)
+        val requestString = "<${objectMapper.writeValueAsString(request)}>"
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
         return aWrite(buf = bytes)
     }
