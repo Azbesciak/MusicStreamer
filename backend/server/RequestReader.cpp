@@ -10,7 +10,7 @@ ssize_t RequestReader::readFromSocket() {
     do {
         memset(buffer, 0, BUFFER_SIZE);
         auto r = read(socketFd, buffer, BUFFER_SIZE);
-        if (buffer[0] == '\n') {
+        if (r > 0 && buffer[0] == '\n') {
             continue;
         } else {
             return r;
@@ -22,18 +22,17 @@ ssize_t RequestReader::readFromSocket() {
 Request *RequestReader::readRequest() {
     std::string message;
     auto value = readFromSocket();
-
-    if (buffer[0] != '<') {
-        return new Request("invalid input format", false);
-    } else if (value <= 0){
+    if (value <= 0){
         return nullptr;
+    } else if (buffer[0] != '<') {
+        return new Request("invalid input format", false);
     }
     while (true) {
         value = readFromSocket();
-        if (buffer[0] == '>') {
-            return new Request(message);
-        } else if (value <=0) {
+        if (value <= 0) {
             return nullptr;
+        } else if (buffer[0] == '>') {
+            return new Request(message);
         } else if (message.length() > MAX_READ_SIZE) {
             return new Request("Too long: " + message, false);
         } else {
