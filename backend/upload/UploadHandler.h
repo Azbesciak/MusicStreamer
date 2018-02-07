@@ -52,10 +52,10 @@ private:
 
     void downloadFile(UploadMeta* uploadMeta);
     std::string acceptToken(int clientSocket);
-    int acceptFileBytes(int clientSocket, int fileSize);
+    UploadedFile* acceptFileBytes(int clientSocket, long fileSize);
 
 
-    int createFile();
+    UploadedFile* createNewUploadedFile();
     std::string resolveNewFilePath();
 
     void logUploadConnection(sockaddr_in clientAddress);

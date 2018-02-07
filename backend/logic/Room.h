@@ -8,6 +8,7 @@
 #include <mutex>
 #include <logic/MusicStreamer.h>
 #include <logic/MusicTrack.h>
+#include "TracksQueue.h"
 
 using namespace std;
 
@@ -23,10 +24,10 @@ private:
     std::recursive_mutex mut;
 
     std::unordered_set<StreamerClient*> clients;
+    std::vector<MusicTrack*> availableTracks;
 
-    MusicStreamer *streamer;
-    std::vector<MusicTrack*> tracks;
-    std::vector<MusicTrack*> trackQueue;
+    MusicStreamer* streamer;
+    TracksQueue* tracksQueue;
 
     string name;
 
@@ -41,6 +42,9 @@ public:
 
     MusicTrack* reserveTrackSlot();
     void cancelTrackReservation(MusicTrack* musicTrack);
+
+    MusicTrack* findTrackByName(std::string trackName);
+    TracksQueue* getTracksQueue();
 };
 
 

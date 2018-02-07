@@ -5,13 +5,20 @@
 #include "utility/synch.h"
 #include "streamerClient/StreamerClient.h"
 
+
 Room::Room(string name): name(std::move(name)) {
 
+    tracksQueue = new TracksQueue();
+    streamer = new MusicStreamer(this);
 }
+
 
 Room::~Room() {
 
+    delete streamer;
+    delete tracksQueue;
 }
+
 
 bool Room::removeClient(StreamerClient *client) {
     synchronized(mut) {
@@ -19,9 +26,11 @@ bool Room::removeClient(StreamerClient *client) {
     }
 }
 
+
 unordered_set<StreamerClient*> Room::getClients() {
     return clients;
 }
+
 
 void Room::addClient(StreamerClient *client) {
     synchronized(mut) {
@@ -29,13 +38,16 @@ void Room::addClient(StreamerClient *client) {
     }
 }
 
+
 bool Room::isEmpty() {
     return clients.empty();
 }
 
+
 string Room::getName() {
     return name;
 }
+
 
 MusicTrack* Room::reserveTrackSlot() {
 
@@ -43,27 +55,32 @@ MusicTrack* Room::reserveTrackSlot() {
 
     synchronized(mut) {
 
-        if (tracks.size() < MAX_TRACK_NUMBER) {
+        if (availableTracks.size() < MAX_TRACK_NUMBER) {
 
             track = new MusicTrack();
-            tracks.push_back(track);
+            availableTracks.push_back(track);
         }
     }
 
     return track;
 }
 
+
 void Room::cancelTrackReservation(MusicTrack* musicTrack) {
 
     synchronized(mut) {
 
-        // Huehue long
-        long trackIndex = distance(tracks.begin(), find(tracks.begin(), tracks.end(), musicTrack));
+        long trackIndex = distance(availableTracks.begin(), find(availableTracks.begin(), availableTracks.end(), musicTrack));
 
-        if (trackIndex < tracks.size()) {
+        if (trackIndex < availableTracks.size()) {
 
-            tracks.erase(tracks.begin() + trackIndex);
+            availableTracks.erase(availableTracks.begin() + trackIndex);
             delete musicTrack;
         }
     }
+}
+
+
+TracksQueue* Room::getTracksQueue() {
+    return tracksQueue;
 }

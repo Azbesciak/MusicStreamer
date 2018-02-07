@@ -17,6 +17,8 @@ add_executable(MusicStreamer
         logic/Room.h
         logic/Container.cpp
         logic/Container.h
+        logic/TracksQueue.cpp
+        logic/TracksQueue.h
         utility/synch.h
         streamerClient/ClientResponse.cpp
         streamerClient/ClientResponse.h
@@ -39,6 +41,8 @@ add_executable(MusicStreamer
         upload/TrackUpload.h
         upload/UploadMeta.cpp
         upload/UploadMeta.h
+        upload/UploadedFile.cpp
+        upload/UploadedFile.h
         upload/exception/FileUploadException.cpp
         upload/exception/FileUploadException.h
         utility/Config.cpp
@@ -50,8 +54,6 @@ add_executable(MusicStreamer
         server/AbstractServer.h
         server/TcpServer.cpp
         server/TcpServer.h
-        server/UdpServer.cpp
-        server/UdpServer.h
         server/BroadCastServer.cpp
         server/BroadCastServer.h
         streamerClient/Socket.h
@@ -60,4 +62,12 @@ add_executable(MusicStreamer
         server/RequestReader.cpp
         server/RequestReader.h
         streamerClient/RequestProcessor.cpp
-        streamerClient/RequestProcessor.h)
+        streamerClient/RequestProcessor.h
+        server/music/MusicChannel.cpp
+        server/music/MusicChannel.h
+        server/music/WavHeaderStreamer.cpp
+        server/music/WavHeaderStreamer.h
+        server/music/WavSignalStreamer.cpp
+        server/music/WavSignalStreamer.h
+        server/UdpServer.cpp
+        server/UdpServer.h)

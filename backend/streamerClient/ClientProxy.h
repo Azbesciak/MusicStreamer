@@ -10,6 +10,7 @@
 #include "Request.h"
 #include "RequestProcessor.h"
 
+class MusicTrack;
 
 class ClientProxy: public RequestProcessor {
     Container* container;

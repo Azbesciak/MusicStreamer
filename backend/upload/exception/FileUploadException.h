@@ -16,7 +16,7 @@ public:
 
     FileUploadException(int statusCode, std::string message) throw();
 
-    virtual const char* what() const throw();
+    const char* what() const throw() override;
     int getStatusCode();
 };
 

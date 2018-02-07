@@ -5,16 +5,30 @@
 
 
 #include <unordered_set>
+#include <logic/MusicTrack.h>
+#include <server/music/MusicChannel.h>
 #include "streamerClient/StreamerClient.h"
 
-class StreamerClient;
+
+class Room;
 
 class MusicStreamer {
+
 private:
-    std::unordered_set<StreamerClient*>* clients;
+
+    MusicChannel* musicChannel;
+
 public:
-    explicit MusicStreamer(std::unordered_set<StreamerClient*>* clients);
-    void init();
+
+    explicit MusicStreamer(Room* room);
+
+    void streamTrack(MusicTrack* track);
+
+    void pauseTrack();
+    void resumeTrack();
+
+    void stopStream();
+
     ~MusicStreamer();
 };
 

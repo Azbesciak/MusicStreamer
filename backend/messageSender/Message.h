@@ -8,6 +8,9 @@ using namespace std;
 
 #ifndef MUSICSTREAMER_MESSAGE_H
 #define MUSICSTREAMER_MESSAGE_H
+
+class StreamerClient;
+
 class Message {
     unordered_set<StreamerClient*> receivers;
     string content;

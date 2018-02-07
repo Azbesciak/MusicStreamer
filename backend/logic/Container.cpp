@@ -10,6 +10,7 @@ void Container::joinClientToRoom(StreamerClient *client, const std::string &name
     }
 }
 
+
 void Container::addNewClient(StreamerClient *client, const string &name) {
 
     auto room = rooms[name];

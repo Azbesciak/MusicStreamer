@@ -15,7 +15,7 @@ long FileUpload::getFileSize() {
 }
 
 
-void FileUpload::onUploadCompleted(int fileDescriptor) {
+void FileUpload::onUploadCompleted(UploadedFile* uploadedFile) {
     // No action by default
 }
 

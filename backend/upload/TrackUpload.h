@@ -2,6 +2,7 @@
 #define MUSICSTREAMER_TRACKUPLOAD_H
 
 #include <logic/MusicTrack.h>
+#include <logic/Room.h>
 #include "FileUpload.h"
 
 
@@ -10,20 +11,18 @@ class TrackUpload : public FileUpload {
 private:
 
     MusicTrack* track;
-    ClientProxy* clientProxy;
+    Room* room;
 
 public:
 
-    TrackUpload(MusicTrack* track, ClientProxy* clientProxy, int fileSize)
+    TrackUpload(MusicTrack* track, Room* room, int fileSize)
         : FileUpload(fileSize) {
 
         this->track = track;
-        this->clientProxy = clientProxy;
+        this->room = room;
     }
 
-    void downloadFile() override;
-
-    void onUploadCompleted(int fileDescriptor) override;
+    void onUploadCompleted(UploadedFile* uploadedFile) override;
     void onUploadFailed() override;
 };
 

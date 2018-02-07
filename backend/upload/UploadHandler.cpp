@@ -2,12 +2,11 @@
 
 #include <server/SocketFactory.h>
 #include <upload/exception/FileUploadException.h>
+#include <streamerClient/ClientResponse.h>
 #include <utility/token.hpp>
+#include <utility/synch.h>
 
 #include <fcntl.h>
-#include <utility/synch.h>
-#include <streamerClient/ClientResponse.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 
 using namespace std;
@@ -118,9 +117,9 @@ void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
         if (upload == nullptr)
             throw FileUploadException(404, "Upload with the token not found");
 
-        int fileDescriptor = acceptFileBytes(uploadMeta->getClientSocket(), upload->getFileSize());
+        UploadedFile* uploadedFile = acceptFileBytes(uploadMeta->getClientSocket(), upload->getFileSize());
 
-        upload->onUploadCompleted(fileDescriptor);
+        upload->onUploadCompleted(uploadedFile);
         client.sendMessage(ClientResponse(200, "File uploaded successfully").serialize());
 
         close(uploadMeta->getClientSocket());
@@ -138,15 +137,20 @@ void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
 }
 
 
-int UploadHandler::acceptFileBytes(int clientSocket, int fileSize) {
+UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
 
-    int file = createFile();
+    UploadedFile* file = createNewUploadedFile();
 
-    if (file < 0)
+    if (file == nullptr)
         throw FileUploadException(500, "Unexpected file upload error");
 
     int remainingSize = fileSize;
     auto * buffer = new char[BYTE_BUFFER_SIZE + 1];
+
+    int fileDescriptor = open(file->getFileName().c_str(), O_WRONLY);
+
+    if (fileDescriptor < 0)
+        throw FileUploadException(500, "Unexpected file upload error");
 
     try {
 
@@ -167,7 +171,7 @@ int UploadHandler::acceptFileBytes(int clientSocket, int fileSize) {
             } else if (bytes > remainingSize)
                 throw FileUploadException(400, "Received bigger file that it was specified");
 
-            ssize_t writeBytes = write(file, buffer, bytes);
+            ssize_t writeBytes = write(fileDescriptor, buffer, bytes);
 
             if (writeBytes < 0)
                 throw FileUploadException(500, "Unexpected file write error");
@@ -177,12 +181,14 @@ int UploadHandler::acceptFileBytes(int clientSocket, int fileSize) {
 
     } catch(FileUploadException& ex) {
 
-        ftruncate(file, 0);
-        close(file);
+        close(fileDescriptor);
+        remove(file->getFileName().c_str());
+
         throw ex;
     }
 
-    close(file);
+    close(fileDescriptor);
+
     return file;
 }
 
@@ -242,20 +248,27 @@ string UploadHandler::acceptToken(int clientSocket) {
 
 void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
 
-    char address[INET_ADDRSTRLEN];
+    char address[INET_ADDRSTRLEN + 1];
 
     inet_ntop(AF_INET, &(clientAddress.sin_addr), address, INET_ADDRSTRLEN);
+    address[INET_ADDRSTRLEN] = '\0';
+
     printf("File upload from: %s\n", address);
 }
 
 
 string UploadHandler::prepareUpload(FileUpload* fileUpload) {
 
+    if (fileUpload->getFileSize() > MAX_FILE_SIZE)
+        return "";
+
     string token = "";
 
     synchronized(mut) {
 
         token = generateToken();
+
+        usedTokens.insert(token);
         uploads[token] = fileUpload;
     }
 
@@ -273,26 +286,28 @@ string UploadHandler::generateToken() {
 
     } while(usedTokens.find(token) != usedTokens.end());
 
-    usedTokens.insert(token);
-
     return token;
 }
 
 
-int UploadHandler::createFile() {
+UploadedFile* UploadHandler::createNewUploadedFile() {
 
+    UploadedFile* uploadedFile = nullptr;
     int fd = -1;
 
     synchronized(fileMut) {
 
         string fileName = resolveNewFilePath();
-        fd = creat(fileName.c_str(), O_WRONLY);
+        fd = creat(fileName.c_str(), 0);
 
-        if (fd < 0)
-            perror("Cannot create new file.\n");
+        if (fd >= 0) {
+
+            uploadedFile = new UploadedFile(fileName);
+            close(fd);
+        }
     }
 
-    return fd;
+    return uploadedFile;
 }
 
 
