@@ -1,4 +1,5 @@
 #include "../utility/json.hpp"
+#include "Request.h"
 
 using json = nlohmann::json;
 using namespace std;
@@ -8,6 +9,8 @@ using namespace std;
 
 class ClientResponse {
     int status;
+    bool hasId = false;
+    string id;
     json body;
 public:
     ClientResponse();
@@ -23,6 +26,7 @@ public:
     static ClientResponse error(int status, const string &message);
     bool isError();
     void asUnknownResponse();
+    void addIdFromRequestIfPresent(Request *request);
 
 };
 

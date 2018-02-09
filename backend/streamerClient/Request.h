@@ -14,7 +14,7 @@ class Request {
     bool correct = true;
 public:
     explicit Request(char * request);
-    Request(const std::string &request, bool correct = true);
+    explicit Request(const std::string &request, bool correct = true);
     int getInt(const std::string &name);
     std::string getStr(const std::string & name);
     std::string getMethod();

@@ -11,15 +11,14 @@ ClientResponse RequestProcessor::onNewRequest(Request *request) {
         string method = request->getMethod();
         try {
             auto resp2 = &resp;
-            auto response = onNewRequest(request, method, resp2);
-            response.fillOkResultIfNotSet();
-            return response;
+            resp = onNewRequest(request, method, resp2);
+            resp.fillOkResultIfNotSet();
 
         } catch (json::exception &e) {
             resp.setError(400, "Input is not correct");
         }
     }
-
+    resp.addIdFromRequestIfPresent(request);
     return resp;
 }
 

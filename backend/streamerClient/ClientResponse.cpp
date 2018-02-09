@@ -4,6 +4,9 @@
 string ClientResponse::serialize() {
     string resp ="{\"status\":" ;
     resp +=  to_string(status);
+    if (hasId) {
+        resp += R"(,"id":")" + id + "\"";
+    }
     resp += ",\"body\":";
     resp += body.dump() + "}";
     return resp;
@@ -64,6 +67,13 @@ bool ClientResponse::isError() {
 
 void ClientResponse::asUnknownResponse() {
     setError(404, "Unknown Request");
+}
+
+void ClientResponse::addIdFromRequestIfPresent(Request *request) {
+    if (request->has("id")) {
+        hasId = true;
+        id = request->getStr("id");
+    }
 }
 
 
