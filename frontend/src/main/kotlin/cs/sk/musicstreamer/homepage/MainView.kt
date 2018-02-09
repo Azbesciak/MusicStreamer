@@ -2,7 +2,7 @@ package cs.sk.musicstreamer.homepage
 
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
-import cs.sk.musicstreamer.connection.ServerConnector
+import cs.sk.musicstreamer.connection.CommunicationServerConnector
 import io.datafx.controller.ViewController
 import javafx.fxml.Initializable
 import javafx.scene.layout.StackPane
@@ -17,7 +17,7 @@ import java.util.*
 class MainView : View(), Initializable {
 
     override val root: StackPane by fxml("/main/main_view.fxml")
-    private val serverConnector: ServerConnector by di()
+    private val communicationServerConnector: CommunicationServerConnector by di()
     private val authService: AuthService by di()
 
     companion object : KLogging()
@@ -27,7 +27,7 @@ class MainView : View(), Initializable {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         kotlinx.coroutines.experimental.launch(JavaFx) {
-            if (serverConnector.isRunning()) {
+            if (communicationServerConnector.isRunning()) {
                 tryToAuthenticate()
             } else {
                 snackBar.fireEvent(JFXSnackbar.SnackbarEvent("Could not connect with server"))

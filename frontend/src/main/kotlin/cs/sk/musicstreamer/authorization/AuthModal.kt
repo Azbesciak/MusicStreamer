@@ -1,7 +1,7 @@
 package cs.sk.musicstreamer.authorization
 
 import com.jfoenix.controls.JFXButton
-import cs.sk.musicstreamer.connection.ServerConnector
+import cs.sk.musicstreamer.connection.CommunicationServerConnector
 import tornadofx.*
 import com.jfoenix.controls.JFXDialog
 import com.jfoenix.controls.JFXTextField
@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct
 
 @Component
 class AuthModal(
-        private val serverConnector: ServerConnector
+        private val communicationServerConnector: CommunicationServerConnector
 ) : View() {
 
     companion object : KLogging()
@@ -47,7 +47,7 @@ class AuthModal(
         username.validators.addAll(invalidUserName, internalServerError)
         acceptButton.onMouseClicked = EventHandler {
             val userNameValue = username.text
-            serverConnector.send(AuthRequest(userNameValue), {
+            communicationServerConnector.send(AuthRequest(userNameValue), {
                 userName = userNameValue
                 dialog.close()
             }, {

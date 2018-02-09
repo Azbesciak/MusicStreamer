@@ -1,59 +1,52 @@
 package cs.sk.musicstreamer.connection
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.nio.aConnect
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import mu.KLogging
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousSocketChannel
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
+abstract class ServerConnector(
+        private val host: String,
+        private val port: Int,
+        private val name: String) {
 
-@Service
-class ServerConnector(
-        @Value("\${server.host}") private val host: String,
-        @Value("\${server.port}") private val port: Int
-) {
 
     companion object : KLogging() {
         const val MAX_BUF_CAP = 512
         val objectMapper = ObjectMapper()
     }
 
-    private val queue = ConcurrentLinkedQueue<ConnectionRequest>()
+
     private val isRunning = AtomicBoolean(false)
-    private val serverDescription = "$host:$port"
+    protected val serverDescription = "$host:$port"
 
-    init {
-        initializeConnection(
-                { logger.info { "Successfully connected with $serverDescription" } },
-                { logger.error("Could not create connection with $serverDescription", it) }
-        )
-    }
+    fun initialize() =
+            initializeConnection(
+                    { logger.info { "Successfully connected $name with $serverDescription" } },
+                    { logger.error("Could not create connection for $name with $serverDescription", it) }
+            )
 
-    final fun initializeConnection(onSuccess: (Boolean) -> Unit, onError: (Exception) -> Unit) {
+    abstract suspend fun onConnection(socket: AsynchronousSocketChannel)
+    abstract fun parseResponse(status: Int, body: JsonNode): Response<*>
+
+    fun initializeConnection(onSuccess: (wasConnected: Boolean) -> Unit, onError: (Exception) -> Unit) {
         if (isRunning.get().not()) {
             logger.info { "Initializing connection" }
             launch {
                 connect({ socket ->
                     onSuccess(false)
                     while (isRunning.get()) {
-                        queue.whileNotEmpty {
-                            val wrote = socket.write(it.request)
-                            if (wrote <= 0) {
-                                logger.error { "Could not write to $serverDescription" }
-                                it.onError(ErrorResponse(body = "Couldn't send request to server"))
-                            } else {
-                                socket.read(it.onResponse, it.onError)
-                            }
-                        }
+                        onConnection(socket)
+                        delay(1000)
                     }
                 }, onError = onError)
             }
@@ -79,23 +72,14 @@ class ServerConnector(
 
     fun shutdown() = isRunning.set(false)
 
-    fun send(request: Request, onResponse: (Response<*>) -> Unit, onError: (ErrorResponse) -> Unit) =
-            queue.add(ConnectionRequest(request, onResponse, onError))
-
-    private inline fun <T> ConcurrentLinkedQueue<T>.whileNotEmpty(f: (T) -> Unit) {
-        while (isNotEmpty()) {
-            f(poll())
-        }
-    }
-
-    private suspend fun AsynchronousSocketChannel.write(request: Request): Int {
+    protected suspend fun AsynchronousSocketChannel.write(request: Request): Int {
         val requestString = objectMapper.writeValueAsString(request)
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
         return aWrite(buf = bytes)
     }
 
 
-    private suspend fun AsynchronousSocketChannel.read(
+    protected suspend fun AsynchronousSocketChannel.read(
             onResponse: (Response<*>) -> Unit,
             onError: (ErrorResponse) -> Unit) {
         val buffer = ByteBuffer.allocate(MAX_BUF_CAP)
@@ -111,24 +95,26 @@ class ServerConnector(
         }
     }
 
-    private fun ByteBuffer.parse(): Response<*> {
+    fun defaultResponse(status: Int, body: JsonNode) = StringResponse(status, body.asText())
+
+    protected fun ByteBuffer.parse(): Response<*> {
         with(objectMapper.readTree(String(array()))) {
             val body = get("body")
             val status = get("status").asInt()
+            val idNode = get("id")
+            hasNonNull("id")
             return when {
                 status in 400..499 -> ErrorResponse(status, body.get("error").asText())
                 status >= 500 -> ErrorResponse(status, "Internal server error")
                         .also { logger.error { body.get("error") } }
-                else -> StringResponse(status, body.asText())
+                else -> parseResponse(status, body)
             }
         }
     }
 
-    private data class ConnectionRequest(
+    protected data class ConnectionRequest(
             val request: Request,
             val onResponse: (Response<*>) -> Unit = {},
             val onError: (ErrorResponse) -> Unit = {}
     )
 }
-
-
