@@ -6,6 +6,7 @@ import tornadofx.*
 import com.jfoenix.controls.JFXDialog
 import com.jfoenix.controls.JFXTextField
 import cs.sk.musicstreamer.connection.AuthRequest
+import cs.sk.musicstreamer.connection.ReadWriteConnector
 import cs.sk.musicstreamer.utils.InvalidFieldValueValidator
 import cs.sk.musicstreamer.utils.VetoValidator
 import javafx.event.EventHandler
@@ -17,7 +18,7 @@ import javax.annotation.PostConstruct
 
 @Component
 class AuthModal(
-        private val communicationServerConnector: CommunicationServerConnector
+        private val communicationServerConnector: ReadWriteConnector
 ) : View() {
 
     companion object : KLogging()
