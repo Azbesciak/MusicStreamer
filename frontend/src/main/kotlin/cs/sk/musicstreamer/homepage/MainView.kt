@@ -80,11 +80,13 @@ class MainView : View(), Initializable {
                 onError = { showSnackBar("An error occurred on broadcast channel") }
         ))
         broadCastServer.addMessagesListener(ResponseListener(
-                onResponse = {
-                    with(it.body) {
-                        if (has("rooms")) {
-                            val rooms = get("rooms").map { it.asText() }
-                            roomsView.updateRooms(rooms)
+                onResponse = { resp ->
+                    fxCoroutine {
+                        with(resp.body) {
+                            if (has("rooms")) {
+                                val rooms = get("rooms").map { it.asText() }
+                                roomsView.updateRooms(rooms)
+                            }
                         }
                     }
                 },
@@ -97,19 +99,25 @@ class MainView : View(), Initializable {
                         broadCastServer.connect()
                     }
                 },
+                onDisconnect = { fxCoroutine { onDisconnect() } },
                 onError = {
                     fxCoroutine {
-                        broadCastServer.disconnect()
                         showSnackBar("Could not connect with server")
-                        delay(5000)
-                        connectButton.isDisable = false
+                        onDisconnect()
                     }
                 }
         ))
         connect()
     }
 
-    private fun <T> fxCoroutine(f: suspend(CoroutineScope) -> T) {
+    private suspend fun onDisconnect() {
+        broadCastServer.disconnect()
+        authService.cleanUser()
+        delay(5000)
+        connectButton.isDisable = false
+    }
+
+    private fun <T> fxCoroutine(f: suspend (CoroutineScope) -> T) {
         kotlinx.coroutines.experimental.launch(JavaFx) {
             f(this)
         }

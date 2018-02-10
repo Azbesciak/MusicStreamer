@@ -1,5 +1,6 @@
 
 #include <unistd.h>
+#include <utility/TerminalUtils.h>
 #include "MessageSender.h"
 
 MessageSender::MessageSender() {
@@ -8,6 +9,7 @@ MessageSender::MessageSender() {
             while (!messages.empty()) {
                 Message* message = &messages.front();
                 const string &content = message->getContent();
+                cout << BLUE_TEXT("New broadCast message: ") << content << endl;
                 for (auto && rec: message->getReceivers()) {
                     rec->sendOnBroadCast(content);
                 }

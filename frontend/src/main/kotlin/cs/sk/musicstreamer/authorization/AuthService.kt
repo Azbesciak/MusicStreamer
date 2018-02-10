@@ -20,7 +20,13 @@ class AuthService(private val authModal: AuthModal) {
         else userName!!
     }
 
+    @Synchronized
     fun getUserName() = userName
+
+    @Synchronized
+    fun cleanUser() {
+        userName = null
+    }
 
 
 }

@@ -161,13 +161,13 @@ class Sock(
         val requestString = ServerConnector.objectMapper.writeValueAsString(request)
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
         return aWrite(buf = bytes).apply {
-            if (this < 0) throw ConnectionError("Could not write to $socketDescription")
+            if (this < 0) throwAndClose("Could not write to $socketDescription")
         }
     }
 
     private suspend fun <T> withSocket(f: suspend (AsynchronousSocketChannel) -> T): T {
         if (socket == null) {
-            throw ConnectionError("Socket is not connected")
+            throwAndClose("Socket is not connected")
         }
         return f(socket!!)
     }
@@ -177,8 +177,14 @@ class Sock(
     private suspend fun AsynchronousSocketChannel.readSocket(): String {
         val buf = ByteBuffer.allocate(bufferSize)
         val read = aRead(buf)
-        return if (read >= 0) buf.asString() else throw ConnectionError("Could not read from $socketDescription")
+        if (read >= 0)
+            return buf.asString()
+        else
+            throwAndClose("Could not read from $socketDescription")
     }
+
+    private fun throwAndClose(message: String): Nothing = throw ConnectionError(message)
+            .also { close() }
 
     @Synchronized
     suspend fun connect() {
@@ -199,13 +205,13 @@ class Sock(
 
     @Synchronized
     fun close(): Boolean {
+        isConnected.set(false)
         if (socket != null) {
             try {
                 socket!!.close()
             } catch (e: Error) {
             }
             socket = null
-            isConnected.set(false)
             return true
         }
         return false
@@ -383,7 +389,7 @@ class SocketReader(
             logger.debug { "New message from ${sock.socketDescription}: $message" }
             val body = get("body")
             val status = get("status").asInt()
-            val id: String? = get("id").asText(null)
+            val id: String? = if (hasNonNull("id")) get("id").asText() else null
             listeners.forEach { it.onNewMessage(status, id, body) }
         }
     }
