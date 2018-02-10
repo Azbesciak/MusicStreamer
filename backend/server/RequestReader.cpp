@@ -23,7 +23,6 @@ ssize_t RequestReader::readFromSocket() {
 std::vector<Request*> RequestReader::readRequest() {
     vector<Request*> requests;
     string originalMes;
-//    originalMes.tr
     readReq;
     int startFlag = 0;
     int startIndex = 0;
