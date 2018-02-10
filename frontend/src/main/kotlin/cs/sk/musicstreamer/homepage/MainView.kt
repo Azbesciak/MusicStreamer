@@ -47,18 +47,8 @@ class MainView : View(), Initializable {
     }
 
     private fun initView() {
-        drawer.setOnDrawerOpening {
-            with(roomsBurger.animation) {
-                rate = 1.0
-                play()
-            }
-        }
-        drawer.setOnDrawerClosing {
-            with(roomsBurger.animation) {
-                rate = 1.0
-                play()
-            }
-        }
+        drawer.setOnDrawerOpening { onDrawerChange() }
+        drawer.setOnDrawerClosing { onDrawerChange() }
         roomsPane.setOnMouseClicked({
             if (drawer.isHidden || drawer.isHiding) {
                 drawer.open()
@@ -68,6 +58,12 @@ class MainView : View(), Initializable {
         })
         drawer.sidePane += roomsView.root
     }
+
+    private fun onDrawerChange() =
+            with(roomsBurger.animation) {
+                rate = 1.0
+                play()
+            }
 
     private fun initConnectors() {
         connectButton.setOnMouseClicked {
@@ -121,7 +117,10 @@ class MainView : View(), Initializable {
         val userName = authService.getUserName()!!
         broadCastServer.send(
                 request = SubscribeRequest(userName),
-                onResponse = { logger.info { "BroadCast subscribed for $userName" } },
+                onResponse = {
+                    logger.info { "BroadCast subscribed for $userName" }
+                    drawer.open()
+                },
                 onError = { e -> logger.error { "could not subscribe for Broadcast: ${e.body}" } }
         )
     }
