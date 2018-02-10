@@ -177,8 +177,8 @@ class Sock(
     private suspend fun AsynchronousSocketChannel.readSocket(): String {
         val buf = ByteBuffer.allocate(bufferSize)
         val read = aRead(buf)
-        if (read >= 0)
-            return buf.asString()
+        return if (read >= 0)
+            buf.asString().replace("\u0000", "")
         else
             throwAndClose("Could not read from $socketDescription")
     }
@@ -377,7 +377,7 @@ class SocketReader(
                     }
                 }
             }
-            if (i >= message.length - 1 && startFlag >= 0) {
+            if (i >= message.length - 1 && startFlag > 0) {
                 message = socket.read()
             }
             i++
