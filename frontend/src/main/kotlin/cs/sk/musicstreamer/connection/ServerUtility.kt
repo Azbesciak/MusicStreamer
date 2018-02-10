@@ -45,7 +45,7 @@ abstract class Connector(host: String, port: Int) {
     protected val writer = SocketWriter()
     protected val messagesListener = UndefinedMessageListener(initialMessagesListeners())
     protected val responseListener = IdentifiedMessageListener()
-    protected val reader = SocketReader(listOf(messagesListener, responseListener))
+    protected val reader = SocketReader(listOf(messagesListener, responseListener), ::onError)
     protected val con = ServerCon(host, port, arrayOf(writer, reader), connectionListeners)
 
     fun connect() = launch {
@@ -73,18 +73,25 @@ abstract class Connector(host: String, port: Int) {
                 responseListener.removeListener(request)
                 onError(ErrorResponse(500, "Error while managing request from ${this::class.simpleName} - ${con.description}"))
                 if (e is ConnectionError) {
-                    connectionListeners.forEach { it.onError(e) }
+                    onError(e)
                 }
             }
         }
     }
+
+    private fun onError(e: Throwable) {
+        logger.error { "Error occured: ${e.message}" }
+        connectionListeners.forEach { it.onError(e) }
+    }
+
+
 }
 
 
 class ConnectionListener(
         val onConnection: () -> Unit = {},
         val onDisconnect: () -> Unit = {},
-        val onError: (Error) -> Unit = {}
+        val onError: (Throwable) -> Unit = {}
 )
 
 @Service
@@ -117,12 +124,14 @@ class ServerCon(host: String, port: Int,
                 }
                 listeners.forEach { it.onConnection() }
             } catch (e: Throwable) {
-                listeners.forEach { it.onError(Error(e)) }
+                onError(e)
             }
         }
     }
 
-
+    private fun onError(e: Throwable) {
+        listeners.forEach { it.onError(Error(e)) }
+    }
 
     @Synchronized
     fun disconnect() = sock.close()
@@ -278,7 +287,8 @@ interface SocketConsumer {
 class SocketWriter : SocketConsumer {
     private lateinit var sock: Sock
     private lateinit var isRunning: AtomicBoolean
-companion object : KLogging()
+
+    companion object : KLogging()
 
     override fun setSocket(socket: Sock) {
         this.sock = socket
@@ -299,7 +309,8 @@ companion object : KLogging()
 }
 
 class SocketReader(
-        private val listeners: List<MessageListener>
+        private val listeners: List<MessageListener>,
+        private val onError: (Throwable) -> Unit
 ) : SocketConsumer {
     override fun setSocket(socket: Sock) {
         sock = socket
@@ -324,6 +335,8 @@ class SocketReader(
                     while (isRunning.get()) {
                         consume(sock)
                     }
+                } catch (e: Throwable) {
+                    onError(e)
                 } finally {
                     listeners.forEach { it.onClose() }
                     isConnected.set(false)
