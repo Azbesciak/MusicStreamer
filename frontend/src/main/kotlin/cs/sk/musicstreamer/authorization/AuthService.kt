@@ -6,16 +6,21 @@ import kotlin.coroutines.experimental.suspendCoroutine
 
 @Service
 class AuthService(private val authModal: AuthModal) {
-    private lateinit var userName: String
+    private var userName: String? = null
 
+    @Synchronized
     suspend fun requestAuthorization(container: StackPane): String {
-       return if (!this::userName.isInitialized)
+       return if (userName == null)
             suspendCoroutine {cont ->
                 authModal.showLoginModal(container, {
                     userName = it
                     cont.resume(it)
                 })
             }
-        else userName
+        else userName!!
     }
+
+    fun getUserName() = userName
+
+
 }

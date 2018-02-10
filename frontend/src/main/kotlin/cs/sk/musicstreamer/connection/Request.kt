@@ -9,4 +9,5 @@ class JoinRequest(val roomName: String) : Request("JOIN")
 class RoomsRequest(val rooms: String) : Request("ROOMS")
 class LeaveRoomRequest : Request("LEAVE")
 class UploadRequest : Request("UPLOAD")
+class SubscribeRequest(val name: String) : Request("SUBSCRIBE")
 

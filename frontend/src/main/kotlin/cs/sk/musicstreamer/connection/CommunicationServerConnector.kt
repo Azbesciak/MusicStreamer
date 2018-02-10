@@ -32,9 +32,6 @@ class CommunicationServerConnector(
 
     fun send(request: Request, onResponse: (Response<*>) -> Unit, onError: (ErrorResponse) -> Unit) =
             queue.add(ConnectionRequest(request, onResponse, onError))
-
-
-
 }
 
 

@@ -15,38 +15,54 @@ import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousSocketChannel
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicBoolean
 
 
 @Service
 class ReadWriteConnector(
         @Value("\${server.host}") host: String,
-        @Value("\${server.connection.port}") port: Int) : Observable {
+        @Value("\${server.connection.port}") port: Int) : Connector(host, port) {
 
+    override fun initialConnectionListeners() =
+            listOf(ConnectionListener(
+                    { logger.info { "connection initialized" } },
+                    { logger.info { "disconnected with read-write server" } },
+                    { logger.error("error with socket", it) }
+            ))
+
+    override fun initialMessagesListeners() = listOf(ResponseListener(::manageUndefinedResponse, ::manageUndefinedResponse))
+
+    private fun manageUndefinedResponse(response: Response<*>) {
+        logger.info { "Undefined response for ReadWriteConnector: $response" }
+    }
+}
+
+abstract class Connector(host: String, port: Int) {
     companion object : KLogging()
 
-    private val writer = SocketWriter()
-    private val messagesListener = UndefinedMessageListener(
-            listOf(ResponseListener(::manageUndefinedResponse, ::manageUndefinedResponse))
-    )
-    private val responseListener = IdentifiedMessageListener()
-    private val reader = SocketReader(listOf(messagesListener, responseListener))
-    final override val listeners = CopyOnWriteArrayList<ConnectionListener>()
-    private val con = ServerCon(host, port, arrayOf(writer, reader), listeners)
-
-    private val connectionListeners = mutableListOf(
-            ConnectionListener(
-                    { logger.info { "connection initialized" } },
-                    { logger.info { "connection lost" } },
-                    { logger.error("error with socket", it) }
-            )
-    )
+    protected val connectionListeners = CopyOnWriteArrayList(initialConnectionListeners())
+    protected val writer = SocketWriter()
+    protected val messagesListener = UndefinedMessageListener(initialMessagesListeners())
+    protected val responseListener = IdentifiedMessageListener()
+    protected val reader = SocketReader(listOf(messagesListener, responseListener))
+    protected val con = ServerCon(host, port, arrayOf(writer, reader), connectionListeners)
 
     fun connect() = launch {
         con.connect()
     }
 
+    fun disconnect() {
+        if (con.disconnect()) {
+            connectionListeners.forEach { it.onDisconnect() }
+        }
+    }
+
     fun isConnected() = con.isConnected()
+    fun addConnectionListener(listener: ConnectionListener) = connectionListeners.add(listener)
+
+    protected open fun initialConnectionListeners() = listOf<ConnectionListener>()
+    protected open fun initialMessagesListeners() = listOf<ResponseListener>()
 
     fun send(request: Request, onResponse: (JsonResponse) -> Unit, onError: (ErrorResponse) -> Unit) {
         launch {
@@ -62,19 +78,12 @@ class ReadWriteConnector(
             }
         }
     }
-
-    private fun manageUndefinedResponse(response: Response<*>) {
-        logger.info { "Undefined response for ReadWriteConnector: $response" }
-    }
 }
 
-interface Observable {
-    val listeners: CopyOnWriteArrayList<ConnectionListener>
-}
 
 class ConnectionListener(
         val onConnection: () -> Unit = {},
-        val onConnectionLost: () -> Unit = {},
+        val onDisconnect: () -> Unit = {},
         val onError: (Error) -> Unit = {}
 )
 
@@ -82,14 +91,8 @@ class ConnectionListener(
 class ReadingConnector(
         @Value("\${server.host}") host: String,
         @Value("\${server.broadcast.port}") port: Int
-) : Observable {
-    companion object : KLogging()
-
-    private val messagesListener = UndefinedMessageListener()
-    private val responseListener = IdentifiedMessageListener()
-    private val reader = SocketReader(listOf(messagesListener, responseListener))
-    final override val listeners = CopyOnWriteArrayList<ConnectionListener>()
-    private val con = ServerCon(host, port, arrayOf(reader), listeners)
+) : Connector(host, port) {
+    fun addMessagesListener(listener: ResponseListener) = messagesListener.registerListener(listener)
 }
 
 class ServerCon(host: String, port: Int,
@@ -118,6 +121,9 @@ class ServerCon(host: String, port: Int,
         }
     }
 
+    @Synchronized
+    fun disconnect() = sock.close()
+
     fun isConnected() = isConnected.get()
 }
 
@@ -133,7 +139,7 @@ class Sock(
 
     companion object : KLogging()
 
-    val socketDescription = "$host:$port"
+    private val socketDescription = "$host:$port"
 
     suspend fun read() = withSocket { it.readSocket() }
 
@@ -180,7 +186,7 @@ class Sock(
     }
 
     @Synchronized
-    fun close() {
+    fun close(): Boolean {
         if (socket != null) {
             try {
                 socket!!.close()
@@ -188,7 +194,9 @@ class Sock(
             }
             socket = null
             isConnected.set(false)
+            return true
         }
+        return false
     }
 }
 
@@ -208,7 +216,7 @@ interface MessageListener {
 class UndefinedMessageListener(
         listeners: List<ResponseListener> = listOf()
 ) : MessageListener {
-    private val responseListeners = CopyOnWriteArrayList<ResponseListener>(listeners)
+    private val responseListeners = CopyOnWriteArraySet<ResponseListener>(listeners)
 
     override fun onClose() {}
 

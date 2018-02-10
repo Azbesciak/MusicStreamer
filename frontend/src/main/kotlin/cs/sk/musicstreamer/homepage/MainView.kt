@@ -3,9 +3,7 @@ package cs.sk.musicstreamer.homepage
 import com.jfoenix.controls.JFXRippler
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
-import cs.sk.musicstreamer.connection.CommunicationServerConnector
-import cs.sk.musicstreamer.connection.ConnectionListener
-import cs.sk.musicstreamer.connection.ReadWriteConnector
+import cs.sk.musicstreamer.connection.*
 import io.datafx.controller.ViewController
 import javafx.fxml.Initializable
 import javafx.scene.layout.StackPane
@@ -22,6 +20,7 @@ class MainView : View(), Initializable {
 
     override val root: StackPane by fxml("/main/main_view.fxml")
     private val communicationServerConnector: ReadWriteConnector by di()
+    private val broadCastServer: ReadingConnector by di()
     private val authService: AuthService by di()
 
     private val connectButton: JFXRippler by fxid()
@@ -36,20 +35,40 @@ class MainView : View(), Initializable {
             connectButton.setOnMouseClicked {
                 connect()
             }
-            communicationServerConnector.listeners += ConnectionListener(
-                    onConnection = { kotlinx.coroutines.experimental.launch(JavaFx) {
-                        tryToAuthenticate()
-                    } },
+            broadCastServer.addConnectionListener(ConnectionListener(
+                    onConnection = ::sendBroadCastSubscription,
+                    onError = { showSnackBar("An error occurred on broadcast channel") }
+            ))
+
+            communicationServerConnector.addConnectionListener(ConnectionListener(
+                    onConnection = {
+                        kotlinx.coroutines.experimental.launch(JavaFx) {
+                            tryToAuthenticate()
+                            broadCastServer.connect()
+                        }
+                    },
                     onError = {
                         kotlinx.coroutines.experimental.launch {
                             delay(5000)
                             connectButton.isDisable = false
                         }
-                        snackBar.fireEvent(JFXSnackbar.SnackbarEvent("Could not connect with server"))
+                        broadCastServer.disconnect()
+                        showSnackBar("Could not connect with server")
                     }
-            )
+            ))
             connect()
         }
+    }
+
+    private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))
+
+    private fun sendBroadCastSubscription() {
+        val userName = authService.getUserName()!!
+        broadCastServer.send(
+                request = SubscribeRequest(userName),
+                onResponse = { logger.info { "BroadCast subscribed for $userName" } },
+                onError = { e -> logger.error { "could not subscribe for Broadcast: ${e.body}" } }
+        )
     }
 
     private fun connect() {
@@ -57,9 +76,11 @@ class MainView : View(), Initializable {
         communicationServerConnector.connect()
     }
 
-    private suspend fun tryToAuthenticate() {
+    private suspend fun tryToAuthenticate(): String {
         logger.info { "Requested authorization..." }
         val username = authService.requestAuthorization(root)
         logger.info { "Username: $username" }
+        return username
+
     }
 }
