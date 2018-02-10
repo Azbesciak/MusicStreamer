@@ -4,6 +4,9 @@
 
 void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
+        auto currentClientRoom = client->getCurrentRoom();
+        if (currentClientRoom != nullptr && currentClientRoom->getName() == name)
+            return;
         removeClientFromRoomsUnsync(client);
         createRoomIfNotExists(name);
         addNewClient(client, name);
