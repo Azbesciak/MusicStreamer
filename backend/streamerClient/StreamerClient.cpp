@@ -7,8 +7,7 @@ using namespace std;
 StreamerClient::StreamerClient(int socketDescriptor) :
         communicationSocket(new Socket(socketDescriptor)),
         broadCastSocket(nullptr),
-        uploadSocket(nullptr),
-        streamingSocket(nullptr){}
+        streamingChannel(nullptr){}
 
 string StreamerClient::getName() const {
     return name;
@@ -17,8 +16,7 @@ string StreamerClient::getName() const {
 StreamerClient::~StreamerClient() {
     removeSocket(communicationSocket);
     removeSocket(broadCastSocket);
-    removeSocket(uploadSocket);
-    removeSocket(streamingSocket);
+    removeStreamingChannel();
 }
 
 ssize_t StreamerClient::sendMessage(const string &message) {
@@ -57,9 +55,22 @@ void StreamerClient::setCurrentRoom(Room *room) {
 }
 
 void StreamerClient::removeSocket(Socket *& socket) {
+
+    // Todo null-check ?
     delete socket;
     socket = nullptr;
 }
+
+
+void StreamerClient::removeStreamingChannel() {
+
+    if (streamingChannel != nullptr) {
+
+        delete streamingChannel;
+        streamingChannel = nullptr;
+    }
+}
+
 
 void StreamerClient::subscribeForMessages(int fd) {
     removeSocket(broadCastSocket);

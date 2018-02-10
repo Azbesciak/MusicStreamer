@@ -5,6 +5,8 @@
 
 
 #include <unordered_set>
+#include <thread>
+
 #include <logic/MusicTrack.h>
 #include <server/music/MusicChannel.h>
 #include "streamerClient/StreamerClient.h"
@@ -16,18 +18,19 @@ class MusicStreamer {
 
 private:
 
-    MusicChannel* musicChannel;
+    MusicTrack* currentTrack;
+    Room* room;
+
+    std::recursive_mutex mut;
+    pthread_t* streamerThread;
+
+    void* runStreamerExecutor();
 
 public:
 
-    explicit MusicStreamer(Room* room);
+    MusicStreamer(Room* room);
 
     void streamTrack(MusicTrack* track);
-
-    void pauseTrack();
-    void resumeTrack();
-
-    void stopStream();
 
     ~MusicStreamer();
 };

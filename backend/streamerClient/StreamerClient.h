@@ -1,10 +1,11 @@
-#include <string>
 
 #ifndef MUSICSTREAMER_STREAMERCLIENT_H
 #define MUSICSTREAMER_STREAMERCLIENT_H
 
 #include <logic/Room.h>
 #include "Socket.h"
+
+#include <string>
 
 using namespace std;
 
@@ -14,8 +15,8 @@ class StreamerClient {
 private:
     Socket * communicationSocket;
     Socket * broadCastSocket;
-    Socket * uploadSocket;
-    Socket * streamingSocket;
+    MusicChannel* streamingChannel;
+
     string name;
     Room * currentRoom;
     ssize_t sendMessage(const string &mes, Socket * socket);
@@ -32,6 +33,7 @@ public:
     ssize_t sendOnBroadCast(const string &mes);
 
     void removeSocket(Socket *&socket);
+    void removeStreamingChannel();
     void subscribeForMessages(int fd);
 
 };

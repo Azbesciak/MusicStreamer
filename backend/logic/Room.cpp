@@ -49,15 +49,15 @@ string Room::getName() {
 }
 
 
-MusicTrack* Room::reserveTrackSlot() {
+MusicTrack* Room::reserveTrackSlot(const string& trackName) {
 
     MusicTrack* track = nullptr;
 
     synchronized(mut) {
 
-        if (availableTracks.size() < MAX_TRACK_NUMBER) {
+        if (availableTracks.size() < MAX_TRACK_NUMBER && findTrackByName(trackName) == nullptr) {
 
-            track = new MusicTrack();
+            track = new MusicTrack(trackName);
             availableTracks.push_back(track);
         }
     }
@@ -78,6 +78,26 @@ void Room::cancelTrackReservation(MusicTrack* musicTrack) {
             delete musicTrack;
         }
     }
+}
+
+
+MusicTrack* Room::findTrackByName(const string& trackName) {
+
+    MusicTrack* resultTrack = nullptr;
+
+    synchronized(mut) {
+
+        for (MusicTrack* track : availableTracks) {
+
+            if (track->getTrackName() == trackName) {
+
+                resultTrack = track;
+                break;
+            }
+        }
+    }
+
+    return resultTrack;
 }
 
 

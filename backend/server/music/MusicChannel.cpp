@@ -7,3 +7,9 @@ MusicChannel::MusicChannel() {
 
     currentTrack = nullptr;
 }
+
+
+MusicChannel::~MusicChannel() {
+
+
+}

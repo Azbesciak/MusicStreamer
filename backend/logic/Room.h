@@ -6,6 +6,7 @@
 
 #include <unordered_set>
 #include <mutex>
+#include <map>
 #include <logic/MusicStreamer.h>
 #include <logic/MusicTrack.h>
 #include "TracksQueue.h"
@@ -40,10 +41,10 @@ public:
     bool isEmpty();
     string getName();
 
-    MusicTrack* reserveTrackSlot();
+    MusicTrack* reserveTrackSlot(const std::string& trackName);
     void cancelTrackReservation(MusicTrack* musicTrack);
 
-    MusicTrack* findTrackByName(std::string trackName);
+    MusicTrack* findTrackByName(const std::string& trackName);
     TracksQueue* getTracksQueue();
 };
 

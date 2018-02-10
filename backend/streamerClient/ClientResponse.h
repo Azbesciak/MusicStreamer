@@ -23,7 +23,10 @@ public:
     void addToBody(const string &key, int value);
     void setError(int code, string message);
     void fillOkResultIfNotSet();
+
+    static ClientResponse ok();
     static ClientResponse error(int status, const string &message);
+
     bool isError();
     void asUnknownResponse();
     void addIdFromRequestIfPresent(Request *request);

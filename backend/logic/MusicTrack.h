@@ -12,13 +12,25 @@ private:
     std::recursive_mutex trackMut;
 
     UploadedFile* trackFile;
+    std::string trackName;
+
+    int openedDescriptor;
 
 public:
 
-    MusicTrack();
+    MusicTrack(const std::string& trackName);
 
-    UploadedFile* getTrackFile();
+    const std::string& getTrackName();
+
     void setTrackFile(UploadedFile* trackFile);
+
+    void openTrack();
+    void closeTrack();
+
+    char* getTrackHeader();
+    char* getTrackSignal();
+
+    ~MusicTrack();
 };
 
 

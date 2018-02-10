@@ -9,11 +9,10 @@ static const char *const AUTHENTICATE_ACTION = "INIT";
 static const char *const LEAVE_ACTION = "LEAVE";
 static const char *const UPLOAD_ACTION = "UPLOAD";
 static const char *const QUEUE_TRACK_ACTION = "QUEUE_TRACK";
-static const char *const PAUSE_TRACK_ACTION = "PAUSE_TRACK";
-static const char *const RESUME_TRACK_ACTION = "RESUME_TRACK";
 static const char *const NEXT_TRACK_ACTION = "NEXT_TRACK";
 
 static const int WAV_HEADER_SIZE = 44;
+
 
 ClientResponse ClientProxy::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
 
@@ -40,10 +39,16 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
     } else if (method == UPLOAD_ACTION) {
 
-        string fileName = request->getStr("trackName");
+        string trackName = request->getStr("trackName");
         int fileSize = request->getInt("trackFileSize");
 
-        return handleTrackUpload(fileSize);
+        return handleTrackUpload(trackName, fileSize);
+
+    } else if (method == QUEUE_TRACK_ACTION) {
+
+        string trackName = request->getStr("trackName");
+
+        return handleQueueTrack(trackName);
 
     } else {
 
@@ -53,15 +58,15 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
     return *response;
 }
 
-ClientResponse ClientProxy::handleTrackUpload(int fileSize) {
+ClientResponse ClientProxy::handleTrackUpload(const string& trackName, int fileSize) {
 
     if (fileSize <= WAV_HEADER_SIZE)
-        return ClientResponse::error(403, "File is too small. Only wav files are supported.");
+        return ClientResponse::error(403, "File too small. Only wav files are supported.");
 
-    if (client->getCurrentRoom())
+    if (client->getCurrentRoom() == nullptr)
         return ClientResponse::error(403, "Client has no assigned room");
 
-    MusicTrack *reservedTrack = reserveRoomFileSlot();
+    MusicTrack *reservedTrack = reserveRoomTrackSlot(trackName);
 
     if (reservedTrack == nullptr)
         return ClientResponse::error(403, "Room tracks limit exceeded");
@@ -85,14 +90,33 @@ ClientResponse ClientProxy::handleTrackUpload(int fileSize) {
 }
 
 
-MusicTrack *ClientProxy::reserveRoomFileSlot() {
+ClientResponse ClientProxy::handleQueueTrack(const std::string& trackName) {
+
+    Room* room = client->getCurrentRoom();
+
+    if (room == nullptr)
+        return ClientResponse::error(403, "Client has no assigned room");
+
+    TracksQueue* tracksQueue = room->getTracksQueue();
+    MusicTrack* track = room->findTrackByName(trackName);
+
+    if (track == nullptr)
+        return ClientResponse::error(404, "Track not found");
+
+    tracksQueue->appendTrack(track);
+
+    return ClientResponse::ok();
+}
+
+
+MusicTrack *ClientProxy::reserveRoomTrackSlot(const string& trackName) {
 
     Room* room = client->getCurrentRoom();
 
     if (room == nullptr)
         return nullptr;
 
-    return room->reserveTrackSlot();
+    return room->reserveTrackSlot(trackName);
 }
 
 

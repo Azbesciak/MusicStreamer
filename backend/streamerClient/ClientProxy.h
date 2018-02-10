@@ -17,7 +17,7 @@ class ClientProxy: public RequestProcessor {
     StreamerClient* client;
     ClientResponse authenticate(const string &method, Request * request);
     ClientResponse onNewRequest(Request *request, const string &method, ClientResponse *&response) override;
-    MusicTrack* reserveRoomFileSlot();
+    MusicTrack* reserveRoomTrackSlot(const std::string& trackName);
 
 public:
     ClientProxy(int clientFd, Container * container);
@@ -26,7 +26,9 @@ public:
     ssize_t respond(const string &message);
 
     bool isNotAuthorized() const;
-    ClientResponse handleTrackUpload(int fileSize);
+
+    ClientResponse handleTrackUpload(const std::string& trackName, int fileSize);
+    ClientResponse handleQueueTrack(const std::string& trackName);
 
     ClientResponse onNewRequest(Request *request) override;
 };
