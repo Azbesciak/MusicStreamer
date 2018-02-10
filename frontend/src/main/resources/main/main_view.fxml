@@ -12,6 +12,8 @@
 <?import javafx.scene.layout.VBox?>
 <?import com.jfoenix.controls.JFXToolbar?>
 <?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
+<?import com.jfoenix.controls.JFXButton?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 <StackPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1"
            xmlns="http://javafx.com/javafx/2.2" prefHeight="600" prefWidth="800">
     <BorderPane>
@@ -29,11 +31,10 @@
                         <Label>Music Streamer</Label>
                     </leftItems>
                     <rightItems>
-                        <JFXRippler fx:id="optionsRippler" maskType="CIRCLE"
-                                    style="-fx-ripple-color:WHITE;">
-                            <StackPane fx:id="optionsBurger">
-                                <JFXHamburger styleClass="jfx-options-burger">
-                                </JFXHamburger>
+                        <JFXRippler position="BACK" styleClass="icons-rippler" fx:id="connectButton">
+                            <StackPane style="-fx-padding: 10;">
+                                <FontAwesomeIconView glyphName="PLUG" size="2em"
+                                                     styleClass="connect-icon"/>
                             </StackPane>
                         </JFXRippler>
                     </rightItems>

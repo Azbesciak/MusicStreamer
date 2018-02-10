@@ -87,6 +87,17 @@
     -fx-cursor: hand;
 }
 
+.connect-icon {
+    -fx-text-fill: #ede7fe;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-fill: #ede7fe;
+}
+.connect-icon:disabled {
+    -fx-fill: #7a7783;
+    -fx-text-fill: #7a7783;
+}
+
 .icons-rippler {
     -jfx-rippler-fill: BLUE;
     -jfx-mask-type: CIRCLE;

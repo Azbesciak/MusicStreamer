@@ -10,7 +10,7 @@ class Initializer(
         private val communicationServerConnector: ReadWriteConnector
 ) : CommandLineRunner {
     override fun run(vararg args: String?) {
-        communicationServerConnector.connect()
+//        communicationServerConnector.connect()
     }
 
 }

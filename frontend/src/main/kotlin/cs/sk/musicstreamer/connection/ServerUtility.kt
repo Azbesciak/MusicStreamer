@@ -21,17 +21,30 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Service
 class ReadWriteConnector(
         @Value("\${server.host}") host: String,
-        @Value("\${server.connection.port}") port: Int) {
+        @Value("\${server.connection.port}") port: Int) : Observable {
+
     companion object : KLogging()
-    private val writer =  SocketWriter()
+
+    private val writer = SocketWriter()
     private val messagesListener = UndefinedMessageListener(
             listOf(ResponseListener(::manageUndefinedResponse, ::manageUndefinedResponse))
     )
     private val responseListener = IdentifiedMessageListener()
     private val reader = SocketReader(listOf(messagesListener, responseListener))
-    private val con = ServerCon(host, port, listOf(writer, reader))
+    final override val listeners = CopyOnWriteArrayList<ConnectionListener>()
+    private val con = ServerCon(host, port, arrayOf(writer, reader), listeners)
 
-    fun connect() = launch { con.connect() }
+    private val connectionListeners = mutableListOf(
+            ConnectionListener(
+                    { logger.info { "connection initialized" } },
+                    { logger.info { "connection lost" } },
+                    { logger.error("error with socket", it) }
+            )
+    )
+
+    fun connect() = launch {
+        con.connect()
+    }
 
     fun isConnected() = con.isConnected()
 
@@ -43,6 +56,9 @@ class ReadWriteConnector(
             } catch (e: Error) {
                 responseListener.removeListener(request)
                 onError(ErrorResponse(500, "Error while managing request"))
+                if (e is ConnectionError) {
+                    connectionListeners.forEach { it.onError(e) }
+                }
             }
         }
     }
@@ -52,66 +68,98 @@ class ReadWriteConnector(
     }
 }
 
+interface Observable {
+    val listeners: CopyOnWriteArrayList<ConnectionListener>
+}
+
+class ConnectionListener(
+        val onConnection: () -> Unit = {},
+        val onConnectionLost: () -> Unit = {},
+        val onError: (Error) -> Unit = {}
+)
+
 @Service
 class ReadingConnector(
         @Value("\${server.host}") host: String,
         @Value("\${server.broadcast.port}") port: Int
-) {
+) : Observable {
+    companion object : KLogging()
 
+    private val messagesListener = UndefinedMessageListener()
+    private val responseListener = IdentifiedMessageListener()
+    private val reader = SocketReader(listOf(messagesListener, responseListener))
+    final override val listeners = CopyOnWriteArrayList<ConnectionListener>()
+    private val con = ServerCon(host, port, arrayOf(reader), listeners)
 }
 
-class ServerCon(host: String, port: Int, private val consumers: List<SocketConsumer>) {
+class ServerCon(host: String, port: Int,
+                private val consumers: Array<SocketConsumer>,
+                private val listeners: CopyOnWriteArrayList<ConnectionListener>) {
 
     companion object : KLogging()
 
     private val isConnected = AtomicBoolean(false)
     private val sock = Sock(host, port, isConnected)
 
+    @Synchronized
     suspend fun connect() {
-        try {
-            sock.connect()
-            consumers.forEach {
-                it.setSocket(sock)
-                it.setRunningFlag(isConnected)
-                it.start()
+        if (!isConnected.get()) {
+            try {
+                sock.connect()
+                consumers.forEach {
+                    it.setSocket(sock)
+                    it.setRunningFlag(isConnected)
+                    it.start()
+                }
+                listeners.forEach { it.onConnection() }
+            } catch (e: Throwable) {
+                listeners.forEach { it.onError(Error(e)) }
             }
-        } catch (e: Error) {
-            logger.error { "Connection failed" }
         }
     }
 
     fun isConnected() = isConnected.get()
 }
 
+
+class ConnectionError(reason: String) : Error(reason)
+
 class Sock(
         private val host: String,
         private val port: Int,
         private val isConnected: AtomicBoolean = AtomicBoolean(false),
         private val bufferSize: Int = 256) {
-    private var socket: AsynchronousSocketChannel = AsynchronousSocketChannel.open()
+    private var socket: AsynchronousSocketChannel? = null
 
     companion object : KLogging()
 
-    protected val socketDescription = "$host:$port"
+    val socketDescription = "$host:$port"
 
-    suspend fun read() = socket.readSocket()
+    suspend fun read() = withSocket { it.readSocket() }
 
-    suspend fun write(request: Request) = socket.write(request)
+    suspend fun write(request: Request) = withSocket { it.write(request) }
 
     private suspend fun AsynchronousSocketChannel.write(request: Request): Int {
         val requestString = ServerConnector.objectMapper.writeValueAsString(request)
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
         return aWrite(buf = bytes).apply {
-            if (this < 0) throw Error("Could not write to $socketDescription")
+            if (this < 0) throw ConnectionError("Could not write to $socketDescription")
         }
     }
 
-    fun ByteBuffer.asString() = String(array())
+    private suspend fun <T> withSocket(f: suspend (AsynchronousSocketChannel) -> T): T {
+        if (socket == null) {
+            throw ConnectionError("Socket is not connected")
+        }
+        return f(socket!!)
+    }
+
+    private fun ByteBuffer.asString() = String(array())
 
     private suspend fun AsynchronousSocketChannel.readSocket(): String {
         val buf = ByteBuffer.allocate(bufferSize)
         val read = aRead(buf)
-        return if (read >= 0) buf.asString() else throw Error("Could not read from $socketDescription")
+        return if (read >= 0) buf.asString() else throw ConnectionError("Could not read from $socketDescription")
     }
 
     @Synchronized
@@ -120,14 +168,26 @@ class Sock(
             try {
                 socket = AsynchronousSocketChannel.open()
                 logger.info { "Initializing connection..." }
-                socket.aConnect(InetSocketAddress(InetAddress.getByName(host), port))
+                socket!!.aConnect(InetSocketAddress(InetAddress.getByName(host), port))
                 logger.info { "Successfully connected with $socketDescription" }
                 isConnected.set(true)
             } catch (e: Error) {
-                isConnected.set(false)
+                close()
                 logger.error("could not connect to $socketDescription", e)
-                throw Error("Could not connect")
+                throw ConnectionError("Could not connect")
             }
+        }
+    }
+
+    @Synchronized
+    fun close() {
+        if (socket != null) {
+            try {
+                socket!!.close()
+            } catch (e: Error) {
+            }
+            socket = null
+            isConnected.set(false)
         }
     }
 }
@@ -146,7 +206,7 @@ interface MessageListener {
 }
 
 class UndefinedMessageListener(
-    listeners: List<ResponseListener> = listOf()
+        listeners: List<ResponseListener> = listOf()
 ) : MessageListener {
     private val responseListeners = CopyOnWriteArrayList<ResponseListener>(listeners)
 
@@ -204,7 +264,7 @@ interface SocketConsumer {
     fun start()
 }
 
-class SocketWriter: SocketConsumer {
+class SocketWriter : SocketConsumer {
     private lateinit var sock: Sock
     private lateinit var isRunning: AtomicBoolean
 
@@ -225,7 +285,7 @@ class SocketWriter: SocketConsumer {
 
 class SocketReader(
         private val listeners: List<MessageListener>
-): SocketConsumer {
+) : SocketConsumer {
     override fun setSocket(socket: Sock) {
         sock = socket
     }
@@ -237,6 +297,7 @@ class SocketReader(
     private lateinit var sock: Sock
     private lateinit var isRunning: AtomicBoolean
     private val isConnected = AtomicBoolean(false)
+
     companion object : KLogging() {
         val objectMapper = ObjectMapper()
     }
@@ -249,7 +310,7 @@ class SocketReader(
                         consume(sock)
                     }
                 } finally {
-                    listeners.forEach {it.onClose()}
+                    listeners.forEach { it.onClose() }
                     isConnected.set(false)
                 }
             }
@@ -275,9 +336,9 @@ class SocketReader(
                         logger.error { "malformed input: $message" }
                         return
                     } else if (startFlag == 0) {
-                        val subMessage = message.substring(startIndex, i+1)
+                        val subMessage = message.substring(startIndex, i + 1)
                         launch { manageMessage(subMessage) }
-                        message = message.substring(i+1)
+                        message = message.substring(i + 1)
                         i = -1
                     }
                 }
