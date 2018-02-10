@@ -71,7 +71,7 @@ abstract class Connector(host: String, port: Int) {
                 writer.write(request)
             } catch (e: Error) {
                 responseListener.removeListener(request)
-                onError(ErrorResponse(500, "Error while managing request"))
+                onError(ErrorResponse(500, "Error while managing request from ${this::class.simpleName} - ${con.description}"))
                 if (e is ConnectionError) {
                     connectionListeners.forEach { it.onError(e) }
                 }
@@ -103,6 +103,7 @@ class ServerCon(host: String, port: Int,
 
     private val isConnected = AtomicBoolean(false)
     private val sock = Sock(host, port, isConnected)
+    val description = sock.socketDescription
 
     @Synchronized
     suspend fun connect() {
@@ -120,6 +121,8 @@ class ServerCon(host: String, port: Int,
             }
         }
     }
+
+
 
     @Synchronized
     fun disconnect() = sock.close()
@@ -139,7 +142,7 @@ class Sock(
 
     companion object : KLogging()
 
-    private val socketDescription = "$host:$port"
+    val socketDescription = "$host:$port"
 
     suspend fun read() = withSocket { it.readSocket() }
 
@@ -275,6 +278,7 @@ interface SocketConsumer {
 class SocketWriter : SocketConsumer {
     private lateinit var sock: Sock
     private lateinit var isRunning: AtomicBoolean
+companion object : KLogging()
 
     override fun setSocket(socket: Sock) {
         this.sock = socket
@@ -287,7 +291,10 @@ class SocketWriter : SocketConsumer {
     override fun start() {
     }
 
-    suspend fun write(request: Request) = sock.write(request)
+    suspend fun write(request: Request): Int {
+        logger.debug { "Writing to ${sock.socketDescription}: $request" }
+        return sock.write(request)
+    }
 
 }
 
@@ -360,6 +367,7 @@ class SocketReader(
 
     private fun manageMessage(message: String) {
         with(objectMapper.readTree(message)) {
+            logger.debug { "New message from ${sock.socketDescription}: $message" }
             val body = get("body")
             val status = get("status").asInt()
             val id: String? = get("id").asText(null)
