@@ -4,6 +4,7 @@ import com.jfoenix.controls.JFXDecorator
 import com.jfoenix.svg.SVGGlyph
 import com.jfoenix.svg.SVGGlyphLoader
 import cs.sk.musicstreamer.homepage.MainView
+import io.datafx.controller.flow.context.ViewFlowContext
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
 import javafx.application.Application
@@ -14,6 +15,7 @@ import javafx.stage.Screen
 import javafx.stage.Stage
 import org.springframework.boot.SpringApplication
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.context.annotation.Bean
 import tornadofx.*
 import kotlin.reflect.KClass
 
@@ -25,6 +27,8 @@ class MusicStreamer : App(MainView::class) {
     //  https://www.felixroske.de/page/programmierung/index.html
     private lateinit var context: ConfigurableApplicationContext
 
+    @Bean
+    fun viewContext() = ViewFlowContext()
 
     override fun init() {
         context = SpringApplication.run(this.javaClass)

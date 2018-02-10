@@ -6,15 +6,12 @@ import com.jfoenix.controls.JFXRippler
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
 import cs.sk.musicstreamer.connection.*
-import io.datafx.controller.ViewController
-import io.datafx.controller.flow.context.FXMLViewFlowContext
 import io.datafx.controller.flow.context.ViewFlowContext
-import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.layout.StackPane
-import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import tornadofx.*
 import java.net.URL
@@ -22,6 +19,8 @@ import java.util.*
 
 // cannot be a @Controller because is created statically...
 class MainView : View(), Initializable {
+
+    private val viewContext: ViewFlowContext by di()
 
     override val root: StackPane by fxml("/main/main_view.fxml")
 
@@ -37,12 +36,11 @@ class MainView : View(), Initializable {
     private val broadCastServer: ReadingConnector by di()
     private val authService: AuthService by di()
 
-
     companion object : KLogging()
 
-
     override fun initialize(location: URL?, resources: ResourceBundle?) {
-        kotlinx.coroutines.experimental.launch {
+        launch {
+            viewContext.register(snackBar)
             initView()
             initConnectors()
         }
@@ -81,7 +79,7 @@ class MainView : View(), Initializable {
         ))
         broadCastServer.addMessagesListener(ResponseListener(
                 onResponse = { resp ->
-                    fxCoroutine {
+                    launch(JavaFx) {
                         with(resp.body) {
                             if (has("rooms")) {
                                 val rooms = get("rooms").map { it.asText() }
@@ -94,14 +92,14 @@ class MainView : View(), Initializable {
 
         communicationServerConnector.addConnectionListener(ConnectionListener(
                 onConnection = {
-                    fxCoroutine {
+                    launch(JavaFx) {
                         tryToAuthenticate()
                         broadCastServer.connect()
                     }
                 },
-                onDisconnect = { fxCoroutine { onDisconnect() } },
+                onDisconnect = { launch(JavaFx) { onDisconnect() } },
                 onError = {
-                    fxCoroutine {
+                    launch(JavaFx) {
                         showSnackBar("Could not connect with server")
                         onDisconnect()
                     }
@@ -115,12 +113,6 @@ class MainView : View(), Initializable {
         authService.cleanUser()
         delay(5000)
         connectButton.isDisable = false
-    }
-
-    private fun <T> fxCoroutine(f: suspend (CoroutineScope) -> T) {
-        kotlinx.coroutines.experimental.launch(JavaFx) {
-            f(this)
-        }
     }
 
     private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))
