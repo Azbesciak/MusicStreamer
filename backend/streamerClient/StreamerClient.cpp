@@ -6,6 +6,7 @@ using namespace std;
 
 StreamerClient::StreamerClient(int socketDescriptor) :
         communicationSocket(new Socket(socketDescriptor)),
+        currentRoom(nullptr),
         broadCastSocket(nullptr),
         streamingChannel(nullptr){}
 
