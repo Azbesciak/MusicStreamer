@@ -75,6 +75,7 @@ class MainView : View(), Initializable {
                     else -> close()
                 }
             })
+            roomsView.addJoinListener { close() }
             sidePane += roomsView.root
             toFront()
         }
@@ -116,10 +117,11 @@ class MainView : View(), Initializable {
     private suspend fun onDisconnect() {
         broadCastServer.disconnect()
         authService.cleanUser()
-        delay(5000)
-        connectButton.isDisable = false
         roomsView.clean()
         appLabel.clean()
+        roomView.clean()
+        delay(5000)
+        connectButton.isDisable = false
     }
 
     private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))

@@ -7,9 +7,7 @@ import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import io.datafx.controller.flow.context.ViewFlowContext
-import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleStringProperty
-import javafx.beans.value.ObservableStringValue
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
@@ -32,6 +30,7 @@ class RoomsView(
     private val snackBar: JFXSnackbar by lazy { viewContext.getRegisteredObject(JFXSnackbar::class.java) }
     private val currentRoom = SimpleStringProperty()
     private var roomsNamesList = mutableListOf<String>()
+    private val joinListeners = mutableListOf<(String) -> Unit>()
 
     companion object : KLogging()
 
@@ -84,6 +83,7 @@ class RoomsView(
                         snackBar.fireEvent(JFXSnackbar.SnackbarEvent("joined to $roomName"))
                         logger.debug { "Joined to room $it" }
                         currentRoom.value = roomName
+                        joinListeners.forEach { it(roomName) }
                         afterJoin()
                     }
                 },
@@ -95,7 +95,6 @@ class RoomsView(
                 }
         )
     }
-
 
     private fun subscribeForRoomsBroadcast() {
         broadCastConnector.addMessagesListener(ResponseListener(
@@ -123,6 +122,8 @@ class RoomsView(
         roomsNamesList.clear()
         roomsList.items.clear()
     }
+
+    fun addJoinListener(listener: (room: String) -> Unit) = joinListeners.add(listener)
 
     private fun addToRoomList(roomName: String) {
         if (!roomsNamesList.contains(roomName)) {
