@@ -13,6 +13,7 @@
 <?import com.jfoenix.controls.JFXToolbar?>
 <?import com.jfoenix.transitions.hamburger.HamburgerBackArrowBasicTransition?>
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<?import javafx.scene.layout.Pane?>
 <StackPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1"
            xmlns="http://javafx.com/javafx/2.2" prefHeight="600" prefWidth="800">
     <BorderPane>
@@ -27,7 +28,7 @@
                                 </JFXHamburger>
                             </StackPane>
                         </JFXRippler>
-                        <Label>Music Streamer</Label>
+                        <Pane fx:id="labelContainer"/>
                     </leftItems>
                     <rightItems>
                         <JFXRippler position="BACK" styleClass="icons-rippler" fx:id="connectButton">
@@ -43,11 +44,13 @@
 
         <!-- Content Area -->
         <center>
-            <JFXDrawer fx:id="drawer" defaultDrawerSize="250" direction="LEFT">
-                <styleClass>
-                    <String fx:value="body"/>
-                </styleClass>
-            </JFXDrawer>
+            <StackPane fx:id="content">
+                <JFXDrawer fx:id="drawer" defaultDrawerSize="250" direction="LEFT" style="z-order: 1000;">
+                    <styleClass>
+                        <String fx:value="body"/>
+                    </styleClass>
+                </JFXDrawer>
+            </StackPane>
         </center>
     </BorderPane>
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXRippler?>
+<?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
+<HBox xmlns="http://javafx.com/javafx" fx:id="root"
+            xmlns:fx="http://javafx.com/fxml" prefHeight="40">
+    <Label fx:id="appLabel" style="-fx-padding: 20 0"/>
+    <JFXRippler position="BACK" styleClass="icons-rippler1"
+                fx:id="leaveButton" visible="false">
+        <StackPane style="-fx-padding: 10;">
+            <FontAwesomeIconView glyphName="SIGN_OUT" size="2em"
+                                 styleClass="connect-icon"/>
+        </StackPane>
+    </JFXRippler>
+</HBox>

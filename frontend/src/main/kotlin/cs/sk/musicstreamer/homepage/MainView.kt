@@ -10,8 +10,11 @@ import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.ConnectionListener
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
+import cs.sk.musicstreamer.room.RoomView
 import io.datafx.controller.flow.context.ViewFlowContext
 import javafx.fxml.Initializable
+import javafx.scene.control.Label
+import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
@@ -29,12 +32,18 @@ class MainView : View(), Initializable {
     override val root: StackPane by fxml("/main/main_view.fxml")
 
     private val roomsPane: StackPane by fxid()
+    private val content: Pane by fxid()
+    private val labelContainer: Pane by fxid()
+
     private val roomsBurger: JFXHamburger by fxid()
     private val drawer: JFXDrawer by fxid()
     private val connectButton: JFXRippler by fxid()
     private val snackBar: JFXSnackbar by lazy { JFXSnackbar(root).apply { prefWidth = 300.0 } }
+    private val appLabel: AppLabel by di()
+
 
     private val roomsView: RoomsView by di()
+    private val roomView: RoomView by di()
 
     private val communicationServerConnector: MainConnector by di()
     private val broadCastServer: BroadCastConnector by di()
@@ -43,29 +52,37 @@ class MainView : View(), Initializable {
     companion object : KLogging()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
-        launch {
+        launch(JavaFx) {
             viewContext.register(snackBar)
             initView()
-            initConnectors()
+            launch {
+                initConnectors()
+            }
         }
     }
 
     private fun initView() {
-        drawer.setOnDrawerOpening { onDrawerChange() }
-        drawer.setOnDrawerClosing { onDrawerChange() }
-        roomsPane.setOnMouseClicked({
-            if (drawer.isHidden || drawer.isHiding) {
-                drawer.open()
-            } else {
-                drawer.close()
-            }
-        })
-        drawer.sidePane += roomsView.root
+        content += roomView.apply {
+            root.toBack()
+        }
+        labelContainer += appLabel
+        with(drawer) {
+            setOnDrawerOpening { onDrawerChange(true) }
+            setOnDrawerClosing { onDrawerChange(false) }
+            roomsPane.setOnMouseClicked({
+                when {
+                    isHidden || isHiding -> open()
+                    else -> close()
+                }
+            })
+            sidePane += roomsView.root
+            toFront()
+        }
     }
 
-    private fun onDrawerChange() =
+    private fun onDrawerChange(open: Boolean) =
             with(roomsBurger.animation) {
-                rate = 1.0
+                rate = if (open) 1.0 else -1.0
                 play()
             }
 
@@ -75,7 +92,7 @@ class MainView : View(), Initializable {
         }
         broadCastServer.addConnectionListener(ConnectionListener(
                 onConnection = ::sendBroadCastSubscription,
-                onError = { showSnackBar("An error occurred on broadcast channel") }
+                onError = { launch(JavaFx) { showSnackBar("An error occurred on broadcast channel") } }
         ))
 
         communicationServerConnector.addConnectionListener(ConnectionListener(

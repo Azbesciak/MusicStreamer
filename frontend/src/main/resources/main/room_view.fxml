@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<?import com.jfoenix.controls.JFXListView?>
+<StackPane xmlns="http://javafx.com/javafx" fx:id="root"
+           xmlns:fx="http://javafx.com/fxml"
+           prefHeight="400.0" prefWidth="600.0">
+    <BorderPane>
+        <center>
+            <HBox spacing="10">
+                <JFXListView fx:id="clients"/>
+                <JFXListView fx:id="tracks"/>
+            </HBox>
+        </center>
+    </BorderPane>
+
+</StackPane>

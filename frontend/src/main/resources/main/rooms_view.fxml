@@ -7,7 +7,6 @@
 <?import com.jfoenix.controls.JFXTextField?>
 <?import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView?>
 <?import com.jfoenix.controls.JFXRippler?>
-<?import com.jfoenix.validation.RequiredFieldValidator?>
 <StackPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2">
     <styleClass>
         <String fx:value="side-menu"/>
@@ -29,11 +28,7 @@
         </center>
         <bottom>
             <HBox spacing="5">
-                <JFXTextField fx:id="joinInput" promptText="Room name">
-                    <validators>
-                        <RequiredFieldValidator message="Name is Required!"/>
-                    </validators>
-                </JFXTextField>
+                <JFXTextField fx:id="joinInput" promptText="Room name"/>
                 <JFXRippler position="BACK" styleClass="icons-rippler1" fx:id="joinButton">
                     <StackPane style="-fx-padding: 10;">
                         <FontAwesomeIconView glyphName="PLUS" size="2em" styleClass="join-button"/>
