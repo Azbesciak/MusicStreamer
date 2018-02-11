@@ -77,18 +77,6 @@ class MainView : View(), Initializable {
                 onConnection = ::sendBroadCastSubscription,
                 onError = { showSnackBar("An error occurred on broadcast channel") }
         ))
-        broadCastServer.addMessagesListener(ResponseListener(
-                onResponse = { resp ->
-                    launch(JavaFx) {
-                        with(resp.body) {
-                            if (has("rooms")) {
-                                val rooms = get("rooms").map { it.asText() }
-                                roomsView.updateRooms(rooms)
-                            }
-                        }
-                    }
-                },
-                onError = {}))
 
         communicationServerConnector.addConnectionListener(ConnectionListener(
                 onConnection = {
@@ -113,6 +101,7 @@ class MainView : View(), Initializable {
         authService.cleanUser()
         delay(5000)
         connectButton.isDisable = false
+        roomsView.clean()
     }
 
     private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))

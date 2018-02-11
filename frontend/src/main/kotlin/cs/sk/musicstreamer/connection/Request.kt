@@ -1,10 +1,14 @@
 package cs.sk.musicstreamer.connection
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.*
 
 
 sealed class Request(val method: String, val id: String = UUID.randomUUID().toString()) {
-    override fun toString() = "Request{method:\"$method\", id:\"$id\"}"
+    companion object {
+        val objMapper = ObjectMapper()
+    }
+    override fun toString() = objMapper.writeValueAsString(this)
 }
 class AuthRequest(val name: String) : Request("INIT")
 class JoinRequest(val roomName: String) : Request("JOIN")

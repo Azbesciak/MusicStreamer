@@ -1,6 +1,5 @@
 package cs.sk.musicstreamer.connection.connectors
 
-import cs.sk.musicstreamer.connection.connectors.ConnectionListener
 import cs.sk.musicstreamer.connection.socket.SocketProxy
 import cs.sk.musicstreamer.connection.socket.SocketConsumer
 import mu.KLogging

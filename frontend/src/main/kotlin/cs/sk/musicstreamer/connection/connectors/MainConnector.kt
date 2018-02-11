@@ -1,9 +1,6 @@
 package cs.sk.musicstreamer.connection.connectors
 
-import cs.sk.musicstreamer.connection.connectors.ConnectionListener
-import cs.sk.musicstreamer.connection.connectors.Connector
 import cs.sk.musicstreamer.connection.Response
-import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -19,7 +16,8 @@ class MainConnector(
                     { logger.error("error with socket", it) }
             ))
 
-    override fun initialMessagesListeners() = listOf(ResponseListener(::manageUndefinedResponse, ::manageUndefinedResponse))
+    override fun initialMessagesListeners() =
+            listOf(ResponseListener(::manageUndefinedResponse, ::manageUndefinedResponse))
 
     private fun manageUndefinedResponse(response: Response<*>) {
         logger.info { "Undefined response for MainConnector: $response" }

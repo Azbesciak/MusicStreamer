@@ -14,11 +14,13 @@
                 <Label>Type your name</Label>
             </heading>
             <body>
-                <JFXTextField fx:id="username" labelFloat="true"><validators>
-                    <RequiredFieldValidator message="Name is Required!">
-                        <FontAwesomeIconView glyphName="WARNING" style="-fx-font-family: FontAwesome;"/>
-                    </RequiredFieldValidator>
-                </validators></JFXTextField>
+                <JFXTextField fx:id="username" labelFloat="true">
+                    <validators>
+                        <RequiredFieldValidator message="Name is Required!">
+                            <FontAwesomeIconView glyphName="WARNING" style="-fx-font-family: FontAwesome;"/>
+                        </RequiredFieldValidator>
+                    </validators>
+                </JFXTextField>
             </body>
             <actions>
                 <JFXButton fx:id="acceptButton" styleClass="dialog-accept">Accept</JFXButton>
