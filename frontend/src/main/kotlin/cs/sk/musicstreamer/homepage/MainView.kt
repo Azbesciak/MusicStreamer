@@ -119,6 +119,7 @@ class MainView : View(), Initializable {
         delay(5000)
         connectButton.isDisable = false
         roomsView.clean()
+        appLabel.clean()
     }
 
     private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))
