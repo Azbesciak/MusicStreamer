@@ -1,12 +1,11 @@
 package cs.sk.musicstreamer.authorization
 
 import com.jfoenix.controls.JFXButton
-import cs.sk.musicstreamer.connection.CommunicationServerConnector
 import tornadofx.*
 import com.jfoenix.controls.JFXDialog
 import com.jfoenix.controls.JFXTextField
 import cs.sk.musicstreamer.connection.AuthRequest
-import cs.sk.musicstreamer.connection.ReadWriteConnector
+import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.utils.InvalidFieldValueValidator
 import cs.sk.musicstreamer.utils.VetoValidator
 import javafx.event.EventHandler
@@ -18,7 +17,7 @@ import javax.annotation.PostConstruct
 
 @Component
 class AuthModal(
-        private val communicationServerConnector: ReadWriteConnector
+        private val communicationServerConnector: MainConnector
 ) : View() {
 
     companion object : KLogging()

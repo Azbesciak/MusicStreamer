@@ -6,6 +6,10 @@ import com.jfoenix.controls.JFXRippler
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
 import cs.sk.musicstreamer.connection.*
+import cs.sk.musicstreamer.connection.connectors.MainConnector
+import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
+import cs.sk.musicstreamer.connection.connectors.ConnectionListener
+import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import io.datafx.controller.flow.context.ViewFlowContext
 import javafx.fxml.Initializable
 import javafx.scene.layout.StackPane
@@ -32,8 +36,8 @@ class MainView : View(), Initializable {
 
     private val roomsView: RoomsView by di()
 
-    private val communicationServerConnector: ReadWriteConnector by di()
-    private val broadCastServer: ReadingConnector by di()
+    private val communicationServerConnector: MainConnector by di()
+    private val broadCastServer: BroadCastConnector by di()
     private val authService: AuthService by di()
 
     companion object : KLogging()

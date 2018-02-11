@@ -4,7 +4,7 @@ import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.connection.JoinRequest
 import cs.sk.musicstreamer.connection.JsonResponse
-import cs.sk.musicstreamer.connection.ReadWriteConnector
+import cs.sk.musicstreamer.connection.connectors.MainConnector
 import io.datafx.controller.flow.context.ViewFlowContext
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.javafx.JavaFx
@@ -16,14 +16,13 @@ import javax.annotation.PostConstruct
 
 @Component
 class RoomsView(
-        private val readWriteConnector: ReadWriteConnector,
+        private val mainConnector: MainConnector,
         private val viewContext: ViewFlowContext
 ) : Fragment() {
 
     override val root: StackPane by fxml("/main/rooms_view.fxml")
     private val roomsList: JFXListView<String> by fxid()
     private val snackBar: JFXSnackbar by lazy { viewContext.getRegisteredObject(JFXSnackbar::class.java) }
-
     companion object : KLogging()
 
     @PostConstruct
@@ -32,7 +31,7 @@ class RoomsView(
         roomsList.selectionModel.selectedItemProperty().addListener { _, oldRoomName, newRoomName ->
             if (newRoomName != null && newRoomName != currentRoom) {
                 logger.info { "joining to $newRoomName..." }
-                readWriteConnector.send(
+                mainConnector.send(
                         request = JoinRequest(newRoomName),
                         onResponse = {
                             launch(JavaFx) {
