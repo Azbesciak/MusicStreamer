@@ -30,7 +30,9 @@ void AbstractServer::startServer() {
 
 void AbstractServer::displayRequest(int socketDescriptor, Request *request) {
     cout << YELLOW_TEXT("Client " << socketDescriptor) << "\n";
-    cout << "\t" << MAGENTA_TEXT("Request from " << socketDescriptor << ":\t") << GREEN_TEXT(request->serialize());
+    cout << "\t"
+         << MAGENTA_TEXT("Request from " << socketDescriptor << ":\t")
+         << GREEN_TEXT(request->serialize()) << endl;
 }
 
 

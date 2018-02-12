@@ -38,7 +38,7 @@ bool Request::has(const std::string &name) {
 }
 
 std::string Request::serialize() {
-    return std::__cxx11::string();
+    return original;
 }
 
 bool Request::isCorrect() {
