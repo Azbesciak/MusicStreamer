@@ -48,6 +48,7 @@ void parseCommand(const string &command) {
 void cleanUp(int) {
     cout<< GREEN_TEXT("cleaning up server") << endl;
     serverRef -> isRunning = false;
+    UploadHandler::destroy();
     delete serverRef->communicationServer;
     delete serverRef->streamer;
     delete serverRef->broadCaster;

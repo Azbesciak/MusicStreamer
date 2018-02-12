@@ -17,15 +17,13 @@ private:
 
     static const int MAX_SIMULTANEOUS_UPLOADS = 20;
     static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
-    static const int UPLOAD_TIMEOUT_MILLIS = 50000; // 50 s
+    static const int UPLOAD_TIMEOUT_MILLIS = 5000; // 5 s
 
     static const int TOKEN_SIZE = 20;
     static const int BYTE_BUFFER_SIZE = 1024;
 
     static const char* const FILE_UPLOAD_DIRECTORY;
 
-
-    static std::recursive_mutex singlMut;
     static UploadHandler* instance;
 
     std::recursive_mutex mut;
