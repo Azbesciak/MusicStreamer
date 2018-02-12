@@ -2,11 +2,11 @@
 #define MUSICSTREAMER_ONTRACKQUEUEDLISTENER_H
 
 
-class OnTrackQueuedListener {
+class OnNextTrackListener {
 
 public:
 
-    virtual void onTrackQueued() = 0;
+    virtual void onNextTrack() = 0;
 };
 
 

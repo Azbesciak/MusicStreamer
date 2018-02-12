@@ -22,6 +22,7 @@ Room::~Room() {
 
 bool Room::removeClient(StreamerClient *client) {
     synchronized(mut) {
+        streamer->leaveClient(client);
         return clients.erase(client) != 0;
     }
 }
@@ -35,6 +36,7 @@ const unordered_set<StreamerClient*>& Room::getClients() {
 void Room::addClient(StreamerClient *client) {
     synchronized(mut) {
         clients.insert(client);
+        streamer->joinClient(client);
     }
 }
 
@@ -78,6 +80,23 @@ void Room::cancelTrackReservation(MusicTrack* musicTrack) {
             delete musicTrack;
         }
     }
+}
+
+
+vector<MusicTrack*> Room::getAvailableTracks() {
+
+    vector<MusicTrack*> tracks;
+
+    synchronized(mut) {
+
+        for (MusicTrack* track : availableTracks) {
+
+            if (track->isSaved())
+                tracks.push_back(track);
+        }
+    }
+
+    return tracks;
 }
 
 

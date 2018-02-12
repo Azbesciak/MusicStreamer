@@ -34,13 +34,14 @@ public:
 
     void setTrackFile(UploadedFile* trackFile);
 
+    bool isSaved();
     bool isOpened();
     bool isFinished();
 
     void openTrack();
     void closeTrack();
 
-    int getTrackDurationMillis();
+    int getChunkTimeGapMicrosec();
 
     int getTrackHeaderSize();
     char* getTrackHeader();

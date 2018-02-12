@@ -9,23 +9,22 @@ using namespace std;
 MusicStreamer::MusicStreamer(TracksQueue* tracksQueue) {
 
     this->tracksQueue = tracksQueue;
-    tracksQueue->addOnTrackQueuedListener(this);
+    tracksQueue->addOnNextTrackListener(this);
 
-    if (tracksQueue->getCurrentTrack() != nullptr) {
-
-        playTrack();
-    }
+    if (tracksQueue->currentTrack() != nullptr)
+        playCurrentTrack();
 }
 
 
-void MusicStreamer::playTrack() {
+void MusicStreamer::playCurrentTrack() {
 
-    MusicTrack* track = tracksQueue->getCurrentTrack();
+    synchronized(trackMut) {
 
-    trackStream = new TrackStream(track, clients);
-    trackStream->start();
+        MusicTrack* track = tracksQueue->currentTrack();
 
-    // Todo implement scheduler
+        trackStream = new TrackStream(track, clients, this);
+        trackStream->start();
+    }
 }
 
 
@@ -58,27 +57,34 @@ void MusicStreamer::leaveClient(StreamerClient* streamerClient) {
 }
 
 
-void MusicStreamer::onTrackQueued() {
+void MusicStreamer::onTrackFinished() {
 
     synchronized(trackMut) {
 
-        // Todo implement track stream finished check
-        if (trackStream == nullptr || trackStream) {
+        delete trackStream;
+        tracksQueue->nextTrack();
+    }
+}
 
-            if (trackStream != nullptr) {
 
-                trackStream->stop();
-                delete trackStream;
-            }
+void MusicStreamer::onNextTrack() {
 
-            trackStream = new TrackStream(tracksQueue->getCurrentTrack(), clients);
-            trackStream->start();
+    synchronized(trackMut) {
+
+        if (trackStream != nullptr) {
+            trackStream->stop();
+            delete trackStream;
         }
+
+        playCurrentTrack();
     }
 }
 
 
 MusicStreamer::~MusicStreamer() {
+
+    if (trackStream != nullptr)
+        trackStream->stop();
 
     delete trackStream;
 }

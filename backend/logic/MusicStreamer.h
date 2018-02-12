@@ -13,13 +13,13 @@
 #include <server/music/MusicChannel.h>
 #include <streamerClient/StreamerClient.h>
 #include <logic/TrackStream.h>
-#include <logic/callback/OnTrackQueuedListener.h>
+#include <logic/callback/OnNextTrackListener.h>
 
 class TracksQueue;
 class StreamerClient;
 class TrackStream;
 
-class MusicStreamer : public OnTrackQueuedListener {
+class MusicStreamer : public OnNextTrackListener {
 
 private:
 
@@ -30,7 +30,7 @@ private:
     std::recursive_mutex trackMut;
     std::recursive_mutex clientsMut;
 
-    void playTrack();
+    void playCurrentTrack();
 
 public:
 
@@ -39,7 +39,8 @@ public:
     void joinClient(StreamerClient* streamerClient);
     void leaveClient(StreamerClient* streamerClient);
 
-    void onTrackQueued() override;
+    void onTrackFinished();
+    void onNextTrack() override;
 
     ~MusicStreamer();
 };

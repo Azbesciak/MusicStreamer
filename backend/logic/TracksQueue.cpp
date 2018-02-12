@@ -8,11 +8,11 @@ using namespace std;
 
 TracksQueue::TracksQueue() {
 
-    trackQueuedListener = nullptr;
+    onNextTrackListener = nullptr;
 }
 
 
-MusicTrack* TracksQueue::getCurrentTrack() {
+MusicTrack* TracksQueue::currentTrack() {
 
     MusicTrack* track = nullptr;
 
@@ -26,6 +26,25 @@ MusicTrack* TracksQueue::getCurrentTrack() {
 }
 
 
+MusicTrack* TracksQueue::nextTrack() {
+
+    MusicTrack* nextTrack = nullptr;
+
+    synchronized(mut) {
+
+        tracks.pop_front();
+
+        if (!tracks.empty()) {
+
+            nextTrack = tracks.front();
+            onNextTrackListener->onNextTrack();
+        }
+    }
+
+    return nextTrack;
+}
+
+
 void TracksQueue::appendTrack(MusicTrack* track) {
 
     synchronized(mut) {
@@ -34,8 +53,8 @@ void TracksQueue::appendTrack(MusicTrack* track) {
 
             tracks.push_back(track);
 
-            if (trackQueuedListener != nullptr)
-                trackQueuedListener->onTrackQueued();
+            if (onNextTrackListener != nullptr)
+                onNextTrackListener->onNextTrack();
         }
     }
 }
@@ -46,11 +65,11 @@ const deque<MusicTrack*>& TracksQueue::getQueuedTracks() {
 }
 
 
-void TracksQueue::addOnTrackQueuedListener(OnTrackQueuedListener* listener) {
+void TracksQueue::addOnNextTrackListener(OnNextTrackListener *listener) {
 
     synchronized(mut) {
 
-        trackQueuedListener = listener;
+        onNextTrackListener = listener;
     }
 }
 

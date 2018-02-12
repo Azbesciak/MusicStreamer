@@ -128,22 +128,59 @@ ClientResponse ClientProxy::handleQueueTrack(const std::string& trackName) {
 
 ClientResponse ClientProxy::handleNextTrack() {
 
-    // Todo implement
+    Room* room = client->getCurrentRoom();
+
+    if (room == nullptr)
+        return ClientResponse::error(403, "Client has no assigned room");
+
+    room->getTracksQueue()->nextTrack();
+
     return ClientResponse::ok();
 }
 
 
 ClientResponse ClientProxy::handleTracksRequest() {
 
-    // Todo implement
-    return ClientResponse::ok();
+    Room* room = client->getCurrentRoom();
+
+    if (room == nullptr)
+        return ClientResponse::error(403, "Client has no assigned room");
+
+    const vector<MusicTrack*>& tracks = room->getAvailableTracks();
+    vector<string> trackNames;
+
+    transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
+              [](MusicTrack* track) -> string { return track->getTrackName(); });
+    sort(trackNames.begin(), trackNames.end());
+
+    ClientResponse response;
+
+    response.addToBody("tracks", trackNames);
+    response.setStatus(200);
+
+    return response;
 }
 
 
 ClientResponse ClientProxy::handleQueueRequest() {
 
-    // Todo implement
-    return ClientResponse::ok();
+    Room* room = client->getCurrentRoom();
+
+    if (room == nullptr)
+        return ClientResponse::error(403, "Client has no assigned room");
+
+    auto tracks = room->getTracksQueue()->getQueuedTracks();
+    vector<string> trackNames;
+
+    transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
+              [](MusicTrack* track) -> string { return track->getTrackName(); });
+
+    ClientResponse response;
+
+    response.addToBody("queue", trackNames);
+    response.setStatus(200);
+
+    return response;
 }
 
 
@@ -198,6 +235,3 @@ ClientResponse ClientProxy::onNewRequest(Request *request) {
 ssize_t ClientProxy::respond(const string &message) {
     return client->sendMessage(message);
 }
-
-
-

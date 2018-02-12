@@ -13,8 +13,8 @@
 
 using namespace std;
 
-class MusicStreamer;
 class StreamerClient;
+class MusicStreamer;
 
 class Room {
 
@@ -44,6 +44,7 @@ public:
     MusicTrack* reserveTrackSlot(const std::string& trackName);
     void cancelTrackReservation(MusicTrack* musicTrack);
 
+    std::vector<MusicTrack*> getAvailableTracks();
     MusicTrack* findTrackByName(const std::string& trackName);
     TracksQueue* getTracksQueue();
 };

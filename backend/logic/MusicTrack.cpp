@@ -44,6 +44,11 @@ void MusicTrack::openTrack() {
 }
 
 
+bool MusicTrack::isSaved() {
+    return trackFile != nullptr;
+}
+
+
 bool MusicTrack::isOpened() {
     return openedTrackFile > 0;
 }
@@ -93,7 +98,7 @@ int MusicTrack::getTrackHeaderSize() {
 }
 
 
-int MusicTrack::getTrackDurationMillis() {
+int MusicTrack::getChunkTimeGapMicrosec() {
 
     if (!headerProcessed)
         readTrackHeader();
@@ -102,8 +107,11 @@ int MusicTrack::getTrackDurationMillis() {
     int byteRate = trackHeader[28] + (trackHeader[29] << 8) + (trackHeader[30] << 16) + (trackHeader[31] << 24);
 
     double seconds = (double) soundSize / byteRate;
+    double chunks = (double) soundSize / SOUND_CHUNK_SIZE;
 
-    return ceil(seconds * 1000);
+    double result = seconds / chunks;
+
+    return (int) (result * 1000000);
 }
 
 

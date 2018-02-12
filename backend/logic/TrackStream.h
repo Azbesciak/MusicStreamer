@@ -7,6 +7,7 @@
 #include <map>
 
 class StreamerClient;
+class MusicStreamer;
 
 class TrackStream {
 
@@ -14,6 +15,7 @@ private:
 
     MusicTrack* track;
     std::vector<StreamerClient*> clients;
+    MusicStreamer* streamer;
 
     std::map<StreamerClient*, bool> frameSent;
 
@@ -25,7 +27,7 @@ private:
 
 public:
 
-    TrackStream(MusicTrack* track, const std::vector<StreamerClient*>& clients);
+    TrackStream(MusicTrack* track, const std::vector<StreamerClient*>& clients, MusicStreamer* streamer);
 
     void start();
     void stop();

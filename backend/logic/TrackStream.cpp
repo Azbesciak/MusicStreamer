@@ -8,10 +8,11 @@ using namespace std;
 
 typedef void* (*THREADFUNCPTR)(void*);
 
-TrackStream::TrackStream(MusicTrack* track, const vector<StreamerClient*>& clients) {
+TrackStream::TrackStream(MusicTrack* track, const vector<StreamerClient*>& clients, MusicStreamer* streamer) {
 
     this->track = track;
     this->clients = clients;
+    this->streamer = streamer;
 
     for (StreamerClient* client : clients)
         frameSent[client] = false;
@@ -31,6 +32,8 @@ void TrackStream::start() {
 void* TrackStream::streamCoroutine() {
 
     track->openTrack();
+
+    int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
 
     while (!track->isFinished()) {
 
@@ -56,6 +59,16 @@ void* TrackStream::streamCoroutine() {
                 }
             }
         }
+
+        usleep(timeGapMicroseconds);
+    }
+
+    usleep(250000);
+
+    synchronized(streamMut) {
+
+        track->closeTrack();
+        streamer->onTrackFinished();
     }
 }
 
