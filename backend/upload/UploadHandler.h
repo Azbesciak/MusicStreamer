@@ -16,10 +16,9 @@ class UploadHandler {
 private:
 
     static const int MAX_SIMULTANEOUS_UPLOADS = 20;
-    static const int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-    static const int UPLOAD_TIMEOUT_MILLIS = 5000; // 5 s
+    static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    static const int UPLOAD_TIMEOUT_MILLIS = 50000; // 50 s
 
-    static const int UPLOAD_PORT = 21212;
     static const int TOKEN_SIZE = 20;
     static const int BYTE_BUFFER_SIZE = 1024;
 
@@ -41,7 +40,7 @@ private:
     int receiverSocket;
 
 
-    UploadHandler();
+    UploadHandler(const string &host, int port);
 
     void spawnHandlerThread();
     static void* listenerLoop(void*);
@@ -62,14 +61,15 @@ private:
     void handleClientUpload(int clientSocket, sockaddr_in clientAddress);
 
     static void* handleFileDownload(void* data);
+    ~UploadHandler();
 
 public:
-
+    static void initialize(const string &host, int port);
+    static void destroy();
     static UploadHandler* getInstance();
 
     std::string prepareUpload(FileUpload* fileUpload);
 
-    ~UploadHandler();
 };
 
 

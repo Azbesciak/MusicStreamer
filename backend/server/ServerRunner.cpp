@@ -20,9 +20,11 @@ int main(int argc, char *argv[]) {
     auto host = config.get("server.host", DEF_ADDR);
     auto port = config.get("server.communication.port", DEF_COMMUN_PORT);
     auto broadCastPort = config.get("server.broadcast.port", DEF_BROAD_PORT);
+    auto uploadPort = config.get("server.upload.port", DEF_UPLOAD_PORT);
 
     serverRef->communicationServer = new CommunicationServer(host, port, serverRef);
     serverRef->broadCaster = new BroadCastServer(host, broadCastPort, serverRef);
+    UploadHandler::initialize(host, uploadPort);
 
     do {
         cin >> command;

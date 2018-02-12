@@ -5,6 +5,7 @@
 
 #define DEF_COMMUN_PORT 10001
 #define DEF_BROAD_PORT 10002
+#define DEF_UPLOAD_PORT 21212
 #define DEF_ADDR "127.0.0.1"
 #define DEF_CONFIG_PATH "../server.properties"
 

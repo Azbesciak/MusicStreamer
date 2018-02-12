@@ -14,28 +14,18 @@ using namespace std;
 
 const char* const UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
 
-recursive_mutex UploadHandler::singlMut;
 UploadHandler* UploadHandler::instance = nullptr;
 
+
 UploadHandler* UploadHandler::getInstance() {
-
-    if (instance == nullptr) {
-
-        synchronized(singlMut) {
-
-            if (instance == nullptr)
-                instance = new UploadHandler();
-        }
-    }
-
     return instance;
 }
 
 
-UploadHandler::UploadHandler() {
+UploadHandler::UploadHandler(const string &host, int port) {
 
     this->nextFileNo = 1;
-    this->receiverSocket = SocketFactory::createTcpSocket("127.0.0.1", UPLOAD_PORT); //TODO
+    this->receiverSocket = SocketFactory::createTcpSocket(host, port);
 
     spawnHandlerThread();
 }
@@ -331,4 +321,15 @@ UploadHandler::~UploadHandler() {
 
     pthread_cancel(*listenerThread);
     close(receiverSocket);
+}
+
+void UploadHandler::initialize(const string &host, int port) {
+    if (instance == nullptr) {
+        instance = new UploadHandler(host, port);
+    }
+}
+
+void UploadHandler::destroy() {
+    delete instance;
+    instance = nullptr;
 }
