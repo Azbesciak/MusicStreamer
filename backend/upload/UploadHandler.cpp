@@ -259,8 +259,10 @@ void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
 
 string UploadHandler::prepareUpload(FileUpload* fileUpload) {
 
+    // Todo implement maximum number of uploads limit
+
     if (fileUpload->getFileSize() > MAX_FILE_SIZE)
-        return "";
+        throw FileUploadException(400, "File size too large");
 
     string token = "";
 

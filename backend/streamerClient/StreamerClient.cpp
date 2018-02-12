@@ -57,7 +57,6 @@ void StreamerClient::setCurrentRoom(Room *room) {
 
 void StreamerClient::removeSocket(Socket *& socket) {
 
-    // Todo null-check ?
     delete socket;
     socket = nullptr;
 }
@@ -76,6 +75,11 @@ void StreamerClient::removeStreamingChannel() {
 void StreamerClient::subscribeForMessages(int fd) {
     removeSocket(broadCastSocket);
     broadCastSocket = new Socket(fd);
+}
+
+
+MusicChannel* StreamerClient::getStreamingChannel() {
+    return streamingChannel;
 }
 
 

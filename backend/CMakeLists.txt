@@ -65,9 +65,6 @@ add_executable(MusicStreamer
         streamerClient/RequestProcessor.h
         server/music/MusicChannel.cpp
         server/music/MusicChannel.h
-        server/music/WavHeaderStreamer.cpp
-        server/music/WavHeaderStreamer.h
-        server/music/WavSignalStreamer.cpp
-        server/music/WavSignalStreamer.h
         server/UdpServer.cpp
-        server/UdpServer.h)
+        server/UdpServer.h
+        logic/TrackStream.cpp logic/TrackStream.h logic/callback/OnTrackQueuedListener.h)

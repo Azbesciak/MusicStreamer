@@ -13,8 +13,8 @@
 
 using namespace std;
 
-class StreamerClient;
 class MusicStreamer;
+class StreamerClient;
 
 class Room {
 
@@ -37,7 +37,7 @@ public:
     ~Room();
     void addClient(StreamerClient *client);
     bool removeClient(StreamerClient * client);
-    unordered_set<StreamerClient*> getClients();
+    const unordered_set<StreamerClient*>& getClients();
     bool isEmpty();
     string getName();
 

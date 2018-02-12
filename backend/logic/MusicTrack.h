@@ -14,9 +14,19 @@ private:
     UploadedFile* trackFile;
     std::string trackName;
 
-    int openedDescriptor;
+    char* trackHeader;
+
+    int openedTrackFile;
+    bool headerProcessed;
+    bool trackFinished;
+
+    void readTrackHeader();
 
 public:
+
+    static const int WAV_HEADER_SIZE = 44;
+    static const int SOUND_CHUNK_SIZE = 512;
+
 
     MusicTrack(const std::string& trackName);
 
@@ -24,11 +34,17 @@ public:
 
     void setTrackFile(UploadedFile* trackFile);
 
+    bool isOpened();
+    bool isFinished();
+
     void openTrack();
     void closeTrack();
 
+    int getTrackDurationMillis();
+
+    int getTrackHeaderSize();
     char* getTrackHeader();
-    char* getTrackSignal();
+    char* nextSoundChunk();
 
     ~MusicTrack();
 };

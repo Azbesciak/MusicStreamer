@@ -9,7 +9,7 @@
 Room::Room(string name): name(std::move(name)) {
 
     tracksQueue = new TracksQueue();
-    streamer = new MusicStreamer(this);
+    streamer = new MusicStreamer(tracksQueue);
 }
 
 
@@ -27,7 +27,7 @@ bool Room::removeClient(StreamerClient *client) {
 }
 
 
-unordered_set<StreamerClient*> Room::getClients() {
+const unordered_set<StreamerClient*>& Room::getClients() {
     return clients;
 }
 

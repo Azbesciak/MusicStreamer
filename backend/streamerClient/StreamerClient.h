@@ -9,6 +9,7 @@
 
 using namespace std;
 
+class MusicStreamer;
 class Room;
 
 class StreamerClient {
@@ -28,6 +29,8 @@ public:
 
     Room* getCurrentRoom();
     void setCurrentRoom(Room* room);
+
+    MusicChannel* getStreamingChannel();
 
     ssize_t sendMessage(const string &mes);
     ssize_t sendOnBroadCast(const string &mes);

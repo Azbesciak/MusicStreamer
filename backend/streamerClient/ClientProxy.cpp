@@ -1,6 +1,7 @@
 
 #include <upload/TrackUpload.h>
 #include <streamerClient/ClientProxy.h>
+#include <upload/exception/FileUploadException.h>
 
 
 static const char *const JOIN_ROOM_ACTION = "JOIN";
@@ -10,8 +11,8 @@ static const char *const LEAVE_ACTION = "LEAVE";
 static const char *const UPLOAD_ACTION = "UPLOAD";
 static const char *const QUEUE_TRACK_ACTION = "QUEUE_TRACK";
 static const char *const NEXT_TRACK_ACTION = "NEXT_TRACK";
-
-static const int WAV_HEADER_SIZE = 44;
+static const char *const GET_TRACKS_ACTION = "TRACKS";
+static const char *const GET_QUEUE_ACTION = "TRACKS_QUEUE";
 
 
 ClientResponse ClientProxy::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
@@ -50,6 +51,18 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
         return handleQueueTrack(trackName);
 
+    } else if (method == NEXT_TRACK_ACTION) {
+
+        return handleNextTrack();
+
+    } if (method == GET_TRACKS_ACTION) {
+
+        return handleTracksRequest();
+
+    } if (method == GET_QUEUE_ACTION) {
+
+        return handleQueueRequest();
+
     } else {
 
         response->asUnknownResponse();
@@ -60,7 +73,7 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
 ClientResponse ClientProxy::handleTrackUpload(const string& trackName, int fileSize) {
 
-    if (fileSize <= WAV_HEADER_SIZE)
+    if (fileSize <= MusicTrack::WAV_HEADER_SIZE)
         return ClientResponse::error(403, "File too small. Only wav files are supported.");
 
     if (client->getCurrentRoom() == nullptr)
@@ -71,16 +84,20 @@ ClientResponse ClientProxy::handleTrackUpload(const string& trackName, int fileS
     if (reservedTrack == nullptr)
         return ClientResponse::error(403, "Room tracks limit exceeded");
 
-    TrackUpload* trackUpload = new TrackUpload(reservedTrack, client->getCurrentRoom(), fileSize);
-    string token = UploadHandler::getInstance()->prepareUpload(trackUpload);
+    TrackUpload* trackUpload = nullptr;
+    string token = "";
 
-    if (token.empty()) {
+    try {
 
-        delete trackUpload;
+        trackUpload = new TrackUpload(reservedTrack, client->getCurrentRoom(), fileSize);
+        token = UploadHandler::getInstance()->prepareUpload(trackUpload);
+
+    } catch(FileUploadException& e) {
 
         client->getCurrentRoom()->cancelTrackReservation(reservedTrack);
+        delete trackUpload;
 
-        return ClientResponse::error(409, "Cannot initiate file upload. Please try later");
+        return ClientResponse::error(e.getStatusCode(), e.what());
     }
 
     ClientResponse resp;
@@ -105,6 +122,27 @@ ClientResponse ClientProxy::handleQueueTrack(const std::string& trackName) {
 
     tracksQueue->appendTrack(track);
 
+    return ClientResponse::ok();
+}
+
+
+ClientResponse ClientProxy::handleNextTrack() {
+
+    // Todo implement
+    return ClientResponse::ok();
+}
+
+
+ClientResponse ClientProxy::handleTracksRequest() {
+
+    // Todo implement
+    return ClientResponse::ok();
+}
+
+
+ClientResponse ClientProxy::handleQueueRequest() {
+
+    // Todo implement
     return ClientResponse::ok();
 }
 

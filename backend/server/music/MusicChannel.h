@@ -3,22 +3,23 @@
 
 #include <logic/MusicTrack.h>
 #include <streamerClient/Socket.h>
+#include <netinet/in.h>
 
 
 class MusicChannel {
 
 private:
 
-    Socket* headerStreamingSocket;
-    Socket* signalStreamingSocket;
-
-    MusicTrack* currentTrack;
+    Socket* frameSocket;
+    Socket* soundSocket;
+    sockaddr_in streamAddress;
 
 public:
 
-    MusicChannel();
+    MusicChannel(Socket* frameSocket, Socket* soundSocket, sockaddr_in streamAddress);
 
-
+    void sendHeader(char* headerBytes, int headerSize);
+    void sendSound(char* soundBytes);
 
     ~MusicChannel();
 };

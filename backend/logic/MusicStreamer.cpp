@@ -1,31 +1,84 @@
 #include "MusicStreamer.h"
 
+#include <utility/synch.h>
+#include <algorithm>
+
 using namespace std;
 
 
-typedef void* (*THREADFUNCPTR)(void*);
+MusicStreamer::MusicStreamer(TracksQueue* tracksQueue) {
 
-MusicStreamer::MusicStreamer(Room* room) {
+    this->tracksQueue = tracksQueue;
+    tracksQueue->addOnTrackQueuedListener(this);
 
-    this->room = room;
-    this->currentTrack = nullptr;
-    this->streamerThread = new pthread_t();
+    if (tracksQueue->getCurrentTrack() != nullptr) {
 
-    pthread_create(streamerThread, nullptr, (THREADFUNCPTR) &MusicStreamer::runStreamerExecutor, this);
+        playTrack();
+    }
 }
 
 
-void* MusicStreamer::runStreamerExecutor() {
+void MusicStreamer::playTrack() {
 
-    while (true) {
+    MusicTrack* track = tracksQueue->getCurrentTrack();
+
+    trackStream = new TrackStream(track, clients);
+    trackStream->start();
+
+    // Todo implement scheduler
+}
 
 
+void MusicStreamer::joinClient(StreamerClient* streamerClient) {
+
+    synchronized(clientsMut) {
+
+        clients.push_back(streamerClient);
+
+        if (trackStream != nullptr)
+            trackStream->attachClient(streamerClient);
+    }
+}
+
+
+void MusicStreamer::leaveClient(StreamerClient* streamerClient) {
+
+    synchronized(clientsMut) {
+
+        auto found = find(clients.begin(), clients.end(), streamerClient);
+
+        if (found != clients.end()) {
+
+            clients.erase(found);
+
+            if (trackStream != nullptr)
+                trackStream->detachClient(streamerClient);
+        }
+    }
+}
+
+
+void MusicStreamer::onTrackQueued() {
+
+    synchronized(trackMut) {
+
+        // Todo implement track stream finished check
+        if (trackStream == nullptr || trackStream) {
+
+            if (trackStream != nullptr) {
+
+                trackStream->stop();
+                delete trackStream;
+            }
+
+            trackStream = new TrackStream(tracksQueue->getCurrentTrack(), clients);
+            trackStream->start();
+        }
     }
 }
 
 
 MusicStreamer::~MusicStreamer() {
 
-    pthread_cancel(*streamerThread);
-    delete streamerThread;
+    delete trackStream;
 }

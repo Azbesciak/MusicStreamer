@@ -5,32 +5,41 @@
 
 
 #include <unordered_set>
+#include <deque>
 #include <thread>
+#include <condition_variable>
 
 #include <logic/MusicTrack.h>
 #include <server/music/MusicChannel.h>
-#include "streamerClient/StreamerClient.h"
+#include <streamerClient/StreamerClient.h>
+#include <logic/TrackStream.h>
+#include <logic/callback/OnTrackQueuedListener.h>
 
+class TracksQueue;
+class StreamerClient;
+class TrackStream;
 
-class Room;
-
-class MusicStreamer {
+class MusicStreamer : public OnTrackQueuedListener {
 
 private:
 
-    MusicTrack* currentTrack;
-    Room* room;
+    TracksQueue* tracksQueue;
+    TrackStream* trackStream;
+    std::vector<StreamerClient*> clients;
 
-    std::recursive_mutex mut;
-    pthread_t* streamerThread;
+    std::recursive_mutex trackMut;
+    std::recursive_mutex clientsMut;
 
-    void* runStreamerExecutor();
+    void playTrack();
 
 public:
 
-    MusicStreamer(Room* room);
+    explicit MusicStreamer(TracksQueue* tracksQueue);
 
-    void streamTrack(MusicTrack* track);
+    void joinClient(StreamerClient* streamerClient);
+    void leaveClient(StreamerClient* streamerClient);
+
+    void onTrackQueued() override;
 
     ~MusicStreamer();
 };

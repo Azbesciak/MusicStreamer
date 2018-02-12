@@ -29,6 +29,9 @@ public:
 
     ClientResponse handleTrackUpload(const std::string& trackName, int fileSize);
     ClientResponse handleQueueTrack(const std::string& trackName);
+    ClientResponse handleNextTrack();
+    ClientResponse handleTracksRequest();
+    ClientResponse handleQueueRequest();
 
     ClientResponse onNewRequest(Request *request) override;
 };
