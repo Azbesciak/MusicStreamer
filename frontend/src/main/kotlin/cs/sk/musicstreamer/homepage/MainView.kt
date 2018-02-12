@@ -12,6 +12,12 @@ import cs.sk.musicstreamer.connection.connectors.ConnectionListener
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import cs.sk.musicstreamer.room.RoomView
 import io.datafx.controller.flow.context.ViewFlowContext
+import javafx.beans.binding.Bindings
+import javafx.beans.binding.BooleanBinding
+import javafx.beans.binding.BooleanExpression
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.value.ObservableBooleanValue
 import javafx.fxml.Initializable
 import javafx.scene.control.Label
 import javafx.scene.layout.Pane
@@ -27,10 +33,9 @@ import java.util.*
 // cannot be a @Controller because is created statically...
 class MainView : View(), Initializable {
 
-    private val viewContext: ViewFlowContext by di()
-
     override val root: StackPane by fxml("/main/main_view.fxml")
 
+    private val infoService: InfoService by di()
     private val roomsPane: StackPane by fxid()
     private val content: Pane by fxid()
     private val labelContainer: Pane by fxid()
@@ -49,11 +54,13 @@ class MainView : View(), Initializable {
     private val broadCastServer: BroadCastConnector by di()
     private val authService: AuthService by di()
 
+    private var isConnected = SimpleBooleanProperty(false)
+
     companion object : KLogging()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         launch(JavaFx) {
-            viewContext.register(snackBar)
+            infoService.setSnackBar(snackBar)
             initView()
             launch {
                 initConnectors()
@@ -62,22 +69,28 @@ class MainView : View(), Initializable {
     }
 
     private fun initView() {
-        content += roomView.apply {
-            root.toBack()
-        }
+        content += roomView
         labelContainer += appLabel
+        onConnectionChange(false)
         with(drawer) {
             setOnDrawerOpening { onDrawerChange(true) }
             setOnDrawerClosing { onDrawerChange(false) }
             roomsPane.setOnMouseClicked({
                 when {
-                    isHidden || isHiding -> open()
-                    else -> close()
+                    isHidden || isHiding -> openAtFront()
+                    else -> closeToBack()
                 }
             })
-            roomsView.addJoinListener { close() }
+            isConnected.addListener {_, _, connected -> onConnectionChange(connected) }
+            roomsView.addJoinListener { closeToBack() }
             sidePane += roomsView.root
-            toFront()
+        }
+    }
+
+    private fun onConnectionChange(connected: Boolean) {
+        roomsPane.isDisable = connected.not()
+        with (roomView.root) {
+            isDisable = connected.not()
         }
     }
 
@@ -88,25 +101,25 @@ class MainView : View(), Initializable {
             }
 
     private fun initConnectors() {
-        connectButton.setOnMouseClicked {
-            connect()
-        }
+
+        connectButton.setOnMouseClicked { connect() }
         broadCastServer.addConnectionListener(ConnectionListener(
                 onConnection = ::sendBroadCastSubscription,
-                onError = { launch(JavaFx) { showSnackBar("An error occurred on broadcast channel") } }
+                onError = { launch(JavaFx) { infoService.showSnackBar("An error occurred on broadcast channel") } }
         ))
 
         communicationServerConnector.addConnectionListener(ConnectionListener(
                 onConnection = {
                     launch(JavaFx) {
                         tryToAuthenticate()
-                        broadCastServer.connect()
+                        launch { broadCastServer.connect() }
+                        isConnected.value = true
                     }
                 },
                 onDisconnect = { launch(JavaFx) { onDisconnect() } },
                 onError = {
                     launch(JavaFx) {
-                        showSnackBar("Could not connect with server")
+                        infoService.showSnackBar("Could not connect with server")
                         onDisconnect()
                     }
                 }
@@ -115,16 +128,17 @@ class MainView : View(), Initializable {
     }
 
     private suspend fun onDisconnect() {
+        drawer.closeToBack()
+        isConnected.value = false
         broadCastServer.disconnect()
         authService.cleanUser()
         roomsView.clean()
-        appLabel.clean()
         roomView.clean()
         delay(5000)
         connectButton.isDisable = false
     }
 
-    private fun showSnackBar(message: String) = snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))
+
 
     private fun sendBroadCastSubscription() {
         val userName = authService.getUserName()!!
@@ -132,11 +146,14 @@ class MainView : View(), Initializable {
                 request = SubscribeRequest(userName),
                 onResponse = {
                     logger.info { "BroadCast subscribed for $userName" }
-                    drawer.open()
+                    launch(JavaFx) { drawer.openAtFront() }
                 },
                 onError = { e -> logger.error { "could not subscribe for Broadcast: ${e.body}" } }
         )
     }
+
+    private fun JFXDrawer.openAtFront() = open().also { toFront() }
+    private fun JFXDrawer.closeToBack() = close().also { toBack() }
 
     private fun connect() {
         connectButton.isDisable = true

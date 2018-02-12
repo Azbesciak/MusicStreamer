@@ -1,6 +1,5 @@
 package cs.sk.musicstreamer.connection.connectors
 
-import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 

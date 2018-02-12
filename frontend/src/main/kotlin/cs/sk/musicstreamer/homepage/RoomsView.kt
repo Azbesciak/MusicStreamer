@@ -20,14 +20,13 @@ import javax.annotation.PostConstruct
 class RoomsView(
         private val mainConnector: MainConnector,
         private val broadCastConnector: BroadCastConnector,
-        private val viewContext: ViewFlowContext
+        private val infoService: InfoService
 ) : Fragment() {
 
     override val root: StackPane by fxml("/main/rooms_view.fxml")
     private val roomsList: JFXListView<String> by fxid()
     private val joinInput: JFXTextField by fxid()
     private val joinButton: JFXRippler by fxid()
-    private val snackBar: JFXSnackbar by lazy { viewContext.getRegisteredObject(JFXSnackbar::class.java) }
     private val currentRoom = SimpleStringProperty()
     private var roomsNamesList = mutableListOf<String>()
     private val joinListeners = mutableListOf<(String) -> Unit>()
@@ -80,7 +79,7 @@ class RoomsView(
                 request = JoinRequest(roomName),
                 onResponse = {
                     launch(JavaFx) {
-                        snackBar.fireEvent(JFXSnackbar.SnackbarEvent("joined to $roomName"))
+                        infoService.showSnackBar("joined to $roomName")
                         logger.debug { "Joined to room $it" }
                         currentRoom.value = roomName
                         joinListeners.forEach { it(roomName) }
@@ -89,7 +88,7 @@ class RoomsView(
                 },
                 onError = {
                     launch(JavaFx) {
-                        snackBar.fireEvent(JFXSnackbar.SnackbarEvent("Could not join to $roomName"))
+                        infoService.showSnackBar("Could not join to $roomName")
                         logger.info { "Could not join to $roomName" }
                     }
                 }

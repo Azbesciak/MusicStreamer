@@ -45,7 +45,7 @@
         <!-- Content Area -->
         <center>
             <StackPane fx:id="content">
-                <JFXDrawer fx:id="drawer" defaultDrawerSize="250" direction="LEFT" style="z-order: 1000;">
+                <JFXDrawer fx:id="drawer" defaultDrawerSize="250" direction="LEFT">
                     <styleClass>
                         <String fx:value="body"/>
                     </styleClass>
