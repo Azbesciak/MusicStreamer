@@ -55,11 +55,11 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
         return handleNextTrack();
 
-    } if (method == GET_TRACKS_ACTION) {
+    } else if (method == GET_TRACKS_ACTION) {
 
         return handleTracksRequest();
 
-    } if (method == GET_QUEUE_ACTION) {
+    } else if (method == GET_QUEUE_ACTION) {
 
         return handleQueueRequest();
 
