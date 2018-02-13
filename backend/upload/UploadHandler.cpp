@@ -71,28 +71,20 @@ void UploadHandler::downloadFile(int clientSocket) {
 }
 
 UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
-
     UploadedFile* file = createNewUploadedFile();
-
     if (file == nullptr)
         throw FileUploadException(500, "Unexpected file upload error");
 
     long remainingSize = fileSize;
-    auto * buffer = new char[BYTE_BUFFER_SIZE + 1];
-
+    auto buffer = new char[BYTE_BUFFER_SIZE + 1];
     int fileDescriptor = open(file->getFileName().c_str(), O_WRONLY);
-
     if (fileDescriptor < 0)
         throw FileUploadException(500, "Unexpected file upload error");
 
     try {
-
         while (remainingSize > 0) {
-
             ssize_t bytes = read(clientSocket, buffer, BYTE_BUFFER_SIZE);
-
             if (bytes < 0) {
-
                 if (errno == EWOULDBLOCK)
                     throw FileUploadException(408, "File upload timeout");
                 else
@@ -101,27 +93,22 @@ UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
             } else if (bytes == 0) {
                 throw FileUploadException(400, "Received smaller file than it was specified");
 
-            } else if (bytes > remainingSize)
+            } else if (bytes > remainingSize) {
                 throw FileUploadException(400, "Received bigger file that it was specified");
-
+            }
             ssize_t writeBytes = write(fileDescriptor, buffer, bytes);
-
             if (writeBytes < 0)
                 throw FileUploadException(500, "Unexpected file write error");
-
             remainingSize -= bytes;
         }
-
     } catch(FileUploadException& ex) {
-
         close(fileDescriptor);
         remove(file->getFileName().c_str());
-
+        delete buffer;
         throw ex;
     }
-
+    delete buffer;
     close(fileDescriptor);
-
     return file;
 }
 
