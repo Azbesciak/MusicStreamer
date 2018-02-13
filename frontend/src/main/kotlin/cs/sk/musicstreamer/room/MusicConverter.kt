@@ -19,7 +19,9 @@ class MusicConverter {
                 sourceFormat.sampleRate,
                 false)
         val converted = AudioSystem.getAudioInputStream(convertFormat, mp3Stream)
-        val tempFile = File.createTempFile("musicStreamer", "wavPort")
+        val tempFile = File("temp/${mp3Data.name}")
+        tempFile.parentFile.mkdirs()
+        tempFile.createNewFile()
         AudioSystem.write(converted, AudioFileFormat.Type.WAVE, tempFile)
         return tempFile
     }

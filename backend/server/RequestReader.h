@@ -5,7 +5,7 @@
 
 #include <streamerClient/Request.h>
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE 256
 
 class RequestReader {
     char *buffer;

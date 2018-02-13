@@ -16,4 +16,5 @@ class RoomsRequest(val rooms: String) : Request("ROOMS")
 class LeaveRoomRequest : Request("LEAVE")
 class UploadRequest(val trackName: String, val trackFileSize: Long) : Request("UPLOAD")
 class SubscribeRequest(val name: String) : Request("SUBSCRIBE")
+class UploadTokenRequest(val name: String, val token: String) : Request("UPLOAD_TOKEN")
 

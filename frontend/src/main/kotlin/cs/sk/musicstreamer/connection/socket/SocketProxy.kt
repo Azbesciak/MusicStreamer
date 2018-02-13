@@ -7,17 +7,21 @@ import kotlinx.coroutines.experimental.nio.aConnect
 import kotlinx.coroutines.experimental.nio.aRead
 import kotlinx.coroutines.experimental.nio.aWrite
 import mu.KLogging
+import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.AsynchronousSocketChannel
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SocketProxy(
         private val host: String,
         private val port: Int,
         private val isConnected: AtomicBoolean = AtomicBoolean(false),
-        private val bufferSize: Int = 256) {
+        private val bufferSize: Int = 256,
+        private val fileBufferSize: Int = 1024) {
 
     companion object : KLogging() {
         val objectMapper = ObjectMapper()
@@ -30,13 +34,39 @@ class SocketProxy(
 
     suspend fun write(request: Request) = withSocket { it.write(request) }
 
+    suspend fun write(file: File, progressListener: (Double) -> Unit) =
+            withSocket {it.write(file, progressListener)}
+
+    private suspend fun AsynchronousSocketChannel.write(file: File, progressListener: (Double) -> Unit) {
+        val buf = ByteBuffer.allocate(fileBufferSize)
+        AsynchronousFileChannel.open(file.toPath(), StandardOpenOption.READ).use { chanel ->
+            var position = 0L
+            val totalSize = file.length()
+            while (position < totalSize) {
+                val read = chanel.aRead(buf, position)
+                if (read <= 0) {
+                    throwAndClose("Could not write file")
+                } else {
+                    buf.flip()
+                    writeOrThrow(buf)
+                    position += read
+                    progressListener(position / totalSize.toDouble())
+                }
+                buf.clear()
+            }
+        }
+    }
+
     private suspend fun AsynchronousSocketChannel.write(request: Request): Int {
         val requestString = objectMapper.writeValueAsString(request)
         val bytes = ByteBuffer.wrap(requestString.toByteArray())
-        return aWrite(buf = bytes).apply {
-            if (this < 0) throwAndClose("Could not write to $socketDescription")
-        }
+        return writeOrThrow(buf = bytes)
     }
+
+    private suspend fun AsynchronousSocketChannel.writeOrThrow(buf: ByteBuffer): Int =
+            aWrite(buf = buf).apply {
+                if (this <= 0) throwAndClose("Could not write to $socketDescription")
+            }
 
     private suspend fun <T> withSocket(f: suspend (AsynchronousSocketChannel) -> T): T {
         if (socket == null) {
@@ -81,7 +111,7 @@ class SocketProxy(
         isConnected.set(false)
         if (socket != null) {
             try {
-                socket!!.close()
+                socket?.close()
             } catch (e: Error) {
             }
             socket = null

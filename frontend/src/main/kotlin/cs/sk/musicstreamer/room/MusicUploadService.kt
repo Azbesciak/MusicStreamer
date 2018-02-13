@@ -1,19 +1,24 @@
 package cs.sk.musicstreamer.room
 
+import cs.sk.musicstreamer.authorization.AuthService
 import cs.sk.musicstreamer.connection.UploadRequest
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.UploadConnector
+import cs.sk.musicstreamer.connection.connectors.UploadData
+import cs.sk.musicstreamer.connection.connectors.UploadListener
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import org.reactivestreams.Subscriber
 import org.springframework.stereotype.Service
 import java.io.File
+import kotlin.math.log
 
 @Service
 class MusicUploadService(
         private val mainConnector: MainConnector,
         private val converter: MusicConverter,
-        private val uploadConnector: UploadConnector
+        private val uploadConnector: UploadConnector,
+        private val authService: AuthService
 ) {
 
     companion object : KLogging()
@@ -30,7 +35,18 @@ class MusicUploadService(
             logger.info { "File to upload: $trackName $fileToUpload" }
             mainConnector.send(
                     request = UploadRequest(trackName, fileSize),
-                    onResponse = { logger.info { "upload ok ! $it" } },
+                    onResponse = {
+                        logger.info { "upload ok ! $it" }
+                        val clientName = authService.getUserName() ?: return@send
+                        uploadConnector.sendFile(
+                                uploadData = UploadData(fileToUpload, it.body.get("uploadToken").asText(), clientName),
+                                listener = UploadListener(
+                                        onProgress = { logger.info { "progress: $it" } },
+                                        onError = { logger.error { "Error at file upload $it" } },
+                                        onSuccess = { logger.info { "file uploaded." } }
+                                )
+                        )
+                    },
                     onError = { logger.error { "Upload denied" } }
             )
         }

@@ -2,6 +2,7 @@ package cs.sk.musicstreamer.connection.socket
 
 import cs.sk.musicstreamer.connection.Request
 import mu.KLogging
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SocketWriter : SocketConsumer {
@@ -24,5 +25,10 @@ class SocketWriter : SocketConsumer {
     suspend fun write(request: Request): Int {
         logger.debug { "Writing to ${socketProxy.socketDescription}: $request" }
         return socketProxy.write(request)
+    }
+
+    suspend fun write(file: File, onProgress: (Double) -> Unit) {
+        logger.debug { "Started sending file: ${file.name}:[${file.length()}]" }
+        return socketProxy.write(file, onProgress)
     }
 }
