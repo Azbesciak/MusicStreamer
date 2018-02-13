@@ -36,7 +36,7 @@ private:
 
     static const int MAX_SIMULTANEOUS_UPLOADS = 20;
     static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
-    static const int UPLOAD_TIMEOUT_MILLIS = 50000; // 5 s
+    static const int UPLOAD_TIMEOUT_MILLIS = 5000; // 5 s
 
 
     static const int BYTE_BUFFER_SIZE = 1024;
