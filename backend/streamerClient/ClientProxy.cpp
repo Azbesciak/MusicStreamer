@@ -2,6 +2,7 @@
 #include <upload/TrackUpload.h>
 #include <streamerClient/ClientProxy.h>
 #include <upload/exception/FileUploadException.h>
+#include <upload/UploadHandler.h>
 
 
 static const char *const JOIN_ROOM_ACTION = "JOIN";

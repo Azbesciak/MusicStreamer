@@ -1,104 +1,47 @@
 #include "UploadHandler.h"
 
-#include <server/SocketFactory.h>
 #include <upload/exception/FileUploadException.h>
-#include <streamerClient/ClientResponse.h>
 #include <utility/token.hpp>
-#include <utility/synch.h>
 
 #include <fcntl.h>
-#include <arpa/inet.h>
 
 using namespace std;
-
 
 const char* const UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
 
 UploadHandler* UploadHandler::instance = nullptr;
 
-
 UploadHandler* UploadHandler::getInstance() {
     return instance;
 }
 
+UploadHandler::UploadHandler(const string &host, int port, ServerManager * manager):
+        TcpServer(host, port, manager, "Upload server"),
+        nextFileNo(1) {}
 
-UploadHandler::UploadHandler(const string &host, int port) {
+void UploadHandler::onNewConnection(int clientSocket, const std::string &remoteAddr) {
 
-    this->nextFileNo = 1;
-    this->receiverSocket = SocketFactory::createTcpSocket(host, port);
-
-    spawnHandlerThread();
+    cout << MAGENTA_TEXT("File upload from: " << remoteAddr) << endl;
+    setSocketTimeout(clientSocket);
+    downloadFile(clientSocket);
 }
 
-
-void UploadHandler::spawnHandlerThread() {
-
-    listenerThread = new pthread_t();
-    pthread_create(listenerThread, nullptr, listenerLoop, nullptr);
+void UploadHandler::setSocketTimeout(int clientSocket) const {
+    timeval timeout {
+            .tv_sec = UPLOAD_TIMEOUT_MILLIS / 1000,
+            .tv_usec = (UPLOAD_TIMEOUT_MILLIS % 1000) * 1000
+    };
+    setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 }
 
+void UploadHandler::downloadFile(int clientSocket) {
 
-void* UploadHandler::listenerLoop(void*) {
-    getInstance()->runLooper();
-}
-
-
-void UploadHandler::runLooper() {
-
-    while (true) {
-
-        sockaddr_in clientAddress;
-        socklen_t addressSize = sizeof(sockaddr_in);
-
-        int clientSocket = accept(receiverSocket, (sockaddr*) &clientAddress, &addressSize);
-
-        if (clientSocket < 0) {
-
-            perror("Client socket accept error.\n");
-            continue;
-        }
-
-        handleClientUpload(clientSocket, clientAddress);
-    }
-}
-
-
-void UploadHandler::handleClientUpload(int clientSocket, sockaddr_in clientAddress) {
-
-    logUploadConnection(clientAddress);
-
-    pthread_t* thread = new pthread_t();
-    UploadMeta* uploadMeta = new UploadMeta(this, thread, clientSocket, clientAddress);
-
-    pthread_create(thread, nullptr, handleFileDownload, uploadMeta);
-}
-
-
-void* UploadHandler::handleFileDownload(void* metadata) {
-
-    auto * uploadMeta = static_cast<UploadMeta*>(metadata);
-    UploadHandler* handler = uploadMeta->getUploadHandlerInstance();
-
-    // Set socket read timeout
-    timeval timeout{};
-    timeout.tv_sec = UPLOAD_TIMEOUT_MILLIS / 1000;
-    timeout.tv_usec = (UPLOAD_TIMEOUT_MILLIS % 1000) * 1000;
-    setsockopt(uploadMeta->getClientSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-
-    handler->downloadFile(uploadMeta);
-
-    return nullptr;
-}
-
-
-void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
-
-    StreamerClient client = StreamerClient(uploadMeta->getClientSocket());
+    StreamerClient client = StreamerClient(clientSocket);
     FileUpload* upload = nullptr;
 
     try {
 
-        string token = acceptToken(uploadMeta->getClientSocket());
+        string token = acceptToken(clientSocket);
 
         client.sendMessage(ClientResponse(100, "Now send the data").serialize());
 
@@ -107,12 +50,12 @@ void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
         if (upload == nullptr)
             throw FileUploadException(404, "Upload with the token not found");
 
-        UploadedFile* uploadedFile = acceptFileBytes(uploadMeta->getClientSocket(), upload->getFileSize());
+        UploadedFile* uploadedFile = acceptFileBytes(clientSocket, upload->getFileSize());
 
         upload->onUploadCompleted(uploadedFile);
         client.sendMessage(ClientResponse(200, "File uploaded successfully").serialize());
 
-        close(uploadMeta->getClientSocket());
+        close(clientSocket);
 
     } catch(FileUploadException& ex) {
 
@@ -120,7 +63,6 @@ void UploadHandler::downloadFile(UploadMeta* uploadMeta) {
             upload->onUploadFailed();
 
         client.sendMessage(ClientResponse::error(ex.getStatusCode(), ex.what()).serialize());
-
     }
 
     delete upload;
@@ -134,7 +76,7 @@ UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
     if (file == nullptr)
         throw FileUploadException(500, "Unexpected file upload error");
 
-    int remainingSize = fileSize;
+    long remainingSize = fileSize;
     auto * buffer = new char[BYTE_BUFFER_SIZE + 1];
 
     int fileDescriptor = open(file->getFileName().c_str(), O_WRONLY);
@@ -235,22 +177,9 @@ string UploadHandler::acceptToken(int clientSocket) {
     return tokenBuffer;
 }
 
-
-void UploadHandler::logUploadConnection(sockaddr_in clientAddress) {
-
-    char address[INET_ADDRSTRLEN + 1];
-
-    inet_ntop(AF_INET, &(clientAddress.sin_addr), address, INET_ADDRSTRLEN);
-    address[INET_ADDRSTRLEN] = '\0';
-
-    printf("File upload from: %s\n", address);
-}
-
-
 string UploadHandler::prepareUpload(FileUpload* fileUpload) {
 
     // Todo implement maximum number of uploads limit
-
     if (fileUpload->getFileSize() > MAX_FILE_SIZE)
         throw FileUploadException(400, "File size too large");
 
@@ -267,7 +196,6 @@ string UploadHandler::prepareUpload(FileUpload* fileUpload) {
     return token;
 }
 
-
 string UploadHandler::generateToken() {
 
     string token = "";
@@ -276,21 +204,18 @@ string UploadHandler::generateToken() {
 
         token = TokenGenerator::alfanumeric(TOKEN_SIZE);
 
-    } while(usedTokens.find(token) != usedTokens.end());
+    } while (usedTokens.find(token) != usedTokens.end());
 
     return token;
 }
 
-
 UploadedFile* UploadHandler::createNewUploadedFile() {
 
     UploadedFile* uploadedFile = nullptr;
-    int fd = -1;
-
     synchronized(fileMut) {
 
         string fileName = resolveNewFilePath();
-        fd = creat(fileName.c_str(), 0);
+        int fd = creat(fileName.c_str(), 0);
 
         if (fd >= 0) {
 
@@ -302,7 +227,6 @@ UploadedFile* UploadHandler::createNewUploadedFile() {
     return uploadedFile;
 }
 
-
 string UploadHandler::resolveNewFilePath() {
 
     string filename = to_string(nextFileNo++);
@@ -310,22 +234,15 @@ string UploadHandler::resolveNewFilePath() {
     return string(FILE_UPLOAD_DIRECTORY) + filename;
 }
 
-
 UploadHandler::~UploadHandler() {
-
     for (auto tokenUpload : uploads) {
-
-        FileUpload* upload = tokenUpload.second;
-        delete upload;
+        delete tokenUpload.second;
     }
-
-    pthread_cancel(*listenerThread);
-    close(receiverSocket);
 }
 
-void UploadHandler::initialize(const string &host, int port) {
+void UploadHandler::initialize(const string &host, int port, ServerManager * manager) {
     if (instance == nullptr) {
-        instance = new UploadHandler(host, port);
+        instance = new UploadHandler(host, port, manager);
     }
 }
 

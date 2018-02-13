@@ -3,18 +3,18 @@
 
 
 #include <upload/FileUpload.h>
-#include <upload/UploadMeta.h>
 #include <logic/Room.h>
 #include <set>
 #include <netinet/in.h>
 #include <map>
+#include <server/TcpServer.h>
 
-class UploadMeta;
 
-class UploadHandler {
+class UploadHandler : public TcpServer {
+protected:
+    void onNewConnection(int clientSocket, const std::string &remoteAddr) override;
 
 private:
-
     static const int MAX_SIMULTANEOUS_UPLOADS = 20;
     static const int MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
     static const int UPLOAD_TIMEOUT_MILLIS = 5000; // 5 s
@@ -28,26 +28,18 @@ private:
 
     std::recursive_mutex mut;
     std::recursive_mutex fileMut;
-    pthread_t* listenerThread;
-
     int nextFileNo;
 
     std::map<std::string, FileUpload*> uploads;
     std::set<std::string> usedTokens;
 
-    int receiverSocket;
 
-
-    UploadHandler(const string &host, int port);
-
-    void spawnHandlerThread();
-    static void* listenerLoop(void*);
-    void runLooper();
+    UploadHandler(const string &host, int port, ServerManager * manager);
 
     std::string generateToken();
     FileUpload* retrieveUploadByToken(std::string token);
 
-    void downloadFile(UploadMeta* uploadMeta);
+    void downloadFile(int clientSocket);
     std::string acceptToken(int clientSocket);
     UploadedFile* acceptFileBytes(int clientSocket, long fileSize);
 
@@ -55,19 +47,16 @@ private:
     UploadedFile* createNewUploadedFile();
     std::string resolveNewFilePath();
 
-    void logUploadConnection(sockaddr_in clientAddress);
-    void handleClientUpload(int clientSocket, sockaddr_in clientAddress);
-
-    static void* handleFileDownload(void* data);
-    ~UploadHandler();
+    ~UploadHandler() override;
 
 public:
-    static void initialize(const string &host, int port);
+    static void initialize(const string &host, int port, ServerManager * manager);
     static void destroy();
     static UploadHandler* getInstance();
 
     std::string prepareUpload(FileUpload* fileUpload);
 
+    void setSocketTimeout(int clientSocket) const;
 };
 
 

@@ -4,7 +4,6 @@
 
 
 #include <upload/FileUpload.h>
-#include <upload/UploadHandler.h>
 #include <streamerClient/ClientResponse.h>
 #include <logic/Container.h>
 #include "Request.h"

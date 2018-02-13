@@ -39,8 +39,6 @@ add_executable(MusicStreamer
         utility/token.hpp
         upload/TrackUpload.cpp
         upload/TrackUpload.h
-        upload/UploadMeta.cpp
-        upload/UploadMeta.h
         upload/UploadedFile.cpp
         upload/UploadedFile.h
         upload/exception/FileUploadException.cpp

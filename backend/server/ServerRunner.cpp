@@ -2,6 +2,7 @@
 #include "../logic/Container.h"
 #include "CommunicationServer.h"
 #include <csignal>
+#include <upload/UploadHandler.h>
 #include "ServerRunner.h"
 #include "BroadCastServer.h"
 
@@ -24,7 +25,7 @@ int main(int argc, char *argv[]) {
 
     serverRef->communicationServer = new CommunicationServer(host, port, serverRef);
     serverRef->broadCaster = new BroadCastServer(host, broadCastPort, serverRef);
-    UploadHandler::initialize(host, uploadPort);
+    UploadHandler::initialize(host, uploadPort, serverRef);
 
     do {
         cin >> command;
@@ -34,7 +35,6 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-
 void parseCommand(const string &command) {
     if (command.find("stop") != string::npos) {
         cout << GREEN_TEXT("Stopping server....\n");
@@ -43,7 +43,6 @@ void parseCommand(const string &command) {
         cout << RED_TEXT("No such function ") << WHITE_TEXT(command) << "\n";
     }
 }
-
 
 void cleanUp(int) {
     cout<< GREEN_TEXT("cleaning up server") << endl;
