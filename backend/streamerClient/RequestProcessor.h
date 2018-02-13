@@ -9,7 +9,7 @@
 
 class RequestProcessor {
     virtual ClientResponse onNewRequest(Request * request, const string &method, ClientResponse *&response) = 0;
-
+    bool isCorrect(Request *request, ClientResponse *&response);
 public:
     virtual ClientResponse onNewRequest(Request * request);
     virtual ssize_t respond(int socket, const string & message);

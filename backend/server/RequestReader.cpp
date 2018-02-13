@@ -48,5 +48,8 @@ std::vector<Request*> RequestReader::readRequest() {
             readReq;
         }
     }
+    if (requests.empty()) {
+        requests.push_back(new Request(originalMes));
+    }
     return requests;
 }

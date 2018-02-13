@@ -1,11 +1,13 @@
 #include <iostream>
 #include <utility/TerminalUtils.h>
+#include <utility/synch.h>
 #include "StreamerClient.h"
 
 using namespace std;
 
 StreamerClient::StreamerClient(int socketDescriptor) :
         communicationSocket(new Socket(socketDescriptor)),
+        uploadSocket(nullptr),
         currentRoom(nullptr),
         broadCastSocket(nullptr),
         streamingChannel(nullptr){}
@@ -17,6 +19,7 @@ string StreamerClient::getName() const {
 StreamerClient::~StreamerClient() {
     removeSocket(communicationSocket);
     removeSocket(broadCastSocket);
+    removeSocket(uploadSocket);
     removeStreamingChannel();
 }
 
@@ -80,6 +83,25 @@ void StreamerClient::subscribeForMessages(int fd) {
 
 MusicChannel* StreamerClient::getStreamingChannel() {
     return streamingChannel;
+}
+
+
+bool StreamerClient::initializeUpload(int socket) {
+    synchronized(uploadMutex) {
+        if (uploadSocket == nullptr) {
+            uploadSocket = new Socket(socket);
+            return true;
+        }
+        return false;
+    }
+}
+
+void StreamerClient::finishUpload(int socket) {
+    synchronized(uploadMutex) {
+        if (uploadSocket != nullptr && uploadSocket->get() == socket) {
+            removeSocket(uploadSocket);
+        }
+    }
 }
 
 

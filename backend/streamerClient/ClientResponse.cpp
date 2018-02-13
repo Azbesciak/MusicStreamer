@@ -76,7 +76,7 @@ void ClientResponse::asUnknownResponse() {
 }
 
 void ClientResponse::addIdFromRequestIfPresent(Request *request) {
-    if (request->has("id")) {
+    if (request != nullptr && request->has("id")) {
         hasId = true;
         id = request->getStr("id");
     }

@@ -4,10 +4,10 @@
 #include <utility/token.hpp>
 
 #include <fcntl.h>
+#include <server/RequestReader.h>
+#include <fstream>
 
 using namespace std;
-
-const char* const UploadHandler::FILE_UPLOAD_DIRECTORY = "uploaded-files/";
 
 UploadHandler* UploadHandler::instance = nullptr;
 
@@ -15,8 +15,8 @@ UploadHandler* UploadHandler::getInstance() {
     return instance;
 }
 
-UploadHandler::UploadHandler(const string &host, int port, ServerManager * manager):
-        TcpServer(host, port, manager, "Upload server"),
+UploadHandler::UploadHandler(const string &host, int port, ServerManager * manager, const string &storageDirectory):
+        TcpServer(host, port, manager, "Upload server"), FILE_UPLOAD_DIRECTORY(storageDirectory),
         nextFileNo(1) {}
 
 void UploadHandler::onNewConnection(int clientSocket, const std::string &remoteAddr) {
@@ -37,37 +37,38 @@ void UploadHandler::setSocketTimeout(int clientSocket) const {
 void UploadHandler::downloadFile(int clientSocket) {
 
     StreamerClient client = StreamerClient(clientSocket);
-    FileUpload* upload = nullptr;
+    auto reader = new RequestReader(clientSocket);
+    auto processor = new UploadRequestProcessor(clientSocket);
 
+    auto requests = reader->readRequest();
     try {
+        if (requests.size() > 1) {
+            auto response = ClientResponse::error(429, "Hold on...");
+            processor->respond(&response);
+        } else {
+            auto response = processor->onNewRequest(requests[0]);
+            processor->respond(&response);
 
-        string token = acceptToken(clientSocket);
+            if (processor->client != nullptr && processor->upload != nullptr) {
+                UploadedFile* uploadedFile = acceptFileBytes(clientSocket, processor->upload->getFileSize());
 
-        client.sendMessage(ClientResponse(100, "Now send the data").serialize());
-
-        upload = retrieveUploadByToken(token);
-
-        if (upload == nullptr)
-            throw FileUploadException(404, "Upload with the token not found");
-
-        UploadedFile* uploadedFile = acceptFileBytes(clientSocket, upload->getFileSize());
-
-        upload->onUploadCompleted(uploadedFile);
-        client.sendMessage(ClientResponse(200, "File uploaded successfully").serialize());
-
-        close(clientSocket);
-
+                processor->upload->onUploadCompleted(uploadedFile);
+                response = ClientResponse(200, "File uploaded successfully");
+                processor->respond(&response);
+            }
+        }
     } catch(FileUploadException& ex) {
 
-        if (upload != nullptr)
-            upload->onUploadFailed();
-
-        client.sendMessage(ClientResponse::error(ex.getStatusCode(), ex.what()).serialize());
+        if (processor->upload != nullptr)
+            processor->upload->onUploadFailed();
+        auto response = ClientResponse::error(ex.getStatusCode(), ex.what());
+        processor->respond(&response);
     }
-
-    delete upload;
+    for (auto req: requests) {
+        delete req;
+    }
+    delete processor;
 }
-
 
 UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
 
@@ -125,7 +126,7 @@ UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
 }
 
 
-FileUpload* UploadHandler::retrieveUploadByToken(string token) {
+FileUpload* UploadHandler::retrieveUploadByToken(const string &token) {
 
     FileUpload* upload = nullptr;
 
@@ -145,36 +146,66 @@ FileUpload* UploadHandler::retrieveUploadByToken(string token) {
     return upload;
 }
 
-
-string UploadHandler::acceptToken(int clientSocket) {
-
-    auto * tokenBuffer = new char[TOKEN_SIZE + 1];
-    size_t remainingBytes = TOKEN_SIZE;
-
-    string token;
-
-    while (remainingBytes > 0) {
-
-        long bytes;
-
-        if ((bytes = read(clientSocket, tokenBuffer, remainingBytes)) > 0) {
-
-            tokenBuffer[bytes] = '\0';
-            token += tokenBuffer;
-            remainingBytes -= bytes;
-
-        } else if (bytes == 0) {
-            throw FileUploadException(400, "Closed connection before uploading file content");
-
-        } else if (errno == EWOULDBLOCK) {
-            throw FileUploadException(408, "File upload timeout");
-
-        } else {
-            throw FileUploadException(500, "Unexpected file upload error");
+ClientResponse UploadHandler::UploadRequestProcessor::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
+    if (method == "UPLOAD_TOKEN") {
+        auto clientName = request->getStr("name");
+        auto handler = UploadHandler::getInstance();
+        client = handler->manager->container->getClient(clientName);
+        if (client == nullptr) {
+            return ClientResponse::error(403, "Client not found");
+        } else if (client -> getCurrentRoom() == nullptr){
+            return ClientResponse::error(403, "Client has no room");
         }
-    }
+        auto token = request->getStr("token");
+        if (token.size() != TOKEN_SIZE) {
+            response->setError(403, "Invalid Token");
+        } else {
+            upload = handler->retrieveUploadByToken(token);
 
-    return tokenBuffer;
+            if (upload == nullptr)
+                response->setError(404, "Upload with the token not found");
+            else if (client->initializeUpload(clientSocket))
+                return ClientResponse(100, "Now send the data");
+            else {
+                client = nullptr;
+                response->setError(403, "Only one upload at the same time is allowed");
+            }
+        }
+    } else {
+        response->asUnknownResponse();
+    }
+    return *response;
+}
+
+ssize_t UploadHandler::UploadRequestProcessor::respond(ClientResponse * response) {
+    if (response -> isError()) {
+        cout<< RED_TEXT("ERROR on upload for client "
+                                << clientSocket
+                                << ": \n\t" << response->serialize()) << endl;
+    } else {
+        cout << "Sending "<< MAGENTA_TEXT("UPLOAD")
+             << "response to client " << clientSocket
+             <<": \n\t" << response->serialize() << endl;
+    }
+    return RequestProcessor::respond(clientSocket, response->serialize());
+}
+
+ClientResponse UploadHandler::UploadRequestProcessor::onNewRequest(Request *request) {
+    return RequestProcessor::onNewRequest(request);
+}
+
+UploadHandler::UploadRequestProcessor::UploadRequestProcessor(int clientSocket):
+        clientSocket(clientSocket),
+        upload(nullptr),
+        client(nullptr) {}
+
+UploadHandler::UploadRequestProcessor::~UploadRequestProcessor() {
+    delete upload;
+    if (client != nullptr) {
+        client->finishUpload(clientSocket);
+    } else {
+        close(clientSocket);
+    }
 }
 
 string UploadHandler::prepareUpload(FileUpload* fileUpload) {
@@ -210,20 +241,15 @@ string UploadHandler::generateToken() {
 }
 
 UploadedFile* UploadHandler::createNewUploadedFile() {
-
     UploadedFile* uploadedFile = nullptr;
     synchronized(fileMut) {
-
         string fileName = resolveNewFilePath();
-        int fd = creat(fileName.c_str(), 0);
-
-        if (fd >= 0) {
-
+        ofstream file(fileName);
+        if (file.is_open()) {
             uploadedFile = new UploadedFile(fileName);
-            close(fd);
+            file.close();
         }
     }
-
     return uploadedFile;
 }
 
@@ -240,9 +266,9 @@ UploadHandler::~UploadHandler() {
     }
 }
 
-void UploadHandler::initialize(const string &host, int port, ServerManager * manager) {
+void UploadHandler::initialize(const string &host, int port, ServerManager * manager, const string &storageDirectory) {
     if (instance == nullptr) {
-        instance = new UploadHandler(host, port, manager);
+        instance = new UploadHandler(host, port, manager, storageDirectory);
     }
 }
 

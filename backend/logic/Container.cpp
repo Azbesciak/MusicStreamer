@@ -157,16 +157,27 @@ void Container::sendToAll(ClientResponse &resp) {
 
 StreamerClient * Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
     synchronized(clientsMut) {
-        auto clientEntry = clients.find(clientName);
-
-        if (clientEntry != clients.end()) {
-            auto client = clientEntry->second;
+        auto client = getClientByNameUnsynch(clientName);
+        if (client != nullptr) {
             client-> subscribeForMessages(messageSocketFd);
             watcher->requestUpdate(client);
-            return client;
         }
-        return nullptr;
+        return client;
     }
+}
+
+StreamerClient *Container::getClient(const string &clientName) {
+    synchronized(clientsMut) {
+        return getClientByNameUnsynch(clientName);
+    }
+}
+
+StreamerClient *Container::getClientByNameUnsynch(const string &clientName) {
+    auto clientEntry = clients.find(clientName);
+    if (clientEntry != clients.end()) {
+        return clientEntry->second;
+    }
+    return nullptr;
 }
 
 

@@ -7,7 +7,8 @@
 #define DEF_BROAD_PORT 10002
 #define DEF_UPLOAD_PORT 21212
 #define DEF_ADDR "127.0.0.1"
-#define DEF_CONFIG_PATH "../server.properties"
+#define DEF_CONFIG_PATH "server.properties"
+#define DEF_UPLOAD_DIR "uploaded-files/"
 
 using namespace std;
 

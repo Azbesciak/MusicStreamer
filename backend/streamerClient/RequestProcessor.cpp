@@ -5,12 +5,10 @@
 
 ClientResponse RequestProcessor::onNewRequest(Request *request) {
     ClientResponse resp;
-    if (!request->isCorrect()) {
-        resp.setError(400, "Malformed input data");
-    } else {
+    auto resp2 = &resp;
+    if (isCorrect(request, resp2)) {
         string method = request->getMethod();
         try {
-            auto resp2 = &resp;
             resp = onNewRequest(request, method, resp2);
             resp.fillOkResultIfNotSet();
 
@@ -24,4 +22,15 @@ ClientResponse RequestProcessor::onNewRequest(Request *request) {
 
 ssize_t RequestProcessor::respond(int socket, const string &message) {
     return write(socket, message.c_str(), message.length());
+}
+
+bool RequestProcessor::isCorrect(Request *request, ClientResponse *&response) {
+    if (request == nullptr || errno == EWOULDBLOCK) {
+        response->setError(408, "Read timeout");
+        return false;
+    } else if (!request->isCorrect()){
+        response->setError(400, "Malformed input data");
+        return false;
+    }
+    return true;
 }

@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include "FileUpload.h"
 
 using namespace std;
@@ -16,7 +15,7 @@ long FileUpload::getFileSize() {
 
 
 void FileUpload::onUploadCompleted(UploadedFile* uploadedFile) {
-    // No action by default
+    delete uploadedFile;
 }
 
 

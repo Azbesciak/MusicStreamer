@@ -16,7 +16,10 @@ class StreamerClient {
 private:
     Socket * communicationSocket;
     Socket * broadCastSocket;
+    Socket * uploadSocket = nullptr;
     MusicChannel* streamingChannel;
+
+    recursive_mutex uploadMutex;
 
     string name;
     Room * currentRoom;
@@ -38,6 +41,9 @@ public:
     void removeSocket(Socket *&socket);
     void removeStreamingChannel();
     void subscribeForMessages(int fd);
+
+    bool initializeUpload(int socket);
+    void finishUpload(int socket);
 
 };
 

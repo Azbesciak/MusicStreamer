@@ -41,6 +41,7 @@ private:
     void sendListOfClientsToAllInRoom(Room *room);
     void addNewClient(StreamerClient *client, const string &name);
     void removeClientFromRoomsUnsync(StreamerClient *client);
+    StreamerClient * getClientByNameUnsynch(const string &clientName);
 
 public:
     Container();
@@ -49,13 +50,15 @@ public:
     bool addUserIfNotKnown(StreamerClient* client, const string &clientName);
     void removeClient(StreamerClient * client);
     vector<string> getRoomsList();
-    StreamerClient * subscribeClientForMessages(const string &clientName, int messageSocketFd);
+    StreamerClient *subscribeClientForMessages(const string &clientName, int messageSocketFd);
 
     void removeClientFromRooms(StreamerClient *client);
     void sendToAll(ClientResponse &resp);
 
     ClientResponse createRoomsResponse();
     void sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const;
+
+    StreamerClient *getClient(const string &clientName);
 };
 
 

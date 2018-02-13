@@ -1,5 +1,6 @@
 #include "Config.h"
-
+#include <fstream>
+#include <sstream>
 
 
 string Config::get(const string &property) {
