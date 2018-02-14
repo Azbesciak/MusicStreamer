@@ -23,7 +23,7 @@ class MusicUploadService(
 
     companion object : KLogging()
 
-    infix fun upload(file: File) {
+    fun upload(file: File, listener: UploadListener) {
         launch {
             val fileToUpload = when (file.extension.toLowerCase()) {
                 "mp3" -> converter.mp3ToWav(file)
@@ -40,11 +40,7 @@ class MusicUploadService(
                         val clientName = authService.getUserName() ?: return@send
                         uploadConnector.sendFile(
                                 uploadData = UploadData(fileToUpload, it.body.get("uploadToken").asText(), clientName),
-                                listener = UploadListener(
-                                        onProgress = { logger.info { "progress: $it" } },
-                                        onError = { logger.error { "Error at file upload $it" } },
-                                        onSuccess = { logger.info { "file uploaded." } }
-                                )
+                                listener = listener
                         )
                     },
                     onError = { logger.error { "Upload denied" } }

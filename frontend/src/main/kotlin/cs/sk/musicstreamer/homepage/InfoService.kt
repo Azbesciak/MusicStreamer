@@ -17,4 +17,8 @@ class InfoService {
     fun showSnackBar(message: String) = launch(JavaFx) {
         snackBar.fireEvent(JFXSnackbar.SnackbarEvent(message))
     }
+
+    fun showConstantSnackBar() {
+//        snackBar.
+    }
 }

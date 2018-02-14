@@ -776,11 +776,17 @@
     -fx-background-color: #0F9D58;
 }
 
+.custom-jfx-progress-bar {
+    -fx-padding: 20 0;
+    -fx-border-radius: 1;
+}
+
 .custom-jfx-progress-bar > .bar {
-    -fx-background-color: #ff8000;
+    -fx-background-color: #329bff;
+    -fx-pref-height: 5;
 }
 .custom-jfx-progress-bar > .secondary-bar{
-    -fx-background-color: rgba(255, 135, 21, 0.18);
+    -fx-background-color: rgba(68, 112, 254, 0.99);
 }
 
 .custom-jfx-progress-bar-stroke > .bar {

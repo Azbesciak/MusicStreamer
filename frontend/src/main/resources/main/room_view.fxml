@@ -8,27 +8,30 @@
 <?import javafx.scene.layout.StackPane?>
 
 <?import javafx.scene.layout.Pane?>
+<?import com.jfoenix.controls.JFXProgressBar?>
 <StackPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
            xmlns:fx="http://javafx.com/fxml/1">
-    <BorderPane>
-        <center>
-            <HBox spacing="10" style="-fx-padding: 10">
+    <HBox  style="-fx-padding: 10">
+        <BorderPane HBox.hgrow="ALWAYS" maxWidth="Infinity">
+            <center>
+            <HBox spacing="10">
                 <StackPane>
                     <JFXListView fx:id="clients" prefWidth="200.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
                 <StackPane>
                     <JFXListView fx:id="tracks" prefWidth="200.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
-                <BorderPane HBox.hgrow="ALWAYS" maxWidth="Infinity">
-                    <bottom>
-                        <HBox>
-                            <Pane HBox.hgrow="ALWAYS"/>
-                            <JFXButton text="Upload" fx:id="uploadButton" styleClass="button-raised"/>
-                        </HBox>
-                    </bottom>
-                </BorderPane>
             </HBox>
-        </center>
-    </BorderPane>
+            </center>
+            <bottom>
+                <JFXProgressBar fx:id="uploadProgress" styleClass="custom-jfx-progress-bar" progress="0" visible="false"/>
+            </bottom>
+        </BorderPane>
+        <BorderPane>
+            <bottom>
+                <JFXButton text="Upload" fx:id="uploadButton" styleClass="button-raised"/>
+            </bottom>
+        </BorderPane>
 
+    </HBox>
 </StackPane>
