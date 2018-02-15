@@ -31,12 +31,13 @@ class RoomView(
     private val clients: JFXListView<String> by fxid()
     private val tracks: JFXListView<String> by fxid()
     private val isRoomSet = SimpleBooleanProperty(false)
+    private val isUploading = SimpleBooleanProperty(false)
 
     companion object : KLogging()
 
     @PostConstruct
     private fun bind() {
-        resetProgress()
+        resetUpload()
         broadCastConnector.addMessagesListener(
                 ResponseListener(onResponse = {
                     with(it.body) {
@@ -57,10 +58,14 @@ class RoomView(
 
     private fun initializeUploadButton() {
         uploadButton.setOnMouseClicked {
+            isUploading.value = true
             val filesToUpload = chooseFile(
                     title = "Choose track to upload",
                     filters = arrayOf(FileChooser.ExtensionFilter("music files (wav, mp3)", "*.wav", "*.mp3"))
             )
+            if (filesToUpload.isEmpty()) {
+                isUploading.value = false
+            }
             filesToUpload.forEach {
                 uploadProgress.show()
                 musicUploadService.upload(it, UploadListener(
@@ -69,24 +74,25 @@ class RoomView(
                             logger.debug { "progress: $it" }
                         },
                         onError = {
-                            resetProgress()
+                            resetUpload()
                             infoService.showSnackBar("Could not upload file")
                             logger.error { "Error at file upload $it" }
                         },
                         onSuccess = {
-                            resetProgress()
+                            resetUpload()
                             infoService.showSnackBar("File uploaded with success")
                             logger.info { "file uploaded." }
                         }
                 ))
             }
         }
-        uploadButton.disableWhen { isRoomSet.not() }
+        uploadButton.disableWhen { isRoomSet.not().or(isUploading) }
     }
 
-    private fun resetProgress() {
+    private fun resetUpload() {
         uploadProgress.hide()
         uploadProgress.progress = 0.0
+        isUploading.value = false
     }
 
     private fun updateState(roomName: String? = null, clients: List<String> = listOf()) {
