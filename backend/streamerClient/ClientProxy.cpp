@@ -5,15 +5,16 @@
 #include <upload/UploadHandler.h>
 
 
-static const char *const JOIN_ROOM_ACTION = "JOIN";
-static const char *const GET_ROOMS_ACTION = "ROOMS";
-static const char *const AUTHENTICATE_ACTION = "INIT";
-static const char *const LEAVE_ACTION = "LEAVE";
-static const char *const UPLOAD_ACTION = "UPLOAD";
-static const char *const QUEUE_TRACK_ACTION = "QUEUE_TRACK";
-static const char *const NEXT_TRACK_ACTION = "NEXT_TRACK";
-static const char *const GET_TRACKS_ACTION = "TRACKS";
-static const char *const GET_QUEUE_ACTION = "TRACKS_QUEUE";
+static const string JOIN_ROOM_ACTION = "JOIN";
+static const string GET_ROOMS_ACTION = "ROOMS";
+static const string AUTHENTICATE_ACTION = "INIT";
+static const string LEAVE_ACTION = "LEAVE";
+static const string UPLOAD_ACTION = "UPLOAD";
+static const string STREAM_SUBSCRIBE = "STREAM_SUBSCRIBE";
+static const string QUEUE_TRACK_ACTION = "QUEUE_TRACK";
+static const string NEXT_TRACK_ACTION = "NEXT_TRACK";
+static const string GET_TRACKS_ACTION = "TRACKS";
+static const string GET_QUEUE_ACTION = "TRACKS_QUEUE";
 
 
 ClientResponse ClientProxy::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
@@ -39,6 +40,10 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
 
         return container->createRoomsResponse();
 
+    } else if (method == STREAM_SUBSCRIBE) {
+        auto port = request->getInt("streamingPort");
+        return container->setClientStreamingPort(client, port);
+        
     } else if (method == UPLOAD_ACTION) {
 
         string trackName = request->getStr("trackName");
@@ -77,7 +82,8 @@ ClientResponse ClientProxy::handleTrackUpload(const string& trackName, int fileS
     if (fileSize <= MusicTrack::WAV_HEADER_SIZE)
         return ClientResponse::error(403, "File too small. Only wav files are supported.");
 
-    if (client->getCurrentRoom() == nullptr)
+    auto clientRoom = client->getCurrentRoom();
+    if (clientRoom == nullptr)
         return ClientResponse::error(403, "Client has no assigned room");
 
     MusicTrack *reservedTrack = reserveRoomTrackSlot(trackName);
@@ -90,12 +96,12 @@ ClientResponse ClientProxy::handleTrackUpload(const string& trackName, int fileS
 
     try {
 
-        trackUpload = new TrackUpload(reservedTrack, client->getCurrentRoom(), fileSize);
+        trackUpload = new TrackUpload(reservedTrack, clientRoom, fileSize);
         token = UploadHandler::getInstance()->prepareUpload(trackUpload);
 
     } catch(FileUploadException& e) {
 
-        client->getCurrentRoom()->cancelTrackReservation(reservedTrack);
+        clientRoom->cancelTrackReservation(reservedTrack);
         delete trackUpload;
 
         return ClientResponse::error(e.getStatusCode(), e.what());
@@ -219,8 +225,8 @@ ClientResponse ClientProxy::authenticate(const string &method, Request *request)
     return resp;
 }
 
-ClientProxy::ClientProxy(int socketDf, Container *container)
-        : container(container), client(new StreamerClient(socketDf)) {}
+ClientProxy::ClientProxy(int socketDf, const string &addr, Container *container)
+        : container(container), client(new StreamerClient(socketDf, addr)) {}
 
 ClientProxy::~ClientProxy() {
     if (client != nullptr && !client->getName().empty()) {

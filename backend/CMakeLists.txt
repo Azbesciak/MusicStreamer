@@ -63,6 +63,4 @@ add_executable(MusicStreamer
         streamerClient/RequestProcessor.h
         server/music/MusicChannel.cpp
         server/music/MusicChannel.h
-        server/UdpServer.cpp
-        server/UdpServer.h
         logic/TrackStream.cpp logic/TrackStream.h logic/callback/OnNextTrackListener.h)

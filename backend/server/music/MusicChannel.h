@@ -9,19 +9,22 @@
 class MusicChannel {
 
 private:
-
-    Socket* frameSocket;
-    Socket* soundSocket;
+    std::recursive_mutex sockMut;
+    Socket * streamingSocket;
     sockaddr_in streamAddress;
+    int port;
 
 public:
 
-    MusicChannel(Socket* frameSocket, Socket* soundSocket, sockaddr_in streamAddress);
+    MusicChannel(int port, const std::string &host);
 
-    void sendHeader(char* headerBytes, int headerSize);
-    void sendSound(char* soundBytes);
+    void setStreamingSocket(Socket *socket);
 
-    ~MusicChannel();
+    void leaveStreamingSocket();
+
+    ssize_t sendSound(char* soundBytes);
+
+    int getPort();
 };
 
 

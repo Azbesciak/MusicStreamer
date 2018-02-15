@@ -2,7 +2,6 @@
 #include <unordered_map>
 #include <mutex>
 #include <atomic>
-#include "Room.h"
 
 #include "utility/synch.h"
 #include "messageSender/MessageSender.h"
@@ -59,6 +58,8 @@ public:
     void sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const;
 
     StreamerClient *getClient(const string &clientName);
+
+    ClientResponse setClientStreamingPort(StreamerClient *client, int port);
 };
 
 

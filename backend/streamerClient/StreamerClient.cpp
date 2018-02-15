@@ -5,12 +5,13 @@
 
 using namespace std;
 
-StreamerClient::StreamerClient(int socketDescriptor) :
+StreamerClient::StreamerClient(int socketDescriptor, const string &addr) :
         communicationSocket(new Socket(socketDescriptor)),
         uploadSocket(nullptr),
         currentRoom(nullptr),
         broadCastSocket(nullptr),
-        streamingChannel(nullptr){}
+        streamingChannel(nullptr),
+        addr(addr) {}
 
 string StreamerClient::getName() const {
     return name;
@@ -20,7 +21,7 @@ StreamerClient::~StreamerClient() {
     removeSocket(communicationSocket);
     removeSocket(broadCastSocket);
     removeSocket(uploadSocket);
-    removeStreamingChannel();
+    delete streamingChannel;
 }
 
 ssize_t StreamerClient::sendMessage(const string &message) {
@@ -32,7 +33,7 @@ ssize_t StreamerClient::sendOnBroadCast(const string &mes) {
     if (wrote < 0) {
         cout << "Broadcast socket for "
              << MAGENTA_TEXT((name.empty() ? "ANONYMOUS" : name))
-             << (broadCastSocket != nullptr ? (string("(") + to_string(broadCastSocket->get()) + ")"): "")
+             << (broadCastSocket != nullptr ? (string("(") + to_string(broadCastSocket->get()) + ")") : "")
              << " was closed."
              << endl;
         removeSocket(broadCastSocket);
@@ -46,11 +47,17 @@ ssize_t StreamerClient::sendMessage(const string &mes, Socket *socket) {
     return 0;
 }
 
+void StreamerClient::sendSound(char *soundBytes) {
+    if (streamingChannel != nullptr)
+        streamingChannel->sendSound(soundBytes);
+}
+
+
 void StreamerClient::setName(const string &name) {
     this->name = name;
 }
 
-Room* StreamerClient::getCurrentRoom() {
+Room *&StreamerClient::getCurrentRoom() {
     return currentRoom;
 }
 
@@ -58,31 +65,15 @@ void StreamerClient::setCurrentRoom(Room *room) {
     this->currentRoom = room;
 }
 
-void StreamerClient::removeSocket(Socket *& socket) {
+void StreamerClient::removeSocket(Socket *&socket) {
 
     delete socket;
     socket = nullptr;
 }
 
-
-void StreamerClient::removeStreamingChannel() {
-
-    if (streamingChannel != nullptr) {
-
-        delete streamingChannel;
-        streamingChannel = nullptr;
-    }
-}
-
-
 void StreamerClient::subscribeForMessages(int fd) {
     removeSocket(broadCastSocket);
     broadCastSocket = new Socket(fd);
-}
-
-
-MusicChannel* StreamerClient::getStreamingChannel() {
-    return streamingChannel;
 }
 
 
@@ -102,6 +93,36 @@ void StreamerClient::finishUpload(int socket) {
             removeSocket(uploadSocket);
         }
     }
+}
+
+void StreamerClient::setStreamingSocket(Socket *socket) {
+    if (streamingChannel != nullptr) {
+        streamingChannel->setStreamingSocket(socket);
+    }
+}
+
+void StreamerClient::leaveStreamingChannel() {
+    if (streamingChannel != nullptr) {
+        streamingChannel->leaveStreamingSocket();
+    }
+}
+
+bool StreamerClient::hasStreamingAddr(const string &addr, int port) {
+    return streamingChannel != nullptr &&
+            this->addr != addr &&
+            streamingChannel->getPort() == port;
+}
+
+bool StreamerClient::initializeStreamingChannel(int port) {
+    if (streamingChannel == nullptr) {
+        streamingChannel = new MusicChannel(port, addr);
+        return true;
+    }
+    return false;
+}
+
+string StreamerClient::getAddr() {
+    return addr;
 }
 
 

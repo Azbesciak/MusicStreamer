@@ -11,11 +11,16 @@
 #define QUEUE_SIZE 128
 
 class SocketFactory {
-static int createSocket(const std::string &host, int port, int type);
+    static int createSocket(const std::string &host, int port, int type, bool exitOnFail);
+
+    static const int INCORRECT_SOCKET = 1;
 
 public:
     static int createTcpSocket(const std::string &host, int port);
+
     static int createUdpSocket(const std::string &host, int port);
+
+    static sockaddr_in getSockAddr(const std::string &host, int port);
 };
 
 

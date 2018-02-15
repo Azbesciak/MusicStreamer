@@ -19,7 +19,7 @@ class ClientProxy: public RequestProcessor {
     MusicTrack* reserveRoomTrackSlot(const std::string& trackName);
 
 public:
-    ClientProxy(int clientFd, Container * container);
+    ClientProxy(int clientFd, const string &addr, Container * container);
     ~ClientProxy();
 
     ssize_t respond(const string &message);

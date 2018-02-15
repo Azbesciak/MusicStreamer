@@ -11,15 +11,12 @@ class TrackUpload : public FileUpload {
 private:
 
     MusicTrack* track;
-    Room* room;
+    Room *& room;
 
 public:
 
-    TrackUpload(MusicTrack* track, Room* room, int fileSize)
-        : FileUpload(fileSize) {
-
-        this->track = track;
-        this->room = room;
+    TrackUpload(MusicTrack* track, Room *& room, int fileSize)
+        : FileUpload(fileSize), room(room), track(track) {
     }
 
     void onUploadCompleted(UploadedFile* uploadedFile) override;

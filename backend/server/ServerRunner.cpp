@@ -23,6 +23,10 @@ int main(int argc, char *argv[]) {
     auto broadCastPort = config.get("server.broadcast.port", DEF_BROAD_PORT);
     auto uploadPort = config.get("server.upload.port", DEF_UPLOAD_PORT);
     auto uploadDir = config.get("server.upload.dir", DEF_UPLOAD_DIR);
+    auto minStreamerPort = config.get("server.streamer.port.min", DEF_MIN_STREAMER_PORT);
+    auto maxStreamerPort = config.get("server.streamer.port.max", DEF_MAX_STREAMER_PORT);
+    MusicStreamer::setPortsRange(minStreamerPort, maxStreamerPort);
+    MusicStreamer::setHost(host);
 
     serverRef->communicationServer = new CommunicationServer(host, port, serverRef);
     serverRef->broadCaster = new BroadCastServer(host, broadCastPort, serverRef);
