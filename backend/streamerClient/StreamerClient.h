@@ -22,29 +22,32 @@ private:
     recursive_mutex uploadMutex;
 
     string name;
+    string addr;
     Room * currentRoom;
     ssize_t sendMessage(const string &mes, Socket * socket);
 public:
-    explicit StreamerClient(int socketDescriptor);
+    explicit StreamerClient(int socketDescriptor, const string &addr);
     ~StreamerClient();
     string getName() const;
     void setName(const string& name);
 
-    Room* getCurrentRoom();
+    Room*& getCurrentRoom();
     void setCurrentRoom(Room* room);
-
-    MusicChannel* getStreamingChannel();
 
     ssize_t sendMessage(const string &mes);
     ssize_t sendOnBroadCast(const string &mes);
 
     void removeSocket(Socket *&socket);
-    void removeStreamingChannel();
     void subscribeForMessages(int fd);
-
+    bool hasStreamingAddr(const string &addr, int port);
     bool initializeUpload(int socket);
     void finishUpload(int socket);
+    void setStreamingSocket(Socket * socket);
+    void leaveStreamingChannel();
+    void sendSound(char *soundBytes);
+    string getAddr();
 
+    bool initializeStreamingChannel(int port);
 };
 
 

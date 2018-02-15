@@ -1,5 +1,6 @@
 
 #include "Container.h"
+#include "streamerClient/StreamerClient.h"
 
 
 void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
@@ -180,6 +181,21 @@ StreamerClient *Container::getClientByNameUnsynch(const string &clientName) {
     return nullptr;
 }
 
+ClientResponse Container::setClientStreamingPort(StreamerClient *client, int port) {
+    synchronized(clientsMut) {
+        auto clientAddress = client->getAddr();
+        for (auto c: clients) {
+            if (c.second->hasStreamingAddr(clientAddress, port)) {
+                return ClientResponse::error(403, "Address already assigned");
+            }
+        }
+        if (client->initializeStreamingChannel(port)) {
+            return ClientResponse::ok();
+        } else {
+            return ClientResponse::error(403, "You cannot change your streaming host");
+        }
+    }
+}
 
 void StateChangeWatcher::spreadChangeStateInfo() {
     auto message = container->createRoomsResponse();

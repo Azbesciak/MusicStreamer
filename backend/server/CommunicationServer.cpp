@@ -11,7 +11,7 @@ void CommunicationServer::onNewConnection(int clientSocket, const string &remote
          << BLUE_TEXT(clientSocket) << " from "
          << BLUE_TEXT(remoteAddr) << endl;
     auto *reader = new RequestReader(clientSocket);
-    auto proxy = new ClientProxy(clientSocket, manager->container);
+    auto proxy = new ClientProxy(clientSocket, remoteAddr, manager->container);
     bool hasDisconnected = false;
     while (!hasDisconnected) {
         auto requests = reader->readRequest();

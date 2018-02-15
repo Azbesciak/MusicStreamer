@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <unordered_set>
-#include "../streamerClient/StreamerClient.h"
 
 using namespace std;
 
@@ -15,7 +14,7 @@ class Message {
     unordered_set<StreamerClient*> receivers;
     string content;
 public:
-    Message(unordered_set<StreamerClient*> receivers, const string &message);
+    Message(const unordered_set<StreamerClient*> &receivers, const string &message);
     unordered_set<StreamerClient*> getReceivers() const;
     string getContent() const;
 };

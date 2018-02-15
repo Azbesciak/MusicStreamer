@@ -14,6 +14,7 @@
 #include <streamerClient/StreamerClient.h>
 #include <logic/TrackStream.h>
 #include <logic/callback/OnNextTrackListener.h>
+#include <server/AbstractServer.h>
 
 class TracksQueue;
 class StreamerClient;
@@ -22,25 +23,43 @@ class TrackStream;
 class MusicStreamer : public OnNextTrackListener {
 
 private:
-
+    static const int MAX_TRACK_NUMBER = 20;
+    static int minPort, maxPort;
+    static string host;
+    int port;
+    Socket * socket;
     TracksQueue* tracksQueue;
     TrackStream* trackStream;
-    std::vector<StreamerClient*> clients;
+    std::vector<MusicTrack*> availableTracks;
+
+    std::unordered_set<StreamerClient*> * clients;
 
     std::recursive_mutex trackMut;
-    std::recursive_mutex clientsMut;
+    std::recursive_mutex * clientsMut;
 
     void playCurrentTrack();
 
+protected:
+    int createSocket();
+
 public:
 
-    explicit MusicStreamer(TracksQueue* tracksQueue);
+    MusicStreamer(unordered_set<StreamerClient *> *clients, recursive_mutex *clientsMut);
 
-    void joinClient(StreamerClient* streamerClient);
-    void leaveClient(StreamerClient* streamerClient);
+    static void setPortsRange(int minPort, int maxPort);
+    static void setHost(const string &host);
 
     void onTrackFinished();
     void onNextTrack() override;
+
+    Socket * getStreamingSocket();
+
+    MusicTrack* reserveTrackSlot(const std::string& trackName);
+    void cancelTrackReservation(MusicTrack* musicTrack);
+
+    std::vector<MusicTrack*> getAvailableTracks();
+    MusicTrack* findTrackByName(const std::string& trackName);
+    TracksQueue* getTracksQueue();
 
     ~MusicStreamer();
 };

@@ -6,23 +6,13 @@
 using namespace std;
 
 
-TracksQueue::TracksQueue() {
-
-    onNextTrackListener = nullptr;
-}
+TracksQueue::TracksQueue(): onNextTrackListener(nullptr) {}
 
 
 MusicTrack* TracksQueue::currentTrack() {
-
-    MusicTrack* track = nullptr;
-
     synchronized(mut) {
-
-        if (!tracks.empty())
-            track = tracks.front();
+        return !tracks.empty() ?  tracks.front() : nullptr;
     }
-
-    return track;
 }
 
 

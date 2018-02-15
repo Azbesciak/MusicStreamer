@@ -19,17 +19,9 @@ class MusicStreamer;
 class Room {
 
 private:
-
-    static const int MAX_TRACK_NUMBER = 20;
-
-    std::recursive_mutex mut;
-
+    std::recursive_mutex clientsMut;
     std::unordered_set<StreamerClient*> clients;
-    std::vector<MusicTrack*> availableTracks;
-
     MusicStreamer* streamer;
-    TracksQueue* tracksQueue;
-
     string name;
 
 public:

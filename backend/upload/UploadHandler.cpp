@@ -35,8 +35,6 @@ void UploadHandler::setSocketTimeout(int clientSocket) const {
 }
 
 void UploadHandler::downloadFile(int clientSocket) {
-
-    StreamerClient client(clientSocket);
     auto reader = new RequestReader(clientSocket);
     auto processor = new UploadRequestProcessor(clientSocket);
 

@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <utility/TerminalUtils.h>
 #include "MessageSender.h"
+#include "streamerClient/StreamerClient.h"
 
 MessageSender::MessageSender() {
     broadcastThread = new thread([&]() {

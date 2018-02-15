@@ -10,6 +10,7 @@ void TrackUpload::onUploadCompleted(UploadedFile* uploadedFile) {
 
 void TrackUpload::onUploadFailed() {
     FileUpload::onUploadFailed();
-
-    room->cancelTrackReservation(track);
+    if (room != nullptr) {
+        room->cancelTrackReservation(track);
+    }
 }

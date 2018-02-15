@@ -6,37 +6,37 @@
 #include "streamerClient/StreamerClient.h"
 
 
-Room::Room(string name): name(std::move(name)) {
-
-    tracksQueue = new TracksQueue();
-    streamer = new MusicStreamer(tracksQueue);
+Room::Room(string name) :
+        name(std::move(name)),
+        streamer(new MusicStreamer(&clients, &clientsMut)) {
 }
 
-
 Room::~Room() {
-
     delete streamer;
-    delete tracksQueue;
+    streamer = nullptr;
 }
 
 
 bool Room::removeClient(StreamerClient *client) {
-    synchronized(mut) {
-        streamer->leaveClient(client);
-        return clients.erase(client) != 0;
+    synchronized(clientsMut) {
+        if (clients.erase(client) != 0) {
+            client->leaveStreamingChannel();
+            return true;
+        }
+        return false;
     }
 }
 
 
-const unordered_set<StreamerClient*>& Room::getClients() {
+const unordered_set<StreamerClient *> &Room::getClients() {
     return clients;
 }
 
 
 void Room::addClient(StreamerClient *client) {
-    synchronized(mut) {
+    synchronized(clientsMut) {
         clients.insert(client);
-        streamer->joinClient(client);
+        client->setStreamingSocket(streamer->getStreamingSocket());
     }
 }
 
@@ -51,75 +51,26 @@ string Room::getName() {
 }
 
 
-MusicTrack* Room::reserveTrackSlot(const string& trackName) {
-
-    MusicTrack* track = nullptr;
-
-    synchronized(mut) {
-
-        if (availableTracks.size() < MAX_TRACK_NUMBER && findTrackByName(trackName) == nullptr) {
-
-            track = new MusicTrack(trackName);
-            availableTracks.push_back(track);
-        }
-    }
-
-    return track;
+MusicTrack *Room::reserveTrackSlot(const string &trackName) {
+    return streamer->reserveTrackSlot(trackName);
 }
 
 
-void Room::cancelTrackReservation(MusicTrack* musicTrack) {
-
-    synchronized(mut) {
-
-        long trackIndex = distance(availableTracks.begin(), find(availableTracks.begin(), availableTracks.end(), musicTrack));
-
-        if (trackIndex < availableTracks.size()) {
-
-            availableTracks.erase(availableTracks.begin() + trackIndex);
-            delete musicTrack;
-        }
-    }
+void Room::cancelTrackReservation(MusicTrack *musicTrack) {
+    streamer->cancelTrackReservation(musicTrack);
 }
 
 
-vector<MusicTrack*> Room::getAvailableTracks() {
-
-    vector<MusicTrack*> tracks;
-
-    synchronized(mut) {
-
-        for (MusicTrack* track : availableTracks) {
-
-            if (track->isSaved())
-                tracks.push_back(track);
-        }
-    }
-
-    return tracks;
+vector<MusicTrack *> Room::getAvailableTracks() {
+    return streamer->getAvailableTracks();
 }
 
 
-MusicTrack* Room::findTrackByName(const string& trackName) {
-
-    MusicTrack* resultTrack = nullptr;
-
-    synchronized(mut) {
-
-        for (MusicTrack* track : availableTracks) {
-
-            if (track->getTrackName() == trackName) {
-
-                resultTrack = track;
-                break;
-            }
-        }
-    }
-
-    return resultTrack;
+MusicTrack *Room::findTrackByName(const string &trackName) {
+    return streamer->findTrackByName(trackName);
 }
 
 
-TracksQueue* Room::getTracksQueue() {
-    return tracksQueue;
+TracksQueue *Room::getTracksQueue() {
+    return streamer->getTracksQueue();
 }
