@@ -26,6 +26,7 @@ import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
+import sun.plugin.dom.exception.InvalidStateException
 import tornadofx.*
 import java.net.URL
 import java.util.*
@@ -85,6 +86,15 @@ class MainView : View(), Initializable {
             roomsView.addJoinListener { closeToBack() }
             sidePane += roomsView.root
         }
+
+        appLabel.addLeaveListener {
+            launch(JavaFx) {
+                appLabel.clean()
+                roomsView.leaveRoom()
+                drawer.openAtFront()
+                infoService.showSnackBar("You have left the room")
+            }
+        }
     }
 
     private fun onConnectionChange(connected: Boolean) {
@@ -101,7 +111,6 @@ class MainView : View(), Initializable {
             }
 
     private fun initConnectors() {
-
         connectButton.setOnMouseClicked { connect() }
         broadCastServer.addConnectionListener(ConnectionListener(
                 onConnection = ::sendBroadCastSubscription,
@@ -138,8 +147,6 @@ class MainView : View(), Initializable {
         connectButton.isDisable = false
     }
 
-
-
     private fun sendBroadCastSubscription() {
         val userName = authService.getUserName()!!
         broadCastServer.send(
@@ -148,7 +155,7 @@ class MainView : View(), Initializable {
                     logger.info { "BroadCast subscribed for $userName" }
                     launch(JavaFx) { drawer.openAtFront() }
                 },
-                onError = { e -> logger.error { "could not subscribe for Broadcast: ${e.body}" } }
+                onError = { logger.error { "could not subscribe for Broadcast: ${it.body}" } }
         )
     }
 

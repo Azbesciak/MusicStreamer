@@ -117,9 +117,13 @@ class RoomsView(
     }
 
     fun clean() {
-        currentRoom.value = null
+        leaveRoom()
         roomsNamesList.clear()
         roomsList.items.clear()
+    }
+
+    fun leaveRoom() {
+        currentRoom.value = null
     }
 
     fun addJoinListener(listener: (room: String) -> Unit) = joinListeners.add(listener)
