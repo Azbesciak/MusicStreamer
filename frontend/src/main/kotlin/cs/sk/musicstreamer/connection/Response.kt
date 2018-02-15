@@ -8,4 +8,6 @@ sealed class Response<out T>(val status: Int, var id: String?, val body: T) {
 }
 class StringResponse(status: Int = 200, body: String = "OK", id: String? = null) : Response<String>(status, id, body)
 class JsonResponse(status: Int = 200, body: JsonNode, id: String? = null) : Response<JsonNode>(status, id, body)
-class ErrorResponse(status: Int = 500, body: String, id: String? = null) : Response<String>(status, id, body)
+class ErrorResponse(status: Int = 500, body: String, id: String? = null) : Response<String>(status, id, body) {
+    fun isServerError() = status >= 500
+}

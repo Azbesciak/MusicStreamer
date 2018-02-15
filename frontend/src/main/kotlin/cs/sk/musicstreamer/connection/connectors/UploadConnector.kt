@@ -2,6 +2,7 @@ package cs.sk.musicstreamer.connection.connectors
 
 import cs.sk.musicstreamer.connection.ErrorResponse
 import cs.sk.musicstreamer.connection.UploadTokenRequest
+import cs.sk.musicstreamer.utils.Informer
 import kotlinx.coroutines.experimental.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -21,34 +22,45 @@ class UploadConnector(
             ))
 
     fun sendFile(uploadData: UploadData, subscriber: UploadSubscriber) {
-        connectionListeners.add(ConnectionListener(
-                onConnection = {
-                    send(UploadTokenRequest(uploadData.clientName, uploadData.token),
-                            onResponse = {
-                                launch {
-                                    try {
-                                        writer.write(
-                                                file = uploadData.file,
-                                                onProgress = subscriber.onProgress
-                                        )
-                                        subscriber.onSuccess()
-                                    } catch (t: Throwable) {
-                                        subscriber.onError(ErrorResponse(body = "Could not send file"))
-                                    }
-                                    this@UploadConnector.disconnect()
-                                }
-                            },
-                            onError = {
-                                subscriber.onError(it)
-                            })
-                },
-                onError = {
-                    subscriber.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
-                },
-                onDisconnect = connectionListeners::clear
-        ))
+        connectionListeners.add(createUploadListener(uploadData, subscriber))
         connect()
     }
+
+    private fun createUploadListener(uploadData: UploadData, subscriber: UploadSubscriber) =
+            with(Informer()) {
+                ConnectionListener(
+                        onConnection = { initializeUploading(uploadData, subscriber) },
+                        onError = {
+                            ifNotInformed {
+                                subscriber.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
+                            }
+                        },
+                        onDisconnect = connectionListeners::clear
+                )
+            }
+
+    private fun Informer.initializeUploading(uploadData: UploadData, subscriber: UploadSubscriber) =
+            send(UploadTokenRequest(uploadData.clientName, uploadData.token),
+                    onResponse = {
+                        launch {
+                            try {
+                                writer.write(
+                                        file = uploadData.file,
+                                        onProgress = subscriber.onProgress
+                                )
+                                ifNotInformed { subscriber.onSuccess() }
+
+                            } catch (t: Throwable) {
+                                ifNotInformed {
+                                    subscriber.onError(ErrorResponse(body = "Could not send file"))
+                                }
+                            }
+                            this@UploadConnector.disconnect()
+                        }
+                    },
+                    onError = {
+                        ifNotInformed { subscriber.onError(it) }
+                    })
 }
 
 class UploadData(

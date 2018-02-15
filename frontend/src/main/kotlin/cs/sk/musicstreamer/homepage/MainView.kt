@@ -82,7 +82,7 @@ class MainView : View(), Initializable {
                     else -> closeToBack()
                 }
             })
-            isConnected.addListener {_, _, connected -> onConnectionChange(connected) }
+            isConnected.addListener { _, _, connected -> onConnectionChange(connected) }
             roomsView.addJoinListener { closeToBack() }
             sidePane += roomsView.root
         }
@@ -100,7 +100,7 @@ class MainView : View(), Initializable {
 
     private fun onConnectionChange(connected: Boolean) {
         roomsPane.isDisable = connected.not()
-        with (roomView.root) {
+        with(roomView.root) {
             isDisable = connected.not()
         }
     }
@@ -161,7 +161,7 @@ class MainView : View(), Initializable {
     }
 
     private fun JFXDrawer.openAtFront() = open().also { toFront() }
-    private fun JFXDrawer.closeToBack() = close().also { toBack() }
+    private fun JFXDrawer.closeToBack() = close().also { launch(JavaFx) { delay(1000);toBack() } }
 
     private fun connect() {
         connectButton.isDisable = true

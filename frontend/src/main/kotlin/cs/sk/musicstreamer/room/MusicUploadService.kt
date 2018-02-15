@@ -1,11 +1,13 @@
 package cs.sk.musicstreamer.room
 
 import cs.sk.musicstreamer.authorization.AuthService
+import cs.sk.musicstreamer.connection.ErrorResponse
 import cs.sk.musicstreamer.connection.UploadRequest
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.UploadConnector
 import cs.sk.musicstreamer.connection.connectors.UploadData
 import cs.sk.musicstreamer.connection.connectors.UploadSubscriber
+import cs.sk.musicstreamer.utils.Informer
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -26,11 +28,15 @@ class MusicUploadService(
             val fileToUpload = when (file.extension.toLowerCase()) {
                 "mp3" -> converter.mp3ToWav(file)
                 "wav" -> file
-                else -> throw UnsupportedOperationException("File extension not supported")
+                else -> {
+                    subscriber.onError(ErrorResponse(status = 403, body = "File extension not supported"))
+                    return@launch
+                }
             }
             val trackName = file.nameWithoutExtension
             val fileSize = fileToUpload.length()
             logger.info { "File to upload: $trackName $fileToUpload" }
+            val informer = Informer()
             mainConnector.send(
                     request = UploadRequest(trackName, fileSize),
                     onResponse = {
@@ -41,8 +47,11 @@ class MusicUploadService(
                                 subscriber = subscriber
                         )
                     },
-                    onError = { logger.error { "Upload denied" }
-                        subscriber.onError(it)
+                    onError = {
+                        informer.ifNotInformed {
+                            logger.error { "Upload denied" }
+                            subscriber.onError(it)
+                        }
                     }
             )
         }

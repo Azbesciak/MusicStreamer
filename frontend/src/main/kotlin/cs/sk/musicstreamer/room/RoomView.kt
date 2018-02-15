@@ -3,6 +3,7 @@ package cs.sk.musicstreamer.room
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXProgressBar
+import cs.sk.musicstreamer.connection.ErrorResponse
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import cs.sk.musicstreamer.connection.connectors.UploadSubscriber
@@ -75,8 +76,7 @@ class RoomView(
                         },
                         onError = {
                             resetUpload()
-                            infoService.showSnackBar("Could not upload file")
-                            logger.error { "Error at file upload $it" }
+                            onUploadFailure(it)
                         },
                         onSuccess = {
                             resetUpload()
@@ -87,6 +87,15 @@ class RoomView(
             }
         }
         uploadButton.disableWhen { isRoomSet.not().or(isUploading) }
+    }
+
+    fun onUploadFailure(errorResp: ErrorResponse) {
+        var message = "Could not upload file"
+        if (!errorResp.isServerError()) {
+            message += ": ${errorResp.body}"
+        }
+        infoService.showSnackBar(message)
+        logger.error { "Error at file upload $errorResp" }
     }
 
     private fun resetUpload() {
