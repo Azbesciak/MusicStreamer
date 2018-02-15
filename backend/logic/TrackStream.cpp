@@ -6,15 +6,13 @@
 using namespace std;
 
 
-typedef void* (*THREADFUNCPTR)(void*);
-
-TrackStream::TrackStream(MusicTrack* track, const vector<StreamerClient*>& clients, MusicStreamer* streamer) {
+TrackStream::TrackStream(MusicTrack *track, const vector<StreamerClient *> &clients, MusicStreamer *streamer) {
 
     this->track = track;
     this->clients = clients;
     this->streamer = streamer;
 
-    for (StreamerClient* client : clients)
+    for (StreamerClient *client : clients)
         frameSent[client] = false;
 
     streamerThread = nullptr;
@@ -22,70 +20,63 @@ TrackStream::TrackStream(MusicTrack* track, const vector<StreamerClient*>& clien
 
 
 void TrackStream::start() {
+    delete streamerThread;
+    streamerThread = new thread([=]() {
+        track->openTrack();
 
-    streamerThread = new pthread_t();
-    // Todo eliminate warning
-    pthread_create(streamerThread, nullptr, (THREADFUNCPTR) &TrackStream::streamCoroutine, this);
-}
+        int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
 
+        while (!track->isFinished()) {
 
-void* TrackStream::streamCoroutine() {
+            synchronized(clientsMut) {
 
-    track->openTrack();
+                for (StreamerClient *client : clients) {
 
-    int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
+                    synchronized(streamMut) {
 
-    while (!track->isFinished()) {
+                        MusicChannel *channel = client->getStreamingChannel();
+                        char *soundChunk = track->nextSoundChunk();
 
-        synchronized(clientsMut) {
+                        if (frameSent[client]) {
 
-            for (StreamerClient* client : clients) {
+                            channel->sendHeader(track->getTrackHeader(), track->getTrackHeaderSize());
 
-                synchronized(streamMut) {
+                        } else {
 
-                    MusicChannel* channel = client->getStreamingChannel();
-                    char* soundChunk = track->nextSoundChunk();
+                            channel->sendSound(soundChunk);
+                        }
 
-                    if (frameSent[client]) {
-
-                        channel->sendHeader(track->getTrackHeader(), track->getTrackHeaderSize());
-
-                    } else {
-
-                        channel->sendSound(soundChunk);
+                        delete[] soundChunk;
                     }
-
-                    delete[] soundChunk;
                 }
             }
+
+            usleep(timeGapMicroseconds);
         }
 
-        usleep(timeGapMicroseconds);
-    }
+        usleep(250000);
 
-    usleep(250000);
+        synchronized(streamMut) {
 
-    synchronized(streamMut) {
-
-        track->closeTrack();
-        streamer->onTrackFinished();
-    }
+            track->closeTrack();
+            streamer->onTrackFinished();
+        }
+    });
+    streamerThread->detach();
 }
 
 
 void TrackStream::stop() {
 
     synchronized(streamMut) {
-
-        pthread_cancel(*streamerThread);
-
+        delete streamerThread;
         if (track->isOpened())
             track->closeTrack();
     }
 }
 
 
-void TrackStream::attachClient(StreamerClient* client) {
+void TrackStream::attachClient(StreamerClient *client) {
 
     synchronized(clientsMut) {
 
@@ -97,7 +88,7 @@ void TrackStream::attachClient(StreamerClient* client) {
 }
 
 
-void TrackStream::detachClient(StreamerClient* client) {
+void TrackStream::detachClient(StreamerClient *client) {
 
     synchronized(clientsMut) {
 
@@ -113,6 +104,5 @@ void TrackStream::detachClient(StreamerClient* client) {
 
 
 TrackStream::~TrackStream() {
-
-    delete streamerThread;
+    stop();
 }

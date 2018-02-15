@@ -2,7 +2,7 @@
 #define MUSICSTREAMER_TRACKSTREAM_H
 
 #include "MusicTrack.h"
-
+#include <thread>
 #include <streamerClient/StreamerClient.h>
 #include <map>
 
@@ -21,9 +21,7 @@ private:
 
     std::recursive_mutex streamMut;
     std::recursive_mutex clientsMut;
-    pthread_t* streamerThread;
-
-    void* streamCoroutine();
+    std::thread* streamerThread;
 
 public:
 
