@@ -20,7 +20,7 @@ class UploadConnector(
                     { logger.error("error with socket", it) }
             ))
 
-    fun sendFile(uploadData: UploadData, listener: UploadListener) {
+    fun sendFile(uploadData: UploadData, subscriber: UploadSubscriber) {
         connectionListeners.add(ConnectionListener(
                 onConnection = {
                     send(UploadTokenRequest(uploadData.clientName, uploadData.token),
@@ -29,21 +29,21 @@ class UploadConnector(
                                     try {
                                         writer.write(
                                                 file = uploadData.file,
-                                                onProgress = listener.onProgress
+                                                onProgress = subscriber.onProgress
                                         )
-                                        listener.onSuccess()
+                                        subscriber.onSuccess()
                                     } catch (t: Throwable) {
-                                        listener.onError(ErrorResponse(body = "Could not send file"))
+                                        subscriber.onError(ErrorResponse(body = "Could not send file"))
                                     }
                                     this@UploadConnector.disconnect()
                                 }
                             },
                             onError = {
-                                listener.onError(it)
+                                subscriber.onError(it)
                             })
                 },
                 onError = {
-                    listener.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
+                    subscriber.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
                 },
                 onDisconnect = connectionListeners::clear
         ))
@@ -57,7 +57,7 @@ class UploadData(
         val clientName: String
 )
 
-class UploadListener(
+class UploadSubscriber(
         val onProgress: (Double) -> Unit,
         val onSuccess: () -> Unit,
         val onError: (ErrorResponse) -> Unit

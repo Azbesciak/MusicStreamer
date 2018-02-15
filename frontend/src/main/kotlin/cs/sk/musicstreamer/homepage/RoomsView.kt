@@ -134,16 +134,4 @@ class RoomsView(
             roomsList.items.add(roomName)
         }
     }
-
-
-    class Room(val roomName: String, val clients: List<String>) {
-        companion object {
-            fun fromResponse(response: JsonResponse) =
-                    with(response.body) {
-                        Room(get("room").asText(), get("clients").map { it.asText() })
-                    }
-
-        }
-    }
-
 }

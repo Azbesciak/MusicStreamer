@@ -5,7 +5,7 @@ import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXProgressBar
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
-import cs.sk.musicstreamer.connection.connectors.UploadListener
+import cs.sk.musicstreamer.connection.connectors.UploadSubscriber
 import cs.sk.musicstreamer.homepage.AppLabel
 import cs.sk.musicstreamer.homepage.InfoService
 import javafx.beans.property.SimpleBooleanProperty
@@ -68,7 +68,7 @@ class RoomView(
             }
             filesToUpload.forEach {
                 uploadProgress.show()
-                musicUploadService.upload(it, UploadListener(
+                musicUploadService.upload(it, UploadSubscriber(
                         onProgress = {
                             uploadProgress.progress = it
                             logger.debug { "progress: $it" }
@@ -110,5 +110,6 @@ class RoomView(
 
     fun clean() {
         updateState()
+        musicUploadService.cancelUpload()
     }
 }

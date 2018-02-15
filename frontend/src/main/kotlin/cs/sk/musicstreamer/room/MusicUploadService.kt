@@ -5,13 +5,11 @@ import cs.sk.musicstreamer.connection.UploadRequest
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.UploadConnector
 import cs.sk.musicstreamer.connection.connectors.UploadData
-import cs.sk.musicstreamer.connection.connectors.UploadListener
+import cs.sk.musicstreamer.connection.connectors.UploadSubscriber
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
-import org.reactivestreams.Subscriber
 import org.springframework.stereotype.Service
 import java.io.File
-import kotlin.math.log
 
 @Service
 class MusicUploadService(
@@ -23,7 +21,7 @@ class MusicUploadService(
 
     companion object : KLogging()
 
-    fun upload(file: File, listener: UploadListener) {
+    fun upload(file: File, subscriber: UploadSubscriber) {
         launch {
             val fileToUpload = when (file.extension.toLowerCase()) {
                 "mp3" -> converter.mp3ToWav(file)
@@ -40,11 +38,15 @@ class MusicUploadService(
                         val clientName = authService.getUserName() ?: return@send
                         uploadConnector.sendFile(
                                 uploadData = UploadData(fileToUpload, it.body.get("uploadToken").asText(), clientName),
-                                listener = listener
+                                subscriber = subscriber
                         )
                     },
-                    onError = { logger.error { "Upload denied" } }
+                    onError = { logger.error { "Upload denied" }
+                        subscriber.onError(it)
+                    }
             )
         }
     }
+
+    fun cancelUpload() = uploadConnector.disconnect()
 }

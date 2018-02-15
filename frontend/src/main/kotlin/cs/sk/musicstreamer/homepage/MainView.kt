@@ -90,6 +90,7 @@ class MainView : View(), Initializable {
         appLabel.addLeaveListener {
             launch(JavaFx) {
                 appLabel.clean()
+                roomView.clean()
                 roomsView.leaveRoom()
                 drawer.openAtFront()
                 infoService.showSnackBar("You have left the room")
