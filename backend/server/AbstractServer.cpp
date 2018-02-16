@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include "AbstractServer.h"
 
+using namespace std;
+
+
 AbstractServer::~AbstractServer() {
     close(serverFd);
     delete serverThread;
@@ -11,6 +14,9 @@ AbstractServer::~AbstractServer() {
 AbstractServer::AbstractServer(const string &host, int port, ServerManager *manager, const string &serverName)
         : port(port), host(host), manager(manager), serverName(serverName) {
     serverThread = new thread([&]() {
+
+        // Small delay to prevent SIGABRT on calling pure virtual createSocket()
+        this_thread::sleep_for(chrono::seconds(1));
         startServer();
     });
     serverThread->detach();

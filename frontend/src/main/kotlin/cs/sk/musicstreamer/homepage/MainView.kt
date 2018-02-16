@@ -26,7 +26,6 @@ import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
-import sun.plugin.dom.exception.InvalidStateException
 import tornadofx.*
 import java.net.URL
 import java.util.*
