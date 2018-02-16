@@ -135,10 +135,10 @@ ClientResponse UploadHandler::UploadRequestProcessor::onNewRequest(Request *requ
     if (method == "UPLOAD_TOKEN") {
         auto clientName = request->getStr("name");
         auto handler = UploadHandler::getInstance();
-        client = handler->manager->container->getClient(clientName);
+        client = Container::getInstance()->getClient(clientName);
         if (client == nullptr) {
             return ClientResponse::error(403, "Client not found");
-        } else if (client -> getCurrentRoom() == nullptr){
+        } else if (!client->hasRoomAssigned()){
             return ClientResponse::error(403, "Client has no room");
         }
         auto token = request->getStr("token");

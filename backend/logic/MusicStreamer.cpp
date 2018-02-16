@@ -65,6 +65,7 @@ void MusicStreamer::onNextTrack() {
 MusicStreamer::~MusicStreamer() {
     delete socket;
     delete trackStream;
+    // what with available tracks?
 }
 
 void MusicStreamer::setPortsRange(int minPort, int maxPort) {
@@ -153,7 +154,7 @@ MusicTrack *MusicStreamer::findTrackByName(const std::string &trackName) {
 }
 
 TracksQueue *MusicStreamer::getTracksQueue() {
-    return nullptr;
+    return tracksQueue;
 }
 
 Socket *MusicStreamer::getStreamingSocket() {

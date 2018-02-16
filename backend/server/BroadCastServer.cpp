@@ -43,7 +43,7 @@ void BroadCastServer::onNewConnection(int clientSocket, const string &remoteAddr
 ClientResponse BroadCastRequestProcessor::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
     if (request->getMethod() == "SUBSCRIBE") {
         auto name = request->getStr("name");
-        auto client = manager->container->subscribeClientForMessages(name, clientSocket);
+        auto client = Container::getInstance()->subscribeClientForMessages(name, clientSocket);
         if (client != nullptr) {
             cout<< MAGENTA_TEXT("CLIENT " << name << "(fd " << clientSocket << ") subscribed for messages") <<endl;
         } else {

@@ -8,7 +8,6 @@ using namespace std;
 StreamerClient::StreamerClient(int socketDescriptor, const string &addr) :
         communicationSocket(new Socket(socketDescriptor)),
         uploadSocket(nullptr),
-        currentRoom(nullptr),
         broadCastSocket(nullptr),
         streamingChannel(nullptr),
         addr(addr) {}
@@ -57,16 +56,15 @@ void StreamerClient::setName(const string &name) {
     this->name = name;
 }
 
-Room *&StreamerClient::getCurrentRoom() {
-    return currentRoom;
+string StreamerClient::getCurrentRoomName() {
+    return currentRoomName;
 }
 
-void StreamerClient::setCurrentRoom(Room *room) {
-    this->currentRoom = room;
+void StreamerClient::setCurrentRoomName(const string & roomName) {
+    currentRoomName = roomName;
 }
 
 void StreamerClient::removeSocket(Socket *&socket) {
-
     delete socket;
     socket = nullptr;
 }
@@ -123,6 +121,14 @@ bool StreamerClient::initializeStreamingChannel(int port) {
 
 string StreamerClient::getAddr() {
     return addr;
+}
+
+void StreamerClient::leaveRoom() {
+    currentRoomName.clear();
+}
+
+bool StreamerClient::hasRoomAssigned() {
+    return !currentRoomName.empty();
 }
 
 
