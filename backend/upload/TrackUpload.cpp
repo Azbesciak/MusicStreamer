@@ -3,14 +3,17 @@
 
 void TrackUpload::onUploadCompleted(UploadedFile* uploadedFile) {
     FileUpload::onUploadCompleted(uploadedFile);
-
     track->setTrackFile(uploadedFile);
 }
 
 
 void TrackUpload::onUploadFailed() {
     FileUpload::onUploadFailed();
-    if (room != nullptr) {
-        room->cancelTrackReservation(track);
+    auto cont = Container::getInstance();
+    synchronized(*cont ->getRoomsMutex()) {
+        auto room = cont ->getRoom(roomName);
+        if (room != nullptr) {
+            room->cancelTrackReservation(track);
+        }
     }
 }

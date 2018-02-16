@@ -8,8 +8,6 @@
 class AbstractServer;
 #pragma once
 class CommunicationServer;
-#pragma once
-class Container;
 
 class ServerManager {
 public:
@@ -17,11 +15,10 @@ public:
     AbstractServer *broadCaster;
     AbstractServer *streamer;
     AbstractServer *uploader;
-    Container* container;
     std::atomic<bool> isRunning;
 
-    explicit ServerManager(Container* con)
-            : container(con), isRunning(true),
+    explicit ServerManager()
+            : isRunning(true),
               communicationServer(nullptr), broadCaster(nullptr),
               streamer(nullptr), uploader(nullptr){};
 

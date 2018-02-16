@@ -29,6 +29,7 @@ public:
 
 class Container {
 private:
+    static Container * instance;
     unordered_map<string, Room*> rooms;
     recursive_mutex roomsMut;
     MessageSender* messageSender;
@@ -60,6 +61,14 @@ public:
     StreamerClient *getClient(const string &clientName);
 
     ClientResponse setClientStreamingPort(StreamerClient *client, int port);
+    recursive_mutex* getRoomsMutex();
+    recursive_mutex* getClientsMutex();
+    Room * getRoom(const string & roomName);
+
+    static Container * getInstance();
+
+    static Container *initialize();
+    static void destroy();
 };
 
 

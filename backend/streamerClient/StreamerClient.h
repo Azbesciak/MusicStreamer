@@ -23,7 +23,7 @@ private:
 
     string name;
     string addr;
-    Room * currentRoom;
+    string currentRoomName;
     ssize_t sendMessage(const string &mes, Socket * socket);
 public:
     explicit StreamerClient(int socketDescriptor, const string &addr);
@@ -31,8 +31,9 @@ public:
     string getName() const;
     void setName(const string& name);
 
-    Room*& getCurrentRoom();
-    void setCurrentRoom(Room* room);
+    string getCurrentRoomName();
+    void setCurrentRoomName(const string &roomName);
+    void leaveRoom();
 
     ssize_t sendMessage(const string &mes);
     ssize_t sendOnBroadCast(const string &mes);
@@ -46,6 +47,7 @@ public:
     void leaveStreamingChannel();
     void sendSound(char *soundBytes);
     string getAddr();
+    bool hasRoomAssigned();
 
     bool initializeStreamingChannel(int port);
 };

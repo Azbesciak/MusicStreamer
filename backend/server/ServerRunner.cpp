@@ -12,7 +12,8 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, cleanUp);
     // prevent dead sockets from throwing pipe errors on write
     signal(SIGPIPE, SIG_IGN);
-    serverRef = new ServerManager(new Container());
+    serverRef = new ServerManager();
+    Container::initialize();
     string command;
 
     string configPath = argc == 2 ? argv[1] : DEF_CONFIG_PATH;
@@ -57,8 +58,8 @@ void cleanUp(int) {
     delete serverRef->streamer;
     delete serverRef->broadCaster;
     delete serverRef->uploader;
-    delete serverRef->container;
     delete serverRef;
+    Container::destroy();
     serverRef = nullptr;
     exit(0);
 }

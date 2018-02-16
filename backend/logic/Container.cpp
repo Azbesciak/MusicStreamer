@@ -2,11 +2,11 @@
 #include "Container.h"
 #include "streamerClient/StreamerClient.h"
 
+Container * Container::instance = nullptr;
 
 void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
-        auto currentClientRoom = client->getCurrentRoom();
-        if (currentClientRoom != nullptr && currentClientRoom->getName() == name)
+        if (client->getCurrentRoomName() == name)
             return;
         removeClientFromRoomsUnsync(client);
         createRoomIfNotExists(name);
@@ -20,7 +20,7 @@ void Container::addNewClient(StreamerClient *client, const string &name) {
     auto room = rooms[name];
 
     room->addClient(client);
-    client->setCurrentRoom(room);
+    client->setCurrentRoomName(room->getName());
 
     sendListOfClientsToAllInRoom(room);
 }
@@ -33,7 +33,7 @@ void Container::removeClientFromRooms(StreamerClient *client) {
 }
 
 void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
-    for (auto && room: rooms) {
+    for (auto &&room: rooms) {
         auto removed = room.second->removeClient(client);
         if (removed) {
             if (room.second->isEmpty()) {
@@ -44,8 +44,7 @@ void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
             break;
         }
     }
-    // FIXME sense of problems...
-    client->setCurrentRoom(nullptr);
+    client->leaveRoom();
 }
 
 
@@ -53,8 +52,8 @@ void Container::sendListOfClientsToAllInRoom(Room *room) {
     auto clients = room->getClients();
     vector<string> names;
     names.reserve(clients.size());
-    for(auto && cli: clients) {
-        names.push_back(cli ->getName());
+    for (auto &&cli: clients) {
+        names.push_back(cli->getName());
     }
 
     ClientResponse resp;
@@ -65,7 +64,7 @@ void Container::sendListOfClientsToAllInRoom(Room *room) {
 }
 
 void Container::sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const {
-    Message message(move(clients), resp.serialize());
+    Message message(clients, resp.serialize());
     messageSender->sendMessage(message);
 }
 
@@ -80,13 +79,13 @@ void Container::deleteRoom(const std::string &name) {
     auto iterator = rooms.find(name);
     if (iterator != rooms.end()) {
 
-        Room* room = iterator->second;
+        Room *room = iterator->second;
 
         // Probably unnecessary, but added for the sake of safety
-        for (StreamerClient* client : room->getClients())
-            client->setCurrentRoom(nullptr);
+        for (StreamerClient *client : room->getClients())
+            client->setCurrentRoomName("");
 
-        delete(room);
+        delete (room);
         rooms.erase(name);
         watcher->markGlobalChange();
     }
@@ -100,16 +99,16 @@ ClientResponse Container::createRoomsResponse() {
 }
 
 Container::Container()
-        : clients(unordered_map<string, StreamerClient*>()),
-          rooms(unordered_map<string, Room*>()),
+        : clients(unordered_map<string, StreamerClient *>()),
+          rooms(unordered_map<string, Room *>()),
           messageSender(new MessageSender()),
-          watcher(new StateChangeWatcher(this)){};
+          watcher(new StateChangeWatcher(this)) {};
 
 Container::~Container() {
     delete watcher;
     delete messageSender;
     synchronized(roomsMut) {
-        for (auto&& room: rooms) {
+        for (auto &&room: rooms) {
             deleteRoom(room.first);
         }
     }
@@ -119,14 +118,16 @@ vector<string> Container::getRoomsList() {
     synchronized(roomsMut) {
         vector<string> roomsList;
         roomsList.reserve(rooms.size());
-        for(auto && room: rooms) {
-            roomsList.push_back(room.second->getName());
+        for (auto &&room: rooms) {
+            if (room.second != nullptr) {
+                roomsList.push_back(room.second->getName());
+            }
         }
         return roomsList;
     }
 }
 
-bool Container::addUserIfNotKnown(StreamerClient * client, const string &clientName) {
+bool Container::addUserIfNotKnown(StreamerClient *client, const string &clientName) {
     synchronized(clientsMut) {
         if (clients.count(clientName) == 0) {
             clients[clientName] = client;
@@ -136,7 +137,7 @@ bool Container::addUserIfNotKnown(StreamerClient * client, const string &clientN
     }
 }
 
-void Container::removeClient(StreamerClient * client) {
+void Container::removeClient(StreamerClient *client) {
     synchronized(clientsMut) {
         clients.erase(client->getName());
     }
@@ -147,20 +148,20 @@ void Container::removeClient(StreamerClient * client) {
 
 void Container::sendToAll(ClientResponse &resp) {
     synchronized(clientsMut) {
-        unordered_set<StreamerClient*> clientsSet;
+        unordered_set<StreamerClient *> clientsSet;
         transform(clients.begin(), clients.end(), inserter(clientsSet, clientsSet.begin()),
-                       [](const pair<string, StreamerClient*>& key_value) {
-                           return key_value.second;
-                       });
+                  [](const pair<string, StreamerClient *> &key_value) {
+                      return key_value.second;
+                  });
         sendResponseToClients(clientsSet, resp);
     }
 }
 
-StreamerClient * Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
+StreamerClient *Container::subscribeClientForMessages(const string &clientName, int messageSocketFd) {
     synchronized(clientsMut) {
         auto client = getClientByNameUnsynch(clientName);
         if (client != nullptr) {
-            client-> subscribeForMessages(messageSocketFd);
+            client->subscribeForMessages(messageSocketFd);
             watcher->requestUpdate(client);
         }
         return client;
@@ -197,6 +198,32 @@ ClientResponse Container::setClientStreamingPort(StreamerClient *client, int por
     }
 }
 
+recursive_mutex *Container::getRoomsMutex() {
+    return &roomsMut;
+}
+
+recursive_mutex *Container::getClientsMutex() {
+    return &clientsMut;
+}
+
+Container *Container::initialize() {
+    instance = new Container();
+    return getInstance();
+}
+
+void Container::destroy() {
+    delete instance;
+    instance = nullptr;
+}
+
+Container *Container::getInstance() {
+    return instance;
+}
+
+Room *Container::getRoom(const string &roomName) {
+    return rooms[roomName];
+}
+
 void StateChangeWatcher::spreadChangeStateInfo() {
     auto message = container->createRoomsResponse();
     container->sendToAll(message);
@@ -223,13 +250,13 @@ StateChangeWatcher::StateChangeWatcher(Container *container)
                 }
             }
             sleep(1);
-        } 
+        }
     });
     watchThread->detach();
 }
 
 StateChangeWatcher::~StateChangeWatcher() {
-    delete(watchThread);
+    delete watchThread;
 }
 
 void StateChangeWatcher::markGlobalChange() {
