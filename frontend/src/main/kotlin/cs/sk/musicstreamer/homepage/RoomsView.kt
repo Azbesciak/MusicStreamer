@@ -2,12 +2,11 @@ package cs.sk.musicstreamer.homepage
 
 import com.jfoenix.controls.*
 import cs.sk.musicstreamer.connection.JoinRequest
-import cs.sk.musicstreamer.connection.JsonResponse
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
+import cs.sk.musicstreamer.room.RoomView
 import cs.sk.musicstreamer.utils.getStrings
-import io.datafx.controller.flow.context.ViewFlowContext
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.javafx.JavaFx
@@ -21,7 +20,8 @@ import javax.annotation.PostConstruct
 class RoomsView(
         private val mainConnector: MainConnector,
         private val broadCastConnector: BroadCastConnector,
-        private val infoService: InfoService
+        private val infoService: InfoService,
+        private val roomView: RoomView
 ) : Fragment() {
 
     override val root: StackPane by fxml("/main/rooms_view.fxml")
@@ -76,6 +76,7 @@ class RoomsView(
 
     private fun joinToRoom(roomName: String, afterJoin: () -> Unit = {}) {
         logger.info { "joining to $roomName..." }
+        roomView.pressingRoomName(roomName)
         mainConnector.send(
                 request = JoinRequest(roomName),
                 onResponse = {
@@ -89,6 +90,7 @@ class RoomsView(
                 },
                 onError = {
                     launch(JavaFx) {
+                        roomView.pressingRoomName()
                         infoService.showSnackBar("Could not join to $roomName")
                         logger.info { "Could not join to $roomName" }
                     }
@@ -125,6 +127,7 @@ class RoomsView(
 
     fun leaveRoom() {
         currentRoom.value = null
+        roomsList.selectionModel.select(-1)
     }
 
     fun addJoinListener(listener: (room: String) -> Unit) = joinListeners.add(listener)
