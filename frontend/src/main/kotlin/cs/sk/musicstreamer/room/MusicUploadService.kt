@@ -48,8 +48,8 @@ class MusicUploadService(
                         )
                     },
                     onError = {
+                        logger.error("Upload denied", it)
                         informer.ifNotInformed {
-                            logger.error { "Upload denied" }
                             subscriber.onError(it)
                         }
                     }
