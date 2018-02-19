@@ -28,7 +28,7 @@ public:
     static const int SOUND_CHUNK_SIZE = 512;
 
 
-    MusicTrack(const std::string& trackName);
+    explicit MusicTrack(const std::string& trackName);
 
     const std::string& getTrackName();
 

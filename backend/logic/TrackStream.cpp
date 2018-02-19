@@ -1,4 +1,5 @@
 #include <unordered_set>
+#include <utility>
 #include <utility/synch.h>
 #include "TrackStream.h"
 #include "MusicStreamer.h"
@@ -7,20 +8,17 @@
 using namespace std;
 
 
-TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *> *clients,
-                         MusicStreamer *streamer, recursive_mutex *clientsMut)
+TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *> clients,
+                         MusicStreamer *streamer)
         : track(track),
-          clients(clients),
+          clients(move(clients)),
           streamer(streamer),
-          clientsMut(clientsMut),
-          streamerThread(nullptr),
-          isRunning(false) {
+          streamerThread(nullptr) {
 }
 
 
 void TrackStream::start() {
     delete streamerThread;
-    isRunning = true;
     streamerThread = new thread([=]() {
         track->openTrack();
 
@@ -30,11 +28,11 @@ void TrackStream::start() {
         resp.addToBody("frameHeader", mes);
         resp.setStatus(200);
         const string frameMes = resp.serialize();
-        while (!track->isFinished() && isRunning.load()) {
-            synchronized(*clientsMut) {
+        while (isRunning.load() && !track->isFinished()) {
+            synchronized(clientsMut) {
                 synchronized(streamMut) {
                     char *soundChunk = track->nextSoundChunk();
-                    for (auto client : *clients) {
+                    for (auto client : clients) {
                         if (!frameSent[client]) {
                             client->sendOnBroadCast(frameMes);
                             frameSent[client] = true;
@@ -45,20 +43,20 @@ void TrackStream::start() {
                     delete[] soundChunk;
                 }
             }
-            if (!isRunning.load())
-                return;
-
             usleep(timeGapMicroseconds);
+        }
+        if (!isRunning.load()) {
+            return;
         }
 
         usleep(250000);
+        if (!isRunning.load()) {
+            return;
+        }
 
         synchronized(streamMut) {
-
             track->closeTrack();
-            if (isRunning.load())
-                streamer->onTrackFinished();
-            delete track;
+            streamer->onTrackFinished();
         }
     });
     streamerThread->detach();
@@ -67,14 +65,26 @@ void TrackStream::start() {
 
 void TrackStream::stop() {
     isRunning = false;
-    sleep(1);
-    synchronized(*clientsMut) {
+    synchronized(clientsMut) {
         synchronized(streamMut) {
             if (track->isOpened())
                 track->closeTrack();
-            sleep(1);
             delete streamerThread;
-            delete track;
+        }
+    }
+}
+
+void TrackStream::attachClient(StreamerClient* client) {
+    synchronized(clientsMut) {
+        clients.insert(client);
+    }
+}
+
+
+void TrackStream::detachClient(StreamerClient* client) {
+    synchronized(clientsMut) {
+        if (clients.erase(client) != 0) {
+            frameSent.erase(client);
         }
     }
 }

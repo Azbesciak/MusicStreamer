@@ -25,7 +25,7 @@ private:
     string name;
 
 public:
-    explicit Room(string name);
+    explicit Room(const string & name);
     ~Room();
     void addClient(StreamerClient *client);
     bool removeClient(StreamerClient * client);
@@ -42,16 +42,16 @@ public:
 
     void sendListOfClientsToAll();
 
-    ClientResponse* prepareRoomsInfo(ClientResponse *resp);
-    ClientResponse* prepareTracksResponse(ClientResponse *resp);
-    ClientResponse* prepareTrackQueueResponse(ClientResponse * resp);
+    ClientResponse prepareRoomsInfo(ClientResponse *resp);
+    ClientResponse prepareTracksResponse(ClientResponse *resp);
+    ClientResponse prepareTrackQueueResponse(ClientResponse * resp);
 
 
     vector<string> getAvailableTracksList();
 
     void sendResponseToAll(const function<ClientResponse(ClientResponse*)> &decorator);
 
-    ClientResponse *addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
+    ClientResponse addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
 
     void sendTrackListToClients(const vector<string> &tracks);
     void sendQueueuedTracksToClients(const vector<string> &tracks);

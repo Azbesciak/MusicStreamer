@@ -14,12 +14,8 @@ int MusicStreamer::minPort = 0;
 int MusicStreamer::maxPort = 65535;
 string MusicStreamer::host("0.0.0.0");
 
-MusicStreamer::MusicStreamer(unordered_set<StreamerClient *> *clients,
-                             recursive_mutex *clientsMut,
-                             function<void(vector<string>)> trackChangeListener)
-        : clients(clients),
-          clientsMut(clientsMut),
-          trackStream(nullptr),
+MusicStreamer::MusicStreamer(function<void(vector<string>)> trackChangeListener)
+        : trackStream(nullptr),
           tracksQueue(new TracksQueue()),
           socket(new Socket(createSocket())),
           trackChangeListener(move(trackChangeListener)) {
@@ -30,11 +26,12 @@ MusicStreamer::MusicStreamer(unordered_set<StreamerClient *> *clients,
 
 
 void MusicStreamer::playCurrentTrack() {
-
     synchronized(trackMut) {
         if (trackStream == nullptr) {
             MusicTrack *track = tracksQueue->currentTrack();
-            trackStream = new TrackStream(track, clients, this, clientsMut);
+            synchronized(clientsMut) {
+                trackStream = new TrackStream(track, clients, this);
+            }
             trackStream->start();
         }
     }
@@ -59,6 +56,24 @@ void MusicStreamer::onNextTrack() {
     }
 }
 
+
+void MusicStreamer::joinClient(StreamerClient *streamerClient) {
+    synchronized(clientsMut) {
+        clients.insert(streamerClient);
+        if (trackStream != nullptr)
+            trackStream->attachClient(streamerClient);
+    }
+}
+
+
+void MusicStreamer::leaveClient(StreamerClient *streamerClient) {
+    synchronized(clientsMut) {
+        if (clients.erase(streamerClient) != 0 && trackStream != nullptr) {
+            trackStream->detachClient(streamerClient);
+        }
+    }
+}
+
 void MusicStreamer::cleanTrackStream() {
     if (trackStream != nullptr) {
         delete trackStream;
@@ -70,7 +85,15 @@ void MusicStreamer::cleanTrackStream() {
 MusicStreamer::~MusicStreamer() {
     delete socket;
     delete trackStream;
-    // what with available tracks?
+    delete tracksQueue;
+//    thread th([=]() {
+//        sleep(2);
+        for (auto &&t : availableTracks) {
+            delete t;
+        }
+//    });
+//    th.detach();
+
 }
 
 void MusicStreamer::setPortsRange(int minPort, int maxPort) {

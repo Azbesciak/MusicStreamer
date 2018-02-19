@@ -15,24 +15,28 @@ class TrackStream {
 private:
 
     MusicTrack* track;
-    std::unordered_set<StreamerClient*> * clients;
+    std::unordered_set<StreamerClient*> clients;
     MusicStreamer* streamer;
 
     std::map<StreamerClient*, bool> frameSent;
 
     std::recursive_mutex streamMut;
-    std::recursive_mutex * clientsMut;
+    std::recursive_mutex  clientsMut;
     std::thread* streamerThread;
     std::atomic<bool> isRunning;
 
 public:
 
-    TrackStream(MusicTrack* track, std::unordered_set<StreamerClient*> * clients, MusicStreamer* streamer, std::recursive_mutex *clientsMut);
+    TrackStream(MusicTrack* track, std::unordered_set<StreamerClient*> clients, MusicStreamer* streamer);
 
     void start();
     void stop();
 
     ~TrackStream();
+
+    void detachClient(StreamerClient *client);
+
+    void attachClient(StreamerClient *client);
 };
 
 

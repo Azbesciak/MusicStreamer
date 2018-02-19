@@ -147,7 +147,7 @@ ClientResponse ClientProxy::handleNextTrack() {
 ClientResponse ClientProxy::handleTracksRequest() {
     return Container::withRoom(client, [&](Room *room) {
         ClientResponse response = room->createBasicResponse();
-        return *room->prepareTracksResponse(&response);
+        return room->prepareTracksResponse(&response);
     });
 }
 
@@ -155,7 +155,7 @@ ClientResponse ClientProxy::handleTracksRequest() {
 ClientResponse ClientProxy::handleQueueRequest() {
     return Container::withRoom(client, [&](Room *room) {
         ClientResponse response = room->createBasicResponse();
-        return *room->prepareTrackQueueResponse(&response);
+        return room->prepareTrackQueueResponse(&response);
     });
 }
 

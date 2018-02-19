@@ -3,7 +3,6 @@
 #define MUSICSTREAMER_CLIENTCOMMAND_H
 
 
-#include <upload/FileUpload.h>
 #include <streamerClient/ClientResponse.h>
 #include <logic/Container.h>
 #include "Request.h"

@@ -2,7 +2,6 @@
 #define MUSICSTREAMER_UPLOADHANDLER_H
 
 
-#include <upload/FileUpload.h>
 #include <logic/Room.h>
 #include <set>
 #include <netinet/in.h>

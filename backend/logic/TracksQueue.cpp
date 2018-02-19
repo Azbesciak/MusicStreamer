@@ -21,7 +21,6 @@ MusicTrack* TracksQueue::nextTrack() {
     MusicTrack* nextTrack = nullptr;
 
     synchronized(mut) {
-
         tracks.pop_front();
 
         if (!tracks.empty()) {
@@ -56,9 +55,7 @@ const deque<MusicTrack*>& TracksQueue::getQueuedTracks() {
 
 
 void TracksQueue::addOnNextTrackListener(OnNextTrackListener *listener) {
-
     synchronized(mut) {
-
         onNextTrackListener = listener;
     }
 }

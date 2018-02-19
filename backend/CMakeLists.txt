@@ -28,8 +28,6 @@ add_executable(MusicStreamer
         messageSender/Message.cpp
         messageSender/MessageSender.cpp
         messageSender/MessageSender.h
-        upload/FileUpload.cpp
-        upload/FileUpload.h
         upload/UploadHandler.cpp
         upload/UploadHandler.h
         server/SocketFactory.cpp
