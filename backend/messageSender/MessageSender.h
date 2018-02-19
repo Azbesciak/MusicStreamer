@@ -11,16 +11,20 @@ using namespace std;
 #define MUSICSTREAMER_MESSAGESENDER_H
 
 class StreamerClient;
-class Room;
+class ClientResponse;
 
 class MessageSender {
+    static MessageSender * instance;
     thread* broadcastThread;
     queue<Message> messages;
     recursive_mutex mesMut;
-public:
+    void sendMessage(Message &message);
     MessageSender();
     ~MessageSender();
-    void sendMessage(Message &message);
+public:
+    static void sendMessage(unordered_set<StreamerClient*> clients, ClientResponse * response);
+    static void init();
+    static void destroy();
 };
 
 #endif //MUSICSTREAMER_MESSAGESENDER_H

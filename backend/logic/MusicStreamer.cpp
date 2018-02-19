@@ -3,6 +3,8 @@
 #include <utility/synch.h>
 #include <algorithm>
 #include <server/SocketFactory.h>
+#include "TracksQueue.h"
+#include "TrackStream.h"
 #include <random>
 
 using namespace std;

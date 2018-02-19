@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
     auto uploadDir = config.get("server.upload.dir", DEF_UPLOAD_DIR);
     auto minStreamerPort = config.get("server.streamer.port.min", DEF_MIN_STREAMER_PORT);
     auto maxStreamerPort = config.get("server.streamer.port.max", DEF_MAX_STREAMER_PORT);
+    MessageSender::init();
     MusicStreamer::setPortsRange(minStreamerPort, maxStreamerPort);
     MusicStreamer::setHost(host);
 
@@ -60,6 +61,7 @@ void cleanUp(int) {
     delete serverRef->uploader;
     delete serverRef;
     Container::destroy();
+    MessageSender::destroy();
     serverRef = nullptr;
     exit(0);
 }

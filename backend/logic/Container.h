@@ -10,6 +10,7 @@
 #ifndef MUSICSTREAMER_CONTAINER_H
 #define MUSICSTREAMER_CONTAINER_H
 class Container;
+class Room;
 
 class StateChangeWatcher {
     thread * watchThread;
@@ -17,7 +18,7 @@ class StateChangeWatcher {
     Container * container;
     unordered_set<StreamerClient *> receivers;
     recursive_mutex receiversMut;
-    void spreadChangeStateInfo();
+    void spreadRoomsList();
 
 public:
     explicit StateChangeWatcher(Container * container);
@@ -32,7 +33,6 @@ private:
     static Container * instance;
     unordered_map<string, Room*> rooms;
     recursive_mutex roomsMut;
-    MessageSender* messageSender;
     unordered_map<string, StreamerClient*> clients;
     recursive_mutex clientsMut;
     StateChangeWatcher * watcher;

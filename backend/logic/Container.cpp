@@ -1,6 +1,7 @@
 
 #include "Container.h"
 #include "streamerClient/StreamerClient.h"
+#include "Room.h"
 
 Container * Container::instance = nullptr;
 
@@ -66,8 +67,7 @@ void Container::sendListOfClientsToAllInRoom(Room *room) {
 }
 
 void Container::sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const {
-    Message message(clients, resp.serialize());
-    messageSender->sendMessage(message);
+    MessageSender::sendMessage(clients, &resp);
 }
 
 void Container::createRoomIfNotExists(const std::string &name) {
@@ -103,12 +103,10 @@ ClientResponse Container::createRoomsResponse() {
 Container::Container()
         : clients(unordered_map<string, StreamerClient *>()),
           rooms(unordered_map<string, Room *>()),
-          messageSender(new MessageSender()),
           watcher(new StateChangeWatcher(this)) {};
 
 Container::~Container() {
     delete watcher;
-    delete messageSender;
     synchronized(roomsMut) {
         for (auto &&room: rooms) {
             deleteRoom(room.first);
@@ -226,7 +224,7 @@ Room *Container::getRoom(const string &roomName) {
     return rooms[roomName];
 }
 
-void StateChangeWatcher::spreadChangeStateInfo() {
+void StateChangeWatcher::spreadRoomsList() {
     auto message = container->createRoomsResponse();
     container->sendToAll(message);
 }
@@ -238,7 +236,7 @@ StateChangeWatcher::StateChangeWatcher(Container *container)
         while (true) {
             if (changeMark) {
                 changeMark = false;
-                spreadChangeStateInfo();
+                spreadRoomsList();
                 synchronized(receiversMut) {
                     receivers.clear();
                 }

@@ -1,4 +1,7 @@
+#include <unordered_set>
+#include <utility/synch.h>
 #include "TrackStream.h"
+#include "MusicStreamer.h"
 
 
 using namespace std;
@@ -11,7 +14,6 @@ TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *>
           streamer(streamer),
           clientsMut(clientsMut),
           streamerThread(nullptr) {
-
 }
 
 

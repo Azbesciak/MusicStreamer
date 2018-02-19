@@ -2,6 +2,7 @@
 #include <utility/TerminalUtils.h>
 #include <utility/synch.h>
 #include "StreamerClient.h"
+#include "../server/music/MusicChannel.h"
 
 using namespace std;
 

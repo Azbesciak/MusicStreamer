@@ -2,7 +2,7 @@
 #ifndef MUSICSTREAMER_STREAMERCLIENT_H
 #define MUSICSTREAMER_STREAMERCLIENT_H
 
-#include <logic/Room.h>
+
 #include "Socket.h"
 
 #include <string>
@@ -11,6 +11,7 @@ using namespace std;
 
 class MusicStreamer;
 class Room;
+class MusicChannel;
 
 class StreamerClient {
 private:
