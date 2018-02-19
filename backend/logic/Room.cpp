@@ -4,6 +4,7 @@
 
 #include "utility/synch.h"
 #include "streamerClient/StreamerClient.h"
+#include "../messageSender/MessageSender.h"
 
 
 Room::Room(string name) :
@@ -21,6 +22,7 @@ bool Room::removeClient(StreamerClient *client) {
     synchronized(clientsMut) {
         if (clients.erase(client) != 0) {
             client->leaveStreamingChannel();
+            sendListOfClientsToAll();
             return true;
         }
         return false;
@@ -36,6 +38,7 @@ const unordered_set<StreamerClient *> &Room::getClients() {
 void Room::addClient(StreamerClient *client) {
     synchronized(clientsMut) {
         clients.insert(client);
+        sendListOfClientsToAll();
         client->setStreamingSocket(streamer->getStreamingSocket());
     }
 }
@@ -58,6 +61,21 @@ MusicTrack *Room::reserveTrackSlot(const string &trackName) {
 
 void Room::cancelTrackReservation(MusicTrack *musicTrack) {
     streamer->cancelTrackReservation(musicTrack);
+}
+
+
+void Room::sendListOfClientsToAll() {
+    vector<string> names;
+    names.reserve(clients.size());
+    for (auto &&cli: clients) {
+        names.push_back(cli->getName());
+    }
+
+    ClientResponse resp;
+    resp.addToBody("room", name);
+    resp.addToBody("clients", names);
+    resp.setStatus(200);
+    MessageSender::sendMessage(clients, &resp);
 }
 
 

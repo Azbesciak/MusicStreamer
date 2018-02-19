@@ -17,13 +17,9 @@ void Container::joinClientToRoom(StreamerClient *client, const std::string &name
 
 
 void Container::addNewClient(StreamerClient *client, const string &name) {
-
     auto room = rooms[name];
-
     room->addClient(client);
     client->setCurrentRoomName(room->getName());
-
-    sendListOfClientsToAllInRoom(room);
 }
 
 
@@ -40,30 +36,12 @@ void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
             if (removed) {
                 if (room.second->isEmpty()) {
                     deleteRoom(room.first);
-                } else {
-                    sendListOfClientsToAllInRoom(room.second);
                 }
                 break;
             }
         }
     }
     client->leaveRoom();
-}
-
-
-void Container::sendListOfClientsToAllInRoom(Room *room) {
-    auto clients = room->getClients();
-    vector<string> names;
-    names.reserve(clients.size());
-    for (auto &&cli: clients) {
-        names.push_back(cli->getName());
-    }
-
-    ClientResponse resp;
-    resp.addToBody("room", room->getName());
-    resp.addToBody("clients", names);
-    resp.setStatus(200);
-    sendResponseToClients(clients, resp);
 }
 
 void Container::sendResponseToClients(unordered_set<StreamerClient *> &clients, ClientResponse &resp) const {

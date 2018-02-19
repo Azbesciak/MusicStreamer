@@ -38,7 +38,6 @@ private:
     StateChangeWatcher * watcher;
     void deleteRoom(const string &name);
     void createRoomIfNotExists(const string &name);
-    void sendListOfClientsToAllInRoom(Room *room);
     void addNewClient(StreamerClient *client, const string &name);
     void removeClientFromRoomsUnsync(StreamerClient *client);
     StreamerClient * getClientByNameUnsynch(const string &clientName);

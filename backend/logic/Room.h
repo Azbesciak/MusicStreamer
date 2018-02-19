@@ -39,6 +39,8 @@ public:
     std::vector<MusicTrack*> getAvailableTracks();
     MusicTrack* findTrackByName(const std::string& trackName);
     TracksQueue* getTracksQueue();
+
+    void sendListOfClientsToAll();
 };
 
 
