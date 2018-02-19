@@ -18,9 +18,11 @@ public:
     TrackUpload(MusicTrack* track, const string & roomName, int fileSize)
         : FileUpload(fileSize), roomName(roomName), track(track) {
     }
-
+    string getIdentify();
     void onUploadCompleted(UploadedFile* uploadedFile) override;
     void onUploadFailed() override;
+
+    string getFileName();
 };
 
 

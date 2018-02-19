@@ -3,6 +3,7 @@ package cs.sk.musicstreamer.connection.connectors
 import cs.sk.musicstreamer.connection.ErrorResponse
 import cs.sk.musicstreamer.connection.UploadTokenRequest
 import cs.sk.musicstreamer.utils.Informer
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service

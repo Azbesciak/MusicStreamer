@@ -13,38 +13,40 @@ TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *>
           clients(clients),
           streamer(streamer),
           clientsMut(clientsMut),
-          streamerThread(nullptr) {
+          streamerThread(nullptr),
+          isRunning(false) {
 }
 
 
 void TrackStream::start() {
     delete streamerThread;
+    isRunning = true;
     streamerThread = new thread([=]() {
         track->openTrack();
 
         int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
-
-        while (!track->isFinished()) {
-
+        char *mes = track->getTrackHeader();
+        ClientResponse resp;
+        resp.addToBody("frameHeader", mes);
+        resp.setStatus(200);
+        const string frameMes = resp.serialize();
+        while (!track->isFinished() && isRunning.load()) {
             synchronized(*clientsMut) {
-
-                for (auto client : *clients) {
-
-                    synchronized(streamMut) {
-
-                        char *soundChunk = track->nextSoundChunk();
-
-                        if (frameSent[client]) {
-                            client->sendOnBroadCast(track->getTrackHeader());
+                synchronized(streamMut) {
+                    char *soundChunk = track->nextSoundChunk();
+                    for (auto client : *clients) {
+                        if (!frameSent[client]) {
+                            client->sendOnBroadCast(frameMes);
                             frameSent[client] = true;
                         } else {
                             client->sendSound(soundChunk);
                         }
-
-                        delete[] soundChunk;
                     }
+                    delete[] soundChunk;
                 }
             }
+            if (!isRunning.load())
+                return;
 
             usleep(timeGapMicroseconds);
         }
@@ -54,7 +56,8 @@ void TrackStream::start() {
         synchronized(streamMut) {
 
             track->closeTrack();
-            streamer->onTrackFinished();
+            if (isRunning.load())
+                streamer->onTrackFinished();
             delete track;
         }
     });
@@ -63,11 +66,14 @@ void TrackStream::start() {
 
 
 void TrackStream::stop() {
+    isRunning = false;
+    sleep(1);
     synchronized(*clientsMut) {
         synchronized(streamMut) {
-            delete streamerThread;
             if (track->isOpened())
                 track->closeTrack();
+            sleep(1);
+            delete streamerThread;
             delete track;
         }
     }

@@ -5,6 +5,7 @@
 #include <thread>
 #include <streamerClient/StreamerClient.h>
 #include <map>
+#include <atomic>
 
 class StreamerClient;
 class MusicStreamer;
@@ -22,6 +23,7 @@ private:
     std::recursive_mutex streamMut;
     std::recursive_mutex * clientsMut;
     std::thread* streamerThread;
+    std::atomic<bool> isRunning;
 
 public:
 

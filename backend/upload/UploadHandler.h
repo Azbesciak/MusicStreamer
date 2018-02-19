@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <map>
 #include <server/TcpServer.h>
+#include "TrackUpload.h"
 
 #define TOKEN_SIZE 20
 
@@ -25,7 +26,7 @@ private:
         ClientResponse onNewRequest(Request *request, const string &method, ClientResponse *&response) override;
     public:
         int clientSocket;
-        FileUpload * upload;
+        TrackUpload * upload;
         StreamerClient * client;
 
         explicit UploadRequestProcessor(int clientSocket);
@@ -49,21 +50,20 @@ private:
     recursive_mutex fileMut;
     int nextFileNo;
 
-    map<string, FileUpload*> uploads;
+    map<string, TrackUpload*> uploads;
     set<string> usedTokens;
 
 
     UploadHandler(const string &host, int port, ServerManager * manager, const string &storageDirectory);
 
     string generateToken();
-    FileUpload* retrieveUploadByToken(const string &token);
+    TrackUpload* retrieveUploadByToken(const string &token);
 
     void downloadFile(int clientSocket);
-    UploadedFile* acceptFileBytes(int clientSocket, long fileSize);
+    UploadedFile *acceptFileBytes(UploadRequestProcessor *clientSocket);
 
 
-    UploadedFile* createNewUploadedFile();
-    string resolveNewFilePath();
+    UploadedFile *createNewUploadedFile(UploadRequestProcessor *processor);
 
     ~UploadHandler() override;
 
@@ -72,9 +72,11 @@ public:
     static void destroy();
     static UploadHandler* getInstance();
 
-    string prepareUpload(FileUpload* fileUpload);
+    string prepareUpload(TrackUpload* fileUpload);
 
     void setSocketTimeout(int clientSocket) const;
+
+    string resolveNewFilePath();
 };
 
 

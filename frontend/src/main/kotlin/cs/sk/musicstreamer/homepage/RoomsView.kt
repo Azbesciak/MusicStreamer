@@ -6,6 +6,7 @@ import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import cs.sk.musicstreamer.room.RoomView
+import cs.sk.musicstreamer.utils.clearSelection
 import cs.sk.musicstreamer.utils.getStrings
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.layout.StackPane
@@ -76,7 +77,7 @@ class RoomsView(
 
     private fun joinToRoom(roomName: String, afterJoin: () -> Unit = {}) {
         logger.info { "joining to $roomName..." }
-        roomView.pressingRoomName(roomName)
+        roomView.preassingRoomName(roomName)
         mainConnector.send(
                 request = JoinRequest(roomName),
                 onResponse = {
@@ -90,7 +91,7 @@ class RoomsView(
                 },
                 onError = {
                     launch(JavaFx) {
-                        roomView.pressingRoomName()
+                        roomView.preassingRoomName()
                         infoService.showSnackBar("Could not join to $roomName")
                         logger.info { "Could not join to $roomName" }
                     }
@@ -127,7 +128,7 @@ class RoomsView(
 
     fun leaveRoom() {
         currentRoom.value = null
-        roomsList.selectionModel.select(-1)
+        roomsList.clearSelection()
     }
 
     fun addJoinListener(listener: (room: String) -> Unit) = joinListeners.add(listener)

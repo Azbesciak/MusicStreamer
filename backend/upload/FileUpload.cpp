@@ -15,7 +15,6 @@ long FileUpload::getFileSize() {
 
 
 void FileUpload::onUploadCompleted(UploadedFile* uploadedFile) {
-    delete uploadedFile;
 }
 
 

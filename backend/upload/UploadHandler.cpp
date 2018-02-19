@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <server/RequestReader.h>
 #include <fstream>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -48,7 +49,7 @@ void UploadHandler::downloadFile(int clientSocket) {
             processor->respond(&response);
 
             if (processor->client != nullptr && processor->upload != nullptr) {
-                UploadedFile* uploadedFile = acceptFileBytes(clientSocket, processor->upload->getFileSize());
+                UploadedFile* uploadedFile = acceptFileBytes(processor);
 
                 processor->upload->onUploadCompleted(uploadedFile);
                 response = ClientResponse(200, "File uploaded successfully");
@@ -68,20 +69,20 @@ void UploadHandler::downloadFile(int clientSocket) {
     delete processor;
 }
 
-UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
-    UploadedFile* file = createNewUploadedFile();
+UploadedFile * UploadHandler::acceptFileBytes(UploadRequestProcessor *processor) {
+    UploadedFile* file = createNewUploadedFile(processor);
     if (file == nullptr)
         throw FileUploadException(500, "Unexpected file upload error");
 
-    long remainingSize = fileSize;
+    long remainingSize = processor->upload->getFileSize();
     auto buffer = new char[BYTE_BUFFER_SIZE + 1];
-    int fileDescriptor = open(file->getFileName().c_str(), O_WRONLY);
+    int fileDescriptor = open(file->getFilePath().c_str(), O_WRONLY);
     if (fileDescriptor < 0)
         throw FileUploadException(500, "Unexpected file upload error");
 
     try {
         while (remainingSize > 0) {
-            ssize_t bytes = read(clientSocket, buffer, BYTE_BUFFER_SIZE);
+            ssize_t bytes = read(processor->clientSocket, buffer, BYTE_BUFFER_SIZE);
             if (bytes < 0) {
                 if (errno == EWOULDBLOCK)
                     throw FileUploadException(408, "File upload timeout");
@@ -101,7 +102,7 @@ UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
         }
     } catch(FileUploadException& ex) {
         close(fileDescriptor);
-        remove(file->getFileName().c_str());
+        remove(file->getFilePath().c_str());
         delete buffer;
         throw ex;
     }
@@ -111,9 +112,9 @@ UploadedFile* UploadHandler::acceptFileBytes(int clientSocket, long fileSize) {
 }
 
 
-FileUpload* UploadHandler::retrieveUploadByToken(const string &token) {
+TrackUpload* UploadHandler::retrieveUploadByToken(const string &token) {
 
-    FileUpload* upload = nullptr;
+    TrackUpload* upload = nullptr;
 
     synchronized(mut) {
 
@@ -193,7 +194,7 @@ UploadHandler::UploadRequestProcessor::~UploadRequestProcessor() {
     }
 }
 
-string UploadHandler::prepareUpload(FileUpload* fileUpload) {
+string UploadHandler::prepareUpload(TrackUpload* fileUpload) {
 
     // Todo implement maximum number of uploads limit
     if (fileUpload->getFileSize() > MAX_FILE_SIZE)
@@ -225,13 +226,13 @@ string UploadHandler::generateToken() {
     return token;
 }
 
-UploadedFile* UploadHandler::createNewUploadedFile() {
+UploadedFile * UploadHandler::createNewUploadedFile(UploadRequestProcessor *processor) {
     UploadedFile* uploadedFile = nullptr;
     synchronized(fileMut) {
-        string fileName = resolveNewFilePath();
-        ofstream file(fileName);
+        string filePath = resolveNewFilePath();
+        ofstream file(filePath);
         if (file.is_open()) {
-            uploadedFile = new UploadedFile(fileName);
+            uploadedFile = new UploadedFile(processor->upload->getFileName(), filePath);
             file.close();
         }
     }
@@ -239,9 +240,7 @@ UploadedFile* UploadHandler::createNewUploadedFile() {
 }
 
 string UploadHandler::resolveNewFilePath() {
-
     string filename = to_string(nextFileNo++);
-
     return string(FILE_UPLOAD_DIRECTORY) + filename;
 }
 

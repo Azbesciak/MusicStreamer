@@ -26,18 +26,17 @@ MusicStreamer::MusicStreamer(unordered_set<StreamerClient *> *clients,
     cout << "Initialized streamer at "
          << YELLOW_TEXT(host << ":" << port) << endl;
     tracksQueue->addOnNextTrackListener(this);
-    if (tracksQueue->currentTrack() != nullptr)
-        playCurrentTrack();
-
 }
 
 
 void MusicStreamer::playCurrentTrack() {
 
     synchronized(trackMut) {
-        MusicTrack *track = tracksQueue->currentTrack();
-        trackStream = new TrackStream(track, clients, this, clientsMut);
-        trackStream->start();
+        if (trackStream == nullptr) {
+            MusicTrack *track = tracksQueue->currentTrack();
+            trackStream = new TrackStream(track, clients, this, clientsMut);
+            trackStream->start();
+        }
     }
 }
 
@@ -45,10 +44,7 @@ void MusicStreamer::playCurrentTrack() {
 void MusicStreamer::onTrackFinished() {
 
     synchronized(trackMut) {
-        if (trackStream != nullptr) {
-            delete trackStream;
-            trackStream = nullptr;
-        }
+        cleanTrackStream();
         tracksQueue->nextTrack();
     }
 }
@@ -57,14 +53,16 @@ void MusicStreamer::onTrackFinished() {
 void MusicStreamer::onNextTrack() {
 
     synchronized(trackMut) {
-
-        if (trackStream != nullptr) {
-            trackStream->stop();
-            delete trackStream;
-        }
-
+        cleanTrackStream();
         playCurrentTrack();
         trackChangeListener(getAvailableTracksList());
+    }
+}
+
+void MusicStreamer::cleanTrackStream() {
+    if (trackStream != nullptr) {
+        delete trackStream;
+        trackStream = nullptr;
     }
 }
 
@@ -142,22 +140,17 @@ std::vector<MusicTrack *> MusicStreamer::getAvailableTracks() {
 }
 
 MusicTrack *MusicStreamer::findTrackByName(const std::string &trackName) {
-
-    MusicTrack *resultTrack = nullptr;
-
     synchronized(trackMut) {
 
         for (MusicTrack *track : availableTracks) {
 
             if (track->getTrackName() == trackName) {
 
-                resultTrack = track;
-                break;
+                return track;
             }
         }
     }
-
-    return resultTrack;
+    return nullptr;;
 }
 
 TracksQueue *MusicStreamer::getTracksQueue() {

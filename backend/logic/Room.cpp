@@ -10,7 +10,7 @@
 
 Room::Room(string name) :
         name(std::move(name)),
-        streamer(new MusicStreamer(&clients, &clientsMut, [&](vector<string> tracks) {
+        streamer(new MusicStreamer(&clients, &clientsMut, [=](vector<string> tracks) {
             synchronized(clientsMut) {
                 cout << "SENDING TRACKS" << endl;
                 sendTrackListToClients(tracks);
@@ -137,4 +137,13 @@ void Room::onTrackListChanged() {
         const vector<string> &tracks = streamer->getAvailableTracksList();
         sendTrackListToClients(tracks);
     }
+}
+
+ClientResponse *Room::prepareTrackQueueResponse(ClientResponse *resp) {
+    vector<string> trackNames;
+    auto tracks = getTracksQueue()->getQueuedTracks();
+    transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
+              [](MusicTrack *track) -> string { return track->getTrackName(); });
+    resp->addToBody("tracksQueue", trackNames);
+    return resp;
 }

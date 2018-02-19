@@ -5,21 +5,15 @@ import com.jfoenix.controls.JFXHamburger
 import com.jfoenix.controls.JFXRippler
 import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
-import cs.sk.musicstreamer.connection.*
-import cs.sk.musicstreamer.connection.connectors.MainConnector
+import cs.sk.musicstreamer.connection.StreamSubscribeRequest
+import cs.sk.musicstreamer.connection.SubscribeRequest
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.ConnectionListener
-import cs.sk.musicstreamer.connection.connectors.ResponseListener
+import cs.sk.musicstreamer.connection.connectors.MainConnector
+import cs.sk.musicstreamer.connection.connectors.StreamingConnector
 import cs.sk.musicstreamer.room.RoomView
-import io.datafx.controller.flow.context.ViewFlowContext
-import javafx.beans.binding.Bindings
-import javafx.beans.binding.BooleanBinding
-import javafx.beans.binding.BooleanExpression
-import javafx.beans.property.BooleanProperty
 import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.value.ObservableBooleanValue
 import javafx.fxml.Initializable
-import javafx.scene.control.Label
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import kotlinx.coroutines.experimental.delay
@@ -29,6 +23,7 @@ import mu.KLogging
 import tornadofx.*
 import java.net.URL
 import java.util.*
+import kotlin.coroutines.experimental.suspendCoroutine
 
 // cannot be a @Controller because is created statically...
 class MainView : View(), Initializable {
@@ -52,11 +47,14 @@ class MainView : View(), Initializable {
 
     private val communicationServerConnector: MainConnector by di()
     private val broadCastServer: BroadCastConnector by di()
+    private val streamingConnector: StreamingConnector by di()
     private val authService: AuthService by di()
 
     private var isConnected = SimpleBooleanProperty(false)
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val MAX_STREAMER_ATTEMPTIONS = 10
+    }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         launch(JavaFx) {
@@ -116,6 +114,7 @@ class MainView : View(), Initializable {
                 onConnection = ::sendBroadCastSubscription,
                 onError = { launch(JavaFx) { infoService.showSnackBar("An error occurred on broadcast channel") } }
         ))
+        broadCastServer.addConnectionListener(manageStreamerLifecycle())
 
         communicationServerConnector.addConnectionListener(ConnectionListener(
                 onConnection = {
@@ -134,6 +133,44 @@ class MainView : View(), Initializable {
                 }
         ))
         connect()
+    }
+
+    private fun manageStreamerLifecycle(): ConnectionListener {
+        return ConnectionListener(
+                onConnection = {
+                    launch {
+                        var attemption = 0
+                        while (attemption++ <MAX_STREAMER_ATTEMPTIONS) {
+                            val port = streamingConnector.connect()
+                            if (port != null) {
+                                val connected = suspendCoroutine<Boolean> { cont ->
+                                    communicationServerConnector.send(
+                                            StreamSubscribeRequest(port),
+                                            onResponse = { cont.resume(true) },
+                                            onError = { cont.resume(false) })
+
+                                }
+                                if (connected) {
+                                    logger.info { "subscribed on stream" }
+                                    return@launch
+                                } else {
+                                    streamingConnector.close()
+                                }
+                                delay(500)
+                            } else {
+                                logger.info { "could not assign port for streamer...$attemption" }
+                            }
+                        }
+                        launch(JavaFx) { infoService.showSnackBar("Could not subscribe on streaming") }
+                    }
+                },
+                onError = {
+                    streamingConnector.close()
+                },
+                onDisconnect = {
+                    streamingConnector.close()
+                }
+        )
     }
 
     private suspend fun onDisconnect() {

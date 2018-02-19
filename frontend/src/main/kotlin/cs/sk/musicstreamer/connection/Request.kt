@@ -17,4 +17,6 @@ class LeaveRoomRequest : Request("LEAVE")
 class UploadRequest(val trackName: String, val trackFileSize: Long) : Request("UPLOAD")
 class SubscribeRequest(val name: String) : Request("SUBSCRIBE")
 class UploadTokenRequest(val name: String, val token: String) : Request("UPLOAD_TOKEN")
+class StreamSubscribeRequest(val streamingPort: Int): Request("STREAM_SUBSCRIBE")
+class QueueTrackRequest(val trackName: String): Request("QUEUE_TRACK")
 

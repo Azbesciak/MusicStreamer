@@ -17,3 +17,11 @@ void TrackUpload::onUploadFailed() {
         room->cancelTrackReservation(track);
     });
 }
+
+string TrackUpload::getIdentify() {
+    return roomName + "/" + track->getTrackName();
+}
+
+string TrackUpload::getFileName() {
+    return track->getTrackName();
+}

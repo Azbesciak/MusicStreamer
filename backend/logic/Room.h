@@ -44,6 +44,7 @@ public:
 
     ClientResponse* prepareRoomsInfo(ClientResponse *resp);
     ClientResponse* prepareTracksResponse(ClientResponse *resp);
+    ClientResponse* prepareTrackQueueResponse(ClientResponse * resp);
 
 
     vector<string> getAvailableTracksList();
@@ -53,6 +54,7 @@ public:
     ClientResponse *addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
 
     void sendTrackListToClients(const vector<string> &tracks);
+    void sendQueueuedTracksToClients(const vector<string> &tracks);
 
     void sendResponseToAll(
             const function<ClientResponse(ClientResponse *)> &decorator,

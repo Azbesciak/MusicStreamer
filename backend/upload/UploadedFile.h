@@ -8,12 +8,15 @@ class UploadedFile {
 private:
 
     std::string fileName;
+    std::string filePath;
 
 public:
 
-    UploadedFile(const std::string& fileName);
+    UploadedFile(const std::string& fileName, const std::string & path);
 
-    const std::string& getFileName();
+    std::string getFileName();
+
+    std::string getFilePath();
 };
 
 

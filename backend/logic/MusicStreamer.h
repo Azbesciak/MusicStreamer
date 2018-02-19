@@ -65,6 +65,8 @@ public:
     ~MusicStreamer();
 
     vector<string> getAvailableTracksList();
+
+    void cleanTrackStream();
 };
 
 

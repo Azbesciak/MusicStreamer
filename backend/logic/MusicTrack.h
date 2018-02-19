@@ -20,7 +20,7 @@ private:
     bool headerProcessed;
     bool trackFinished;
 
-    void readTrackHeader();
+    bool readTrackHeader();
 
 public:
 
