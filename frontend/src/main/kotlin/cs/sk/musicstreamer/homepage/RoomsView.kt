@@ -6,6 +6,7 @@ import cs.sk.musicstreamer.connection.JsonResponse
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
+import cs.sk.musicstreamer.utils.getStrings
 import io.datafx.controller.flow.context.ViewFlowContext
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.layout.StackPane
@@ -101,7 +102,7 @@ class RoomsView(
                     launch(JavaFx) {
                         with(resp.body) {
                             if (has("rooms")) {
-                                val rooms = get("rooms").map { it.asText() }
+                                val rooms = getStrings("rooms")
                                 updateRooms(rooms)
                             }
                         }

@@ -1,5 +1,6 @@
 package cs.sk.musicstreamer.room
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXProgressBar
@@ -9,6 +10,7 @@ import cs.sk.musicstreamer.connection.connectors.ResponseListener
 import cs.sk.musicstreamer.connection.connectors.UploadSubscriber
 import cs.sk.musicstreamer.homepage.AppLabel
 import cs.sk.musicstreamer.homepage.InfoService
+import cs.sk.musicstreamer.utils.getStrings
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.scene.layout.StackPane
 import javafx.stage.FileChooser
@@ -33,7 +35,7 @@ class RoomView(
     private val tracks: JFXListView<String> by fxid()
     private val isRoomSet = SimpleBooleanProperty(false)
     private val isUploading = SimpleBooleanProperty(false)
-
+    private var currentRoomName: String? = null;
     companion object : KLogging()
 
     @PostConstruct
@@ -41,11 +43,7 @@ class RoomView(
         resetUpload()
         broadCastConnector.addMessagesListener(
                 ResponseListener(onResponse = {
-                    with(it.body) {
-                        if (has("clients") && has("room")) {
-                            updateState(get("room").asText(), get("clients").map { it.asText() })
-                        }
-                    }
+                        it.body.onBroadCastMessage()
                 }
                 )
         )
@@ -55,6 +53,16 @@ class RoomView(
         }
 
         initializeUploadButton()
+    }
+
+    private fun JsonNode.onBroadCastMessage() {
+        if (has("room")) {
+            val roomName = get("room").asText()
+            when { //TODO what with room... can be not synchronized, timestamp?
+                has("clients") -> updateState(roomName, getStrings("clients"))
+                has("tracks") -> updateTracks(getStrings("tracks"))
+            }
+        }
     }
 
     private fun initializeUploadButton() {
@@ -104,6 +112,11 @@ class RoomView(
         isUploading.value = false
     }
 
+    private fun updateTracks(tracks: List<String> = listOf()) {
+        this.tracks.items.setAll(tracks)
+    }
+
+
     private fun updateState(roomName: String? = null, clients: List<String> = listOf()) {
         launch(JavaFx) {
             if (roomName != null) {
@@ -113,12 +126,14 @@ class RoomView(
                 appLabel.clean()
                 isRoomSet.value = true
             }
+            currentRoomName = roomName
             this@RoomView.clients.items.setAll(clients)
         }
     }
 
     fun clean() {
         updateState()
+        updateTracks()
         musicUploadService.cancelUpload()
     }
 }
