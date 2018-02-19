@@ -77,7 +77,6 @@ class RoomsView(
 
     private fun joinToRoom(roomName: String, afterJoin: () -> Unit = {}) {
         logger.info { "joining to $roomName..." }
-        roomView.preassingRoomName(roomName)
         mainConnector.send(
                 request = JoinRequest(roomName),
                 onResponse = {
@@ -91,7 +90,6 @@ class RoomsView(
                 },
                 onError = {
                     launch(JavaFx) {
-                        roomView.preassingRoomName()
                         infoService.showSnackBar("Could not join to $roomName")
                         logger.info { "Could not join to $roomName" }
                     }

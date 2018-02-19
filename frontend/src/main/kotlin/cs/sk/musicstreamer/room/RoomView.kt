@@ -87,11 +87,10 @@ class RoomView(
     private fun JsonNode.onBroadCastMessage() {
         if (has("room")) {
             val roomName = get("room").asText()
-            if (roomName == currentRoomName)
-                when { //TODO what with room... can be not synchronized, timestamp?
-                    has("clients") -> updateState(roomName, getStrings("clients"))
-                    has("tracks") -> updateTracks(getStrings("tracks"))
-                }
+            when { //TODO what with room... can be not synchronized, timestamp?
+                has("clients") -> updateState(roomName, getStrings("clients"))
+                has("tracks") -> updateTracks(getStrings("tracks"))
+            }
         }
     }
 
@@ -150,11 +149,6 @@ class RoomView(
         launch(JavaFx) { this@RoomView.tracks.items.setAll(tracks) }
     }
 
-
-    fun preassingRoomName(roomName: String? = null) {
-        currentRoomName = roomName
-    }
-
     private fun updateState(roomName: String? = null, clients: List<String> = listOf()) {
         launch(JavaFx) {
             if (roomName != null) {
@@ -171,7 +165,6 @@ class RoomView(
     fun clean() {
         updateState()
         updateTracks()
-        preassingRoomName()
         musicUploadService.cancelUpload()
     }
 }

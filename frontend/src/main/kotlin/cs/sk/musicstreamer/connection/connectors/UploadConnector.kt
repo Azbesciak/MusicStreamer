@@ -29,11 +29,21 @@ class UploadConnector(
 
     private fun createUploadListener(uploadData: UploadData, subscriber: UploadSubscriber) =
             with(Informer()) {
+                val wrapper = UploadSubscriber(
+                        onSuccess = {
+                            connectionListeners.clear()
+                            subscriber.onSuccess()
+                        },
+                        onProgress = { subscriber.onProgress(it) },
+                        onError = {
+                            connectionListeners.clear()
+                            subscriber.onError(it)
+                        })
                 ConnectionListener(
-                        onConnection = { initializeUploading(uploadData, subscriber) },
+                        onConnection = { initializeUploading(uploadData, wrapper) },
                         onError = {
                             ifNotInformed {
-                                subscriber.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
+                                wrapper.onError(ErrorResponse(body = it.message ?: "Error while sending file"))
                             }
                         },
                         onDisconnect = connectionListeners::clear
