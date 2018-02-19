@@ -3,7 +3,7 @@
 #include "streamerClient/StreamerClient.h"
 #include "Room.h"
 
-Container * Container::instance = nullptr;
+Container *Container::instance = nullptr;
 
 void Container::joinClientToRoom(StreamerClient *client, const std::string &name) {
     synchronized(roomsMut) {
@@ -30,7 +30,7 @@ void Container::removeClientFromRooms(StreamerClient *client) {
 }
 
 void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
-    for (auto && room: rooms) {
+    for (auto &&room: rooms) {
         if (room.second != nullptr) {
             auto removed = room.second->removeClient(client);
             if (removed) {
@@ -200,6 +200,32 @@ Container *Container::getInstance() {
 
 Room *Container::getRoom(const string &roomName) {
     return rooms[roomName];
+}
+
+void Container::withRoom(const string &roomName, const function<void(Room *)> &consumer) {
+    if (roomName.empty()) return;
+    synchronized(instance->roomsMut) {
+        Room *&room = instance->rooms[roomName];
+        if (room != nullptr) {
+            consumer(room);
+        }
+    }
+}
+
+ClientResponse Container::withRoom(StreamerClient *client, const function<ClientResponse(Room *)> &consumer) {
+    synchronized(instance->roomsMut) {
+        if (client->hasRoomAssigned()) {
+            const string &roomName = client->getCurrentRoomName();
+            Room *&room = instance->rooms[roomName];
+            if (room != nullptr) {
+                return consumer(room);
+            } else {
+                return ClientResponse::error(403, "Room no longer exists");
+            }
+        } else {
+            return ClientResponse::error(403, "Client has no assigned room");
+        }
+    }
 }
 
 void StateChangeWatcher::spreadRoomsList() {

@@ -33,14 +33,33 @@ public:
     bool isEmpty();
     string getName();
 
+    ClientResponse createBasicResponse();
     MusicTrack* reserveTrackSlot(const std::string& trackName);
     void cancelTrackReservation(MusicTrack* musicTrack);
 
-    std::vector<MusicTrack*> getAvailableTracks();
     MusicTrack* findTrackByName(const std::string& trackName);
     TracksQueue* getTracksQueue();
 
     void sendListOfClientsToAll();
+
+    ClientResponse* prepareRoomsInfo(ClientResponse *resp);
+    ClientResponse* prepareTracksResponse(ClientResponse *resp);
+
+
+    vector<string> getAvailableTracksList();
+
+    void sendResponseToAll(const function<ClientResponse(ClientResponse*)> &decorator);
+
+    ClientResponse *addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
+
+    void sendTrackListToClients(const vector<string> &tracks);
+
+    void sendResponseToAll(
+            const function<ClientResponse(ClientResponse *)> &decorator,
+            unordered_set<StreamerClient *> clients
+    );
+
+    void onTrackListChanged();
 };
 
 

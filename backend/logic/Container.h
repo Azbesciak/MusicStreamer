@@ -68,6 +68,10 @@ public:
 
     static Container *initialize();
     static void destroy();
+
+    static void withRoom(const string &roomName, const function<void(Room *)> &consumer);
+
+    static ClientResponse withRoom(StreamerClient * client, const function<ClientResponse(Room *)> &consumer);
 };
 
 

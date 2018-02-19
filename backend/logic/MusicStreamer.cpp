@@ -6,6 +6,7 @@
 #include "TracksQueue.h"
 #include "TrackStream.h"
 #include <random>
+#include <utility>
 
 using namespace std;
 
@@ -13,14 +14,17 @@ int MusicStreamer::minPort = 0;
 int MusicStreamer::maxPort = 65535;
 string MusicStreamer::host("0.0.0.0");
 
-MusicStreamer::MusicStreamer(unordered_set<StreamerClient *> *clients, recursive_mutex *clientsMut)
+MusicStreamer::MusicStreamer(unordered_set<StreamerClient *> *clients,
+                             recursive_mutex *clientsMut,
+                             function<void(vector<string>)> trackChangeListener)
         : clients(clients),
           clientsMut(clientsMut),
           trackStream(nullptr),
           tracksQueue(new TracksQueue()),
-          socket(new Socket(createSocket())) {
+          socket(new Socket(createSocket())),
+          trackChangeListener(move(trackChangeListener)) {
     cout << "Initialized streamer at "
-         << YELLOW_TEXT( host << ":" << port) << endl;
+         << YELLOW_TEXT(host << ":" << port) << endl;
     tracksQueue->addOnNextTrackListener(this);
     if (tracksQueue->currentTrack() != nullptr)
         playCurrentTrack();
@@ -60,6 +64,7 @@ void MusicStreamer::onNextTrack() {
         }
 
         playCurrentTrack();
+        trackChangeListener(getAvailableTracksList());
     }
 }
 
@@ -161,4 +166,16 @@ TracksQueue *MusicStreamer::getTracksQueue() {
 
 Socket *MusicStreamer::getStreamingSocket() {
     return socket;
+}
+
+vector<string> MusicStreamer::getAvailableTracksList() {
+    vector<string> trackNames;
+    synchronized(trackMut) {
+        auto tracks = getAvailableTracks();
+
+        transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
+                  [](MusicTrack *track) -> string { return track->getTrackName(); });
+    }
+    sort(trackNames.begin(), trackNames.end());
+    return trackNames;
 }

@@ -137,55 +137,31 @@ ClientResponse ClientProxy::handleQueueTrack(const std::string &trackName) {
 
 
 ClientResponse ClientProxy::handleNextTrack() {
-    synchronized(*container->getRoomsMutex()) {
-        if (client->hasRoomAssigned()) {
-            auto clientRoom = client->getCurrentRoomName();
-            auto room = container->getRoom(clientRoom);
-            room->getTracksQueue()->nextTrack();
-
-            return ClientResponse::ok();
-        } else {
-            return ClientResponse::error(403, "Client has no assigned room");
-        }
-    }
+    return Container::withRoom(client, [&](Room *room) {
+        room->getTracksQueue()->nextTrack();
+        return ClientResponse::ok();
+    });
 }
 
 
 ClientResponse ClientProxy::handleTracksRequest() {
-    vector<MusicTrack *> tracks;
-    synchronized(*container->getRoomsMutex()) {
-        if (client->hasRoomAssigned()) {
-            auto room = container->getRoom(client->getCurrentRoomName());
-            tracks = room->getAvailableTracks();
-        } else {
-            return ClientResponse::error(403, "Client has no assigned room");
-        }
-    }
-    vector<string> trackNames;
-
-    transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
-              [](MusicTrack *track) -> string { return track->getTrackName(); });
-    sort(trackNames.begin(), trackNames.end());
-
-    ClientResponse response;
-
-    response.addToBody("tracks", trackNames);
-    response.setStatus(200);
-    return response;
+    return Container::withRoom(client, [&](Room *room) {
+        ClientResponse response = room->createBasicResponse();
+        return *room->prepareTracksResponse(&response);
+    });
 }
 
 
 ClientResponse ClientProxy::handleQueueRequest() {
     vector<string> trackNames;
-    synchronized(*container->getRoomsMutex()) {
-        if (client->hasRoomAssigned()) {
-            auto room = container->getRoom(client->getCurrentRoomName());
+    if (client->hasRoomAssigned()) {
+        Container::withRoom(client->getCurrentRoomName(), [&](Room *room) {
             auto tracks = room->getTracksQueue()->getQueuedTracks();
             transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
                       [](MusicTrack *track) -> string { return track->getTrackName(); });
-        } else {
-            return ClientResponse::error(403, "Client has no assigned room");
-        }
+        });
+    } else {
+        return ClientResponse::error(403, "Client has no assigned room");
     }
     ClientResponse response;
 
@@ -197,13 +173,11 @@ ClientResponse ClientProxy::handleQueueRequest() {
 
 
 MusicTrack *ClientProxy::reserveRoomTrackSlot(const string &trackName) {
-    synchronized(*container->getRoomsMutex()) {
-        if (client->hasRoomAssigned()) {
-            auto room = container->getRoom(client->getCurrentRoomName());
-            return room->reserveTrackSlot(trackName);
-        }
-        return nullptr;
-    }
+    MusicTrack *track = nullptr;
+    Container::withRoom(client->getCurrentRoomName(), [&](Room *room) {
+        track = room->reserveTrackSlot(trackName);
+    });
+    return track;
 }
 
 

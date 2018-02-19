@@ -33,6 +33,7 @@ private:
     std::vector<MusicTrack*> availableTracks;
 
     std::unordered_set<StreamerClient*> * clients;
+    function<void(vector<string>)> trackChangeListener;
 
     std::recursive_mutex trackMut;
     std::recursive_mutex * clientsMut;
@@ -44,7 +45,7 @@ protected:
 
 public:
 
-    MusicStreamer(unordered_set<StreamerClient *> *clients, recursive_mutex *clientsMut);
+    MusicStreamer(unordered_set<StreamerClient *> *clients, recursive_mutex *clientsMut, function<void(vector<string>)> trackChangeListener);
 
     static void setPortsRange(int minPort, int maxPort);
     static void setHost(const string &host);
@@ -62,6 +63,8 @@ public:
     TracksQueue* getTracksQueue();
 
     ~MusicStreamer();
+
+    vector<string> getAvailableTracksList();
 };
 
 

@@ -4,16 +4,16 @@
 void TrackUpload::onUploadCompleted(UploadedFile* uploadedFile) {
     FileUpload::onUploadCompleted(uploadedFile);
     track->setTrackFile(uploadedFile);
+    Container::withRoom(roomName, [&] (Room * room) {
+        room->onTrackListChanged();
+    });
+
 }
 
 
 void TrackUpload::onUploadFailed() {
     FileUpload::onUploadFailed();
-    auto cont = Container::getInstance();
-    synchronized(*cont ->getRoomsMutex()) {
-        auto room = cont ->getRoom(roomName);
-        if (room != nullptr) {
-            room->cancelTrackReservation(track);
-        }
-    }
+    Container::withRoom(roomName, [&] (Room * room) {
+        room->cancelTrackReservation(track);
+    });
 }
