@@ -33,15 +33,17 @@ void Container::removeClientFromRooms(StreamerClient *client) {
 }
 
 void Container::removeClientFromRoomsUnsync(StreamerClient *client) {
-    for (auto &&room: rooms) {
-        auto removed = room.second->removeClient(client);
-        if (removed) {
-            if (room.second->isEmpty()) {
-                deleteRoom(room.first);
-            } else {
-                sendListOfClientsToAllInRoom(room.second);
+    for (auto && room: rooms) {
+        if (room.second != nullptr) {
+            auto removed = room.second->removeClient(client);
+            if (removed) {
+                if (room.second->isEmpty()) {
+                    deleteRoom(room.first);
+                } else {
+                    sendListOfClientsToAllInRoom(room.second);
+                }
+                break;
             }
-            break;
         }
     }
     client->leaveRoom();
@@ -69,7 +71,7 @@ void Container::sendResponseToClients(unordered_set<StreamerClient *> &clients, 
 }
 
 void Container::createRoomIfNotExists(const std::string &name) {
-    if (rooms.count(name) == 0) {
+    if (rooms[name] == nullptr) {
         rooms[name] = new Room(name);
         watcher->markGlobalChange();
     }
@@ -83,10 +85,10 @@ void Container::deleteRoom(const std::string &name) {
 
         // Probably unnecessary, but added for the sake of safety
         for (StreamerClient *client : room->getClients())
-            client->setCurrentRoomName("");
+            client->leaveRoom();
 
         delete (room);
-        rooms.erase(name);
+        rooms.erase(iterator);
         watcher->markGlobalChange();
     }
 }
