@@ -84,6 +84,8 @@ public:
     vector<string> getTracksQueue();
 
     void requestNextTrack();
+
+    void reorderTrack(int from, int to);
 };
 
 

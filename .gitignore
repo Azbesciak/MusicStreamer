@@ -2,6 +2,12 @@
 backend/.idea/
 backend/cmake-build-debug/
 
+# Server uploaded files
+backend/uploadDir/
+
+# Client temp upload files
+frontend/temp/
+
 # Prerequisites
 *.d
 

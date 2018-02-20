@@ -30,6 +30,7 @@ public:
     ClientResponse handleNextTrack();
     ClientResponse handleTracksRequest();
     ClientResponse handleQueueRequest();
+    ClientResponse handleReorderTrack(int fromIndex, int toIndex);
 
     ClientResponse onNewRequest(Request *request) override;
 };

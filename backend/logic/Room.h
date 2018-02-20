@@ -64,6 +64,8 @@ public:
     void sendInitialMessage(StreamerClient *client);
 
     void switchTrack();
+
+    void reorderTrack(int fromIndex, int toIndex);
 };
 
 

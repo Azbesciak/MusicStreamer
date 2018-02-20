@@ -151,6 +151,10 @@ void Room::switchTrack() {
     streamer->requestNextTrack();
 }
 
+void Room::reorderTrack(int fromIndex, int toIndex) {
+    streamer->reorderTrack(fromIndex, toIndex);
+}
+
 void Room::onTrackListChanged() {
     synchronized(clientsMut) {
         const vector<string> &tracks = streamer->getAvailableTracksList();

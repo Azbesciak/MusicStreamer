@@ -15,6 +15,7 @@ static const string QUEUE_TRACK_ACTION = "QUEUE_TRACK";
 static const string NEXT_TRACK_ACTION = "NEXT_TRACK";
 static const string GET_TRACKS_ACTION = "TRACKS";
 static const string GET_QUEUE_ACTION = "TRACKS_QUEUE";
+static const string REORDER_TRACK_ACTION = "REORDER_TRACK";
 
 
 ClientResponse ClientProxy::onNewRequest(Request *request, const string &method, ClientResponse *&response) {
@@ -68,6 +69,13 @@ ClientResponse ClientProxy::onNewRequest(Request *request, const string &method,
     } else if (method == GET_QUEUE_ACTION) {
 
         return handleQueueRequest();
+
+    } else if (method == REORDER_TRACK_ACTION) {
+
+        int fromIndex = request->getInt("fromIndex");
+        int toIndex = request->getInt("toIndex");
+
+        return handleReorderTrack(fromIndex, toIndex);
 
     } else {
 
@@ -148,6 +156,18 @@ ClientResponse ClientProxy::handleQueueRequest() {
         ClientResponse response = room->createBasicResponse();
         room->prepareTrackQueueResponse(&response);
         return response;
+    });
+}
+
+
+ClientResponse ClientProxy::handleReorderTrack(int fromIndex, int toIndex) {
+
+    return Container::withRoom(client, [&](Room* room) {
+
+        if (toIndex == 1 || fromIndex == 1)
+            return ClientResponse::error(400, "The played track cannot be moved. Try skipping it...");
+
+        room->reorderTrack(fromIndex, toIndex);
     });
 }
 

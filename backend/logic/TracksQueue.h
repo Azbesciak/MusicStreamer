@@ -23,6 +23,8 @@ public:
     MusicTrack* currentTrack();
     MusicTrack* nextTrack();
 
+    void reorderTrack(int from, int to);
+
     void appendTrack(MusicTrack* track);
     const std::deque<MusicTrack*>& getQueuedTracks();
 };

@@ -45,6 +45,25 @@ void TracksQueue::appendTrack(MusicTrack* track) {
     }
 }
 
+void TracksQueue::reorderTrack(int from, int to) {
+
+    synchronized(mut) {
+
+        from--;
+        to--;
+
+        if (max(from, to) >= tracks.size() || from != to)
+            return;
+
+        int direction = (from < to) ? 1 : -1;
+
+        for (int i = from; i != to; i += direction)
+            swap(tracks[i], tracks[i + direction]);
+
+        trackListener->onQueueChange(tracks);
+    }
+}
+
 const deque<MusicTrack*>& TracksQueue::getQueuedTracks() {
     return tracks;
 }

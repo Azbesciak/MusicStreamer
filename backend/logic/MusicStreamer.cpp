@@ -122,7 +122,7 @@ int MusicStreamer::createSocket() {
     int socketFd;
     std::random_device rd;
     std::mt19937 mt(rd());
-    std::uniform_int_distribution dist(MusicStreamer::minPort, MusicStreamer::maxPort);
+    std::uniform_int_distribution<> dist(MusicStreamer::minPort, MusicStreamer::maxPort);
     do {
         port = dist(mt);
         socketFd = SocketFactory::createUdpSocket(host, port);
@@ -224,4 +224,6 @@ void MusicStreamer::requestNextTrack() {
     tracksQueue->nextTrack();
 }
 
-
+void MusicStreamer::reorderTrack(int from, int to) {
+    tracksQueue->reorderTrack(from, to);
+}
