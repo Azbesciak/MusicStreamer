@@ -27,25 +27,32 @@ private:
     static int minPort, maxPort;
     static string host;
     int port;
-    Socket * socket;
+    Socket * streamingSocket;
     TracksQueue* tracksQueue;
     TrackStream* trackStream;
     std::vector<MusicTrack*> availableTracks;
 
     std::unordered_set<StreamerClient*> clients;
-    function<void(vector<string>&)> trackChangeListener;
+    function<void(vector<string>&)> trackListChangeListener;
+    function<void(vector<string>&)> queueChangeListener;
 
     std::recursive_mutex trackMut;
     std::recursive_mutex clientsMut;
 
-    void playCurrentTrack();
 
+    void cleanTrackStream();
+    void playCurrentTrack();
+    MusicTrack* findTrackByName(const std::string& trackName);
+    MusicTrack *withTrack(const string &trackName, function<void(MusicTrack *)> consumer = [](MusicTrack*){});
 protected:
     int createSocket();
 
 public:
 
-    MusicStreamer(function<void(vector<string>&)> trackChangeListener);
+    MusicStreamer(
+            function<void(vector<string>&)> trackListChangeListener,
+            function<void(vector<string>&)> queueChangeListener
+    );
 
     static void setPortsRange(int minPort, int maxPort);
     static void setHost(const string &host);
@@ -59,18 +66,24 @@ public:
     void cancelTrackReservation(MusicTrack* musicTrack);
 
     std::vector<MusicTrack*> getAvailableTracks();
-    MusicTrack* findTrackByName(const std::string& trackName);
-    TracksQueue* getTracksQueue();
 
     ~MusicStreamer();
 
     vector<string> getAvailableTracksList();
 
-    void cleanTrackStream();
-
     void joinClient(StreamerClient *streamerClient);
 
     void leaveClient(StreamerClient *streamerClient);
+
+    void onQueueChange(deque<MusicTrack *> trackQueue) override;
+
+    vector<string> mapTracksQueue(deque<MusicTrack *> &trackQueue);
+
+    bool queueTrack(const string &trackName);
+
+    vector<string> getTracksQueue();
+
+    void requestNextTrack();
 };
 
 

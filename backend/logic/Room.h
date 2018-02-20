@@ -37,9 +37,6 @@ public:
     MusicTrack* reserveTrackSlot(const std::string& trackName);
     void cancelTrackReservation(MusicTrack* musicTrack);
 
-    MusicTrack* findTrackByName(const std::string& trackName);
-    TracksQueue* getTracksQueue();
-
     void sendListOfClientsToAll();
 
     void prepareRoomsInfo(ClientResponse *resp);
@@ -52,13 +49,21 @@ public:
     void sendResponseToAll(ClientResponse * response);
 
     void addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
+    void addTracksQueueToResponse(ClientResponse *resp, const vector<string> &queue) const;
 
     void sendTrackListToClients(const vector<string> &tracks);
-//    void sendQueueuedTracksToClients(const vector<string> &tracks);
 
     void sendResponseToAll(ClientResponse * response, unordered_set<StreamerClient *> &clients);
 
     void onTrackListChanged();
+
+    void sendQueueToAllClients(const vector<string> &queue);
+
+    bool queueTrack(const string &trackName);
+
+    void sendInitialMessage(StreamerClient *client);
+
+    void switchTrack();
 };
 
 

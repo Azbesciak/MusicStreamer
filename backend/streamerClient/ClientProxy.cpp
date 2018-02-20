@@ -116,29 +116,19 @@ ClientResponse ClientProxy::handleTrackUpload(const string &trackName, int fileS
 
 
 ClientResponse ClientProxy::handleQueueTrack(const std::string &trackName) {
-    auto clientRoom = client->getCurrentRoomName();
-    TracksQueue *tracksQueue = nullptr;
-    MusicTrack *track = nullptr;
-
-    synchronized(*container->getRoomsMutex()) {
-        auto room = container->getRoom(clientRoom);
-        if (room == nullptr)
-            return ClientResponse::error(403, "Client has no assigned room");
-
-        tracksQueue = room->getTracksQueue();
-        track = room->findTrackByName(trackName);
-        if (track == nullptr)
+    return Container::withRoom(client, [&](Room * room) {
+        auto wasAdded = room->queueTrack(trackName);
+        if (!wasAdded) {
             return ClientResponse::error(404, "Track not found");
-    }
-    tracksQueue->appendTrack(track);
-
-    return ClientResponse::ok();
+        }
+        return ClientResponse::ok();
+    });
 }
 
 
 ClientResponse ClientProxy::handleNextTrack() {
     return Container::withRoom(client, [&](Room *room) {
-        room->getTracksQueue()->nextTrack();
+        room->switchTrack();
         return ClientResponse::ok();
     });
 }

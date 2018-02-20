@@ -106,5 +106,6 @@ void TrackStream::detachClient(StreamerClient *client) {
 }
 
 TrackStream::~TrackStream() {
-    stop();
+    delete streamerThread;
+    streamerThread = nullptr;
 }

@@ -12,8 +12,12 @@ Room::Room(const string & name) :
         name(name),
         streamer(new MusicStreamer([&](vector<string> &tracks) {
             synchronized(clientsMut) {
-                cout << "SENDING TRACKS" << endl;
+                // not invoked by now.
                 sendTrackListToClients(tracks);
+            }
+        }, [&](vector<string> &queue) {
+            synchronized(clientsMut) {
+                sendQueueToAllClients(queue);
             }
         })) {
 }
@@ -48,30 +52,31 @@ void Room::addClient(StreamerClient *client) {
         clients.insert(client);
         sendListOfClientsToAll();
         streamer->joinClient(client);
-        unordered_set<StreamerClient*> client_set;
-        client_set.insert(client);
-        ClientResponse response = createBasicResponse();
-        prepareTracksResponse(&response);
-        sendResponseToAll(&response, client_set);
+        sendInitialMessage(client);
         client->setStreamingSocket(streamer->getStreamingSocket());
     }
 }
 
+void Room::sendInitialMessage(StreamerClient *client) {
+    unordered_set<StreamerClient*> clientSet;
+    clientSet.insert(client);
+    ClientResponse response = createBasicResponse();
+    prepareTracksResponse(&response);
+    prepareTrackQueueResponse(&response);
+    sendResponseToAll(&response, clientSet);
+}
 
 bool Room::isEmpty() {
     return clients.empty();
 }
 
-
 string Room::getName() {
     return name;
 }
 
-
 MusicTrack *Room::reserveTrackSlot(const string &trackName) {
     return streamer->reserveTrackSlot(trackName);
 }
-
 
 void Room::cancelTrackReservation(MusicTrack *musicTrack) {
     streamer->cancelTrackReservation(musicTrack);
@@ -81,12 +86,18 @@ void Room::sendListOfClientsToAll() {
     ClientResponse response = createBasicResponse();
     prepareRoomsInfo(&response);
     sendResponseToAll(&response);
-    cout<< "resp to client: " << response.serialize() <<endl;
 }
 
 void Room::sendTrackListToClients(const vector<string> &tracks) {
     ClientResponse response = createBasicResponse();
     addTracksToResponse(&response, tracks);
+    sendResponseToAll(&response);
+}
+
+
+void Room::sendQueueToAllClients(const vector<string> &queue) {
+    ClientResponse response = createBasicResponse();
+    addTracksQueueToResponse(&response, queue);
     sendResponseToAll(&response);
 }
 
@@ -132,14 +143,12 @@ vector<string> Room::getAvailableTracksList() {
     return streamer->getAvailableTracksList();
 }
 
-
-MusicTrack *Room::findTrackByName(const string &trackName) {
-    return streamer->findTrackByName(trackName);
+bool Room::queueTrack(const string & trackName) {
+   return streamer->queueTrack(trackName);
 }
 
-
-TracksQueue *Room::getTracksQueue() {
-    return streamer->getTracksQueue();
+void Room::switchTrack() {
+    streamer->requestNextTrack();
 }
 
 void Room::onTrackListChanged() {
@@ -150,9 +159,10 @@ void Room::onTrackListChanged() {
 }
 
 void Room::prepareTrackQueueResponse(ClientResponse *resp) {
-    vector<string> trackNames;
-    auto tracks = getTracksQueue()->getQueuedTracks();
-    transform(tracks.begin(), tracks.end(), back_inserter(trackNames),
-              [](MusicTrack *track) -> string { return track->getTrackName(); });
-    resp->addToBody("tracksQueue", trackNames);
+    auto tracks = streamer->getTracksQueue();
+    addTracksQueueToResponse(resp, tracks);
+}
+
+void Room::addTracksQueueToResponse(ClientResponse *resp, const vector<string> &queue) const {
+    resp->addToBody("tracksQueue", queue);
 }

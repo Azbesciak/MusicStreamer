@@ -12,21 +12,19 @@ private:
     std::deque<MusicTrack*> tracks;
     std::recursive_mutex mut;
 
-    OnNextTrackListener* onNextTrackListener;
+    OnNextTrackListener* trackListener;
 
     static const int MAX_SIZE = 65535;
 
 public:
 
-    TracksQueue();
+    explicit TracksQueue(OnNextTrackListener* tracksListener);
 
     MusicTrack* currentTrack();
     MusicTrack* nextTrack();
 
     void appendTrack(MusicTrack* track);
     const std::deque<MusicTrack*>& getQueuedTracks();
-
-    void addOnNextTrackListener(OnNextTrackListener *listener);
 };
 
 

@@ -14,14 +14,15 @@ int MusicStreamer::minPort = 0;
 int MusicStreamer::maxPort = 65535;
 string MusicStreamer::host("0.0.0.0");
 
-MusicStreamer::MusicStreamer(function<void(vector<string>&)> trackChangeListener)
+MusicStreamer::MusicStreamer(function<void(vector<string> &)> trackListChangeListener,
+                             function<void(vector<string> &)> queueChangeListener)
         : trackStream(nullptr),
-          tracksQueue(new TracksQueue()),
-          socket(new Socket(createSocket())),
-          trackChangeListener(move(trackChangeListener)) {
+          tracksQueue(new TracksQueue(this)),
+          streamingSocket(new Socket(createSocket())),
+          trackListChangeListener(move(trackListChangeListener)),
+          queueChangeListener(move(queueChangeListener)) {
     cout << "Initialized streamer at "
          << YELLOW_TEXT(host << ":" << port) << endl;
-    tracksQueue->addOnNextTrackListener(this);
 }
 
 
@@ -29,6 +30,8 @@ void MusicStreamer::playCurrentTrack() {
     synchronized(trackMut) {
         if (trackStream == nullptr) {
             MusicTrack *track = tracksQueue->currentTrack();
+            if (track == nullptr)
+                return;
             synchronized(clientsMut) {
                 trackStream = new TrackStream(track, clients, this);
             }
@@ -39,7 +42,6 @@ void MusicStreamer::playCurrentTrack() {
 
 
 void MusicStreamer::onTrackFinished() {
-
     synchronized(trackMut) {
         cleanTrackStream();
         tracksQueue->nextTrack();
@@ -48,15 +50,12 @@ void MusicStreamer::onTrackFinished() {
 
 
 void MusicStreamer::onNextTrack() {
-
     synchronized(trackMut) {
+        trackStream->stop();
         cleanTrackStream();
         playCurrentTrack();
     }
-    vector<string> tracks = getAvailableTracksList();
-    trackChangeListener(tracks);
 }
-
 
 void MusicStreamer::joinClient(StreamerClient *streamerClient) {
     synchronized(clientsMut) {
@@ -64,6 +63,24 @@ void MusicStreamer::joinClient(StreamerClient *streamerClient) {
         if (trackStream != nullptr)
             trackStream->attachClient(streamerClient);
     }
+}
+
+void MusicStreamer::onQueueChange(deque<MusicTrack *> trackQueue) {
+    playCurrentTrack();
+    vector<string> queue = mapTracksQueue(trackQueue);
+    queueChangeListener(queue);
+}
+
+vector<string> MusicStreamer::getTracksQueue() {
+    deque<MusicTrack *> deque = tracksQueue->getQueuedTracks();
+    return mapTracksQueue(deque);
+}
+
+vector<string> MusicStreamer::mapTracksQueue(deque<MusicTrack *> &trackQueue) {
+    vector<string> trackNames;
+    transform(trackQueue.begin(), trackQueue.end(), back_inserter(trackNames),
+              [](MusicTrack *track) -> string { return track->getTrackName(); });
+    return trackNames;
 }
 
 
@@ -84,8 +101,11 @@ void MusicStreamer::cleanTrackStream() {
 
 
 MusicStreamer::~MusicStreamer() {
-    delete socket;
-    delete trackStream;
+    if (trackStream != nullptr) {
+        trackStream->stop();
+        delete trackStream;
+    }
+    delete streamingSocket;
     delete tracksQueue;
     for (auto &&t : availableTracks) {
         delete t;
@@ -160,25 +180,32 @@ std::vector<MusicTrack *> MusicStreamer::getAvailableTracks() {
 }
 
 MusicTrack *MusicStreamer::findTrackByName(const std::string &trackName) {
+    return withTrack(trackName);
+}
+
+MusicTrack *MusicStreamer::withTrack(const string &trackName, function<void(MusicTrack*)> consumer) {
     synchronized(trackMut) {
 
         for (MusicTrack *track : availableTracks) {
 
             if (track->getTrackName() == trackName) {
-
+                consumer(track);
                 return track;
             }
         }
     }
-    return nullptr;;
+    return nullptr;
 }
 
-TracksQueue *MusicStreamer::getTracksQueue() {
-    return tracksQueue;
+bool MusicStreamer::queueTrack(const string & trackName) {
+    MusicTrack *foundTrack = withTrack(trackName, [&](MusicTrack* track) {
+            tracksQueue->appendTrack(track);
+        });
+    return foundTrack != nullptr;
 }
 
 Socket *MusicStreamer::getStreamingSocket() {
-    return socket;
+    return streamingSocket;
 }
 
 vector<string> MusicStreamer::getAvailableTracksList() {
@@ -192,3 +219,9 @@ vector<string> MusicStreamer::getAvailableTracksList() {
     sort(trackNames.begin(), trackNames.end());
     return trackNames;
 }
+
+void MusicStreamer::requestNextTrack() {
+    tracksQueue->nextTrack();
+}
+
+
