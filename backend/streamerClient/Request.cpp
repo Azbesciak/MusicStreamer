@@ -4,8 +4,6 @@
 
 static const char *const METHOD_KEY = "method";
 
-Request::Request(char *message): Request(std::string(message)) {}
-
 Request::Request(const std::string &message, bool correct) {
     original = message;
     if (correct) {

@@ -63,8 +63,10 @@ void MusicTrack::closeTrack() {
 
     synchronized(trackMut) {
 
-        if (isOpened())
+        if (isOpened()) {
             close(openedTrackFile);
+            openedTrackFile = -1;
+        }
 
         headerProcessed = false;
         trackFinished = false;
@@ -77,7 +79,7 @@ bool MusicTrack::readTrackHeader() {
     if (!headerProcessed) {
         synchronized(trackMut) {
 
-            auto headerBuffer = new char[WAV_HEADER_SIZE];
+            auto * headerBuffer = new char[WAV_HEADER_SIZE];
             ssize_t bytes = read(openedTrackFile, headerBuffer, WAV_HEADER_SIZE);
 
             if (bytes != WAV_HEADER_SIZE) {

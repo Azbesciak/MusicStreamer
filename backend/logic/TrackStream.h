@@ -22,8 +22,9 @@ private:
 
     std::recursive_mutex streamMut;
     std::recursive_mutex  clientsMut;
-    std::thread* streamerThread;
+    std::thread * streamerThread;
     std::atomic<bool> isRunning;
+    std::atomic<bool> hasFinished;
 
 public:
 
@@ -37,6 +38,8 @@ public:
     void detachClient(StreamerClient *client);
 
     void attachClient(StreamerClient *client);
+
+    void waitUntilWorkEnd();
 };
 
 

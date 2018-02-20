@@ -52,9 +52,9 @@ void MusicStreamer::onNextTrack() {
     synchronized(trackMut) {
         cleanTrackStream();
         playCurrentTrack();
-        vector<string> tracks = getAvailableTracksList();
-        trackChangeListener(tracks);
     }
+    vector<string> tracks = getAvailableTracksList();
+    trackChangeListener(tracks);
 }
 
 
@@ -87,13 +87,9 @@ MusicStreamer::~MusicStreamer() {
     delete socket;
     delete trackStream;
     delete tracksQueue;
-//    thread th([=]() {
-//        sleep(2);
-        for (auto &&t : availableTracks) {
-            delete t;
-        }
-//    });
-//    th.detach();
+    for (auto &&t : availableTracks) {
+        delete t;
+    }
 
 }
 

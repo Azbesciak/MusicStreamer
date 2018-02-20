@@ -14,64 +14,79 @@ TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *>
           clients(move(clients)),
           streamer(streamer),
           streamerThread(nullptr),
-          isRunning(true) {
+          isRunning(true),
+          hasFinished(true) {
 }
 
 
 void TrackStream::start() {
-    delete streamerThread;
-    streamerThread = new thread([=]() {
-        track->openTrack();
+    synchronized(streamMut) {
+        waitUntilWorkEnd();
+        isRunning = true;
+        hasFinished = false;
+        streamerThread = new thread([&]() {
+            track->openTrack();
 
-        int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
-        char *mes = track->getTrackHeader();
-        ClientResponse resp;
-        resp.addToBody("frameHeader", mes);
-        resp.setStatus(200);
-        const string frameMes = resp.serialize();
-        while (isRunning.load() && !track->isFinished()) {
-            synchronized(clientsMut) {
-                synchronized(streamMut) {
-                    char *soundChunk = track->nextSoundChunk();
-                    for (auto client : clients) {
-                        if (!frameSent[client]) {
-                            client->sendOnBroadCast(frameMes);
-                            frameSent[client] = true;
-                        } else {
-                            client->sendSound(soundChunk);
+            int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
+            char *mes = track->getTrackHeader();
+            ClientResponse resp;
+            resp.addToBody("frameHeader", mes);
+            resp.setStatus(200);
+            const string frameMes = resp.serialize();
+            while (isRunning.load() && !track->isFinished()) {
+                synchronized(clientsMut) {
+                    synchronized(streamMut) {
+                        char *soundChunk = track->nextSoundChunk();
+                        for (auto client : clients) {
+                            if (!frameSent[client]) {
+                                client->sendOnBroadCast(frameMes);
+                                frameSent[client] = true;
+                            } else {
+                                client->sendSound(soundChunk);
+                            }
                         }
+                        delete[] soundChunk;
                     }
-                    delete[] soundChunk;
                 }
+                usleep(timeGapMicroseconds);
             }
-            usleep(timeGapMicroseconds);
-        }
-        if (!isRunning.load()) {
-            return;
-        }
+            if (isRunning.load()) {
+                usleep(250000);
+            }
 
-        usleep(250000);
-        if (!isRunning.load()) {
-            return;
-        }
-
-        synchronized(streamMut) {
-            track->closeTrack();
-            streamer->onTrackFinished();
-        }
-    });
-    streamerThread->detach();
+            synchronized(streamMut) {
+                if (track != nullptr) {
+                    track->closeTrack();
+                }
+                if (isRunning.load())
+                    streamer->onTrackFinished();
+            }
+            hasFinished = true;
+        });
+        streamerThread->detach();
+    }
 }
 
 
 void TrackStream::stop() {
     isRunning = false;
-    synchronized(clientsMut) {
-        synchronized(streamMut) {
-            if (track->isOpened())
-                track->closeTrack();
-            delete streamerThread;
+    if (streamerThread != nullptr) {
+        waitUntilWorkEnd();
+        synchronized(clientsMut) {
+            synchronized(streamMut) {
+                if (track->isOpened())
+                    track->closeTrack();
+                delete streamerThread;
+                streamerThread = nullptr;
+            }
         }
+    }
+}
+
+void TrackStream::waitUntilWorkEnd() {
+    while (!hasFinished.load()) {
+        usleep(1000);
+        //thread join no.
     }
 }
 
