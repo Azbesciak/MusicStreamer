@@ -115,7 +115,7 @@ class MainView : View(), Initializable {
                 onError = { launch(JavaFx) { infoService.showSnackBar("An error occurred on broadcast channel") } }
         ))
         broadCastServer.addConnectionListener(manageStreamerLifecycle())
-
+        broadCastServer.addMessagesListener(streamingConnector.getFrameListener())
         communicationServerConnector.addConnectionListener(ConnectionListener(
                 onConnection = {
                     launch(JavaFx) {

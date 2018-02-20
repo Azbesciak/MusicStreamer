@@ -43,6 +43,8 @@ class RoomView(
     private val isRoomSet = SimpleBooleanProperty(false)
     private val isUploading = SimpleBooleanProperty(false)
     private var currentRoomName: String? = null
+    private val nextButton: JFXButton by fxid()
+    private val playButton: JFXButton by fxid()
 
     companion object : KLogging()
 

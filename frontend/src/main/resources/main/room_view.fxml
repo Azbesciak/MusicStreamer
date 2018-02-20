@@ -12,15 +12,15 @@
 <?import javafx.scene.layout.VBox?>
 <StackPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
            xmlns:fx="http://javafx.com/fxml/1">
-    <HBox  style="-fx-padding: 10">
+    <HBox style="-fx-padding: 10" spacing="10">
         <BorderPane HBox.hgrow="ALWAYS" maxWidth="Infinity">
             <center>
             <HBox spacing="10">
                 <StackPane>
                     <JFXListView fx:id="clients" prefWidth="200.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
-                <StackPane>
-                    <JFXListView fx:id="tracks" prefWidth="300.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
+                <StackPane HBox.hgrow="ALWAYS">
+                    <JFXListView fx:id="tracks" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
             </HBox>
             </center>
@@ -36,10 +36,8 @@
                             <JFXListView fx:id="tracksQueue" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                         </StackPane>
                         <StackPane style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87)" prefHeight="40">
-                            <JFXButton style="-fx-background-radius: 40;-fx-background-color: #4470fe;
-                             margin: 0 12 0 0;-fx-alignment: bottom-right; -fx-translate-y: -10"
-                                       buttonType="RAISED" prefHeight="40" prefWidth="40">
-                            </JFXButton>
+                            <JFXButton styleClass="player-button" style=" -fx-translate-x: 40" fx:id="playButton"/>
+                            <JFXButton styleClass="player-button" style="-fx-translate-x: -40" fx:id="nextButton"/>
                         </StackPane>
                     </VBox>
                 </StackPane>
