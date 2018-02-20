@@ -55,5 +55,5 @@ std::vector<Request*> RequestReader::readRequest() {
 }
 
 RequestReader::~RequestReader() {
-    delete buffer;
+    delete [] buffer;
 }

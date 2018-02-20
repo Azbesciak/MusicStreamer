@@ -104,10 +104,10 @@ UploadedFile * UploadHandler::acceptFileBytes(UploadRequestProcessor *processor)
     } catch(FileUploadException& ex) {
         close(fileDescriptor);
         remove(file->getFilePath().c_str());
-        delete buffer;
+        delete [] buffer;
         throw ex;
     }
-    delete buffer;
+    delete [] buffer;
     close(fileDescriptor);
     return file;
 }

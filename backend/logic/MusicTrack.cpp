@@ -71,6 +71,7 @@ void MusicTrack::closeTrack() {
         headerProcessed = false;
         trackFinished = false;
         delete[] trackHeader;
+        trackHeader = nullptr;
     }
 }
 
@@ -123,12 +124,9 @@ int MusicTrack::getChunkTimeGapMicrosec() {
 
 char *MusicTrack::getTrackHeader() {
 
-    if (!isOpened())
+    if (!isOpened() || !readTrackHeader())
         return nullptr;
 
-    if (!readTrackHeader()) {
-        return nullptr;
-    }
     return trackHeader;
 }
 
