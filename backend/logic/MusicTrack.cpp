@@ -151,7 +151,9 @@ char *MusicTrack::nextSoundChunk() {
 MusicTrack::~MusicTrack() {
     if (isOpened())
         close(openedTrackFile);
-    if (trackFile != nullptr)
+    if (trackFile != nullptr) {
         remove(trackFile->getFilePath().c_str());
+        delete trackFile;
+    }
     delete[] trackHeader;
 }

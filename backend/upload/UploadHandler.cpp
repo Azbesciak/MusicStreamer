@@ -67,6 +67,7 @@ void UploadHandler::downloadFile(int clientSocket) {
         delete req;
     }
     delete processor;
+    delete reader;
 }
 
 UploadedFile * UploadHandler::acceptFileBytes(UploadRequestProcessor *processor) {
@@ -75,7 +76,7 @@ UploadedFile * UploadHandler::acceptFileBytes(UploadRequestProcessor *processor)
         throw FileUploadException(500, "Unexpected file upload error");
 
     long remainingSize = processor->upload->getFileSize();
-    auto buffer = new char[BYTE_BUFFER_SIZE + 1];
+    auto *buffer = new char[BYTE_BUFFER_SIZE + 1];
     int fileDescriptor = open(file->getFilePath().c_str(), O_WRONLY);
     if (fileDescriptor < 0)
         throw FileUploadException(500, "Unexpected file upload error");

@@ -14,7 +14,7 @@ int MusicStreamer::minPort = 0;
 int MusicStreamer::maxPort = 65535;
 string MusicStreamer::host("0.0.0.0");
 
-MusicStreamer::MusicStreamer(function<void(vector<string>)> trackChangeListener)
+MusicStreamer::MusicStreamer(function<void(vector<string>&)> trackChangeListener)
         : trackStream(nullptr),
           tracksQueue(new TracksQueue()),
           socket(new Socket(createSocket())),
@@ -52,7 +52,8 @@ void MusicStreamer::onNextTrack() {
     synchronized(trackMut) {
         cleanTrackStream();
         playCurrentTrack();
-        trackChangeListener(getAvailableTracksList());
+        vector<string> tracks = getAvailableTracksList();
+        trackChangeListener(tracks);
     }
 }
 

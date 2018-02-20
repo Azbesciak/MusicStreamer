@@ -13,6 +13,9 @@ class RequestReader {
     ssize_t readFromSocket();
 
 public:
+    virtual ~RequestReader();
+
+public:
     explicit RequestReader(int socketFd);
     std::vector<Request*> readRequest();
 };

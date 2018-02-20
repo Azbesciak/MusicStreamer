@@ -22,7 +22,8 @@ class MessageSender {
     MessageSender();
     ~MessageSender();
 public:
-    static void sendMessage(unordered_set<StreamerClient*> clients, ClientResponse * response);
+    static void sendMessage(unordered_set<StreamerClient*> &clients, ClientResponse * response);
+    static void send(Message &message);
     static void init();
     static void destroy();
 };

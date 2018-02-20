@@ -35,9 +35,9 @@ void MessageSender::sendMessage(Message &message) {
     }
 }
 
-void MessageSender::sendMessage(unordered_set<StreamerClient *> clients, ClientResponse *response) {
+void MessageSender::sendMessage(unordered_set<StreamerClient *> &clients, ClientResponse *response) {
     Message message(clients, response->serialize());
-    instance ->sendMessage(message);
+    instance->sendMessage(message);
 }
 
 void MessageSender::init() {
@@ -49,6 +49,10 @@ void MessageSender::init() {
 void MessageSender::destroy() {
     delete instance;
     instance = nullptr;
+}
+
+void MessageSender::send(Message &message) {
+    instance->sendMessage(message);
 }
 
 

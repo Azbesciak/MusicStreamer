@@ -42,24 +42,21 @@ public:
 
     void sendListOfClientsToAll();
 
-    ClientResponse prepareRoomsInfo(ClientResponse *resp);
-    ClientResponse prepareTracksResponse(ClientResponse *resp);
-    ClientResponse prepareTrackQueueResponse(ClientResponse * resp);
+    void prepareRoomsInfo(ClientResponse *resp);
+    void prepareTracksResponse(ClientResponse *resp);
+    void prepareTrackQueueResponse(ClientResponse *resp);
 
 
     vector<string> getAvailableTracksList();
 
-    void sendResponseToAll(const function<ClientResponse(ClientResponse*)> &decorator);
+    void sendResponseToAll(ClientResponse * response);
 
-    ClientResponse addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
+    void addTracksToResponse(ClientResponse *resp, const vector<string> &tracks) const;
 
     void sendTrackListToClients(const vector<string> &tracks);
-    void sendQueueuedTracksToClients(const vector<string> &tracks);
+//    void sendQueueuedTracksToClients(const vector<string> &tracks);
 
-    void sendResponseToAll(
-            const function<ClientResponse(ClientResponse *)> &decorator,
-            unordered_set<StreamerClient *> clients
-    );
+    void sendResponseToAll(ClientResponse * response, unordered_set<StreamerClient *> &clients);
 
     void onTrackListChanged();
 };

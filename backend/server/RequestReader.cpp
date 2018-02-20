@@ -53,3 +53,7 @@ std::vector<Request*> RequestReader::readRequest() {
     }
     return requests;
 }
+
+RequestReader::~RequestReader() {
+    delete buffer;
+}

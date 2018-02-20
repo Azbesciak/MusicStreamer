@@ -13,7 +13,8 @@ TrackStream::TrackStream(MusicTrack *track, std::unordered_set<StreamerClient *>
         : track(track),
           clients(move(clients)),
           streamer(streamer),
-          streamerThread(nullptr) {
+          streamerThread(nullptr),
+          isRunning(true) {
 }
 
 
@@ -74,14 +75,14 @@ void TrackStream::stop() {
     }
 }
 
-void TrackStream::attachClient(StreamerClient* client) {
+void TrackStream::attachClient(StreamerClient *client) {
     synchronized(clientsMut) {
         clients.insert(client);
     }
 }
 
 
-void TrackStream::detachClient(StreamerClient* client) {
+void TrackStream::detachClient(StreamerClient *client) {
     synchronized(clientsMut) {
         if (clients.erase(client) != 0) {
             frameSent.erase(client);
