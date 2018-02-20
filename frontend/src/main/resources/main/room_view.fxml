@@ -9,6 +9,7 @@
 
 <?import javafx.scene.layout.Pane?>
 <?import com.jfoenix.controls.JFXProgressBar?>
+<?import javafx.scene.layout.VBox?>
 <StackPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
            xmlns:fx="http://javafx.com/fxml/1">
     <HBox  style="-fx-padding: 10">
@@ -19,7 +20,7 @@
                     <JFXListView fx:id="clients" prefWidth="200.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
                 <StackPane>
-                    <JFXListView fx:id="tracks" prefWidth="200.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
+                    <JFXListView fx:id="tracks" prefWidth="300.0" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                 </StackPane>
             </HBox>
             </center>
@@ -28,6 +29,21 @@
             </bottom>
         </BorderPane>
         <BorderPane>
+            <center>
+                <StackPane>
+                    <VBox>
+                        <StackPane VBox.vgrow="ALWAYS" style="-fx-background-radius: 5 5 0 0; -fx-background-color: rgba(88,202,255,0.5)">
+                            <JFXListView fx:id="tracksQueue" style="-fx-background-color:rgba(255,255,255,0.5)"/>
+                        </StackPane>
+                        <StackPane style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87)" prefHeight="40">
+                            <JFXButton style="-fx-background-radius: 40;-fx-background-color: #4470fe;
+                             margin: 0 12 0 0;-fx-alignment: bottom-right; -fx-translate-y: -10"
+                                       buttonType="RAISED" prefHeight="40" prefWidth="40">
+                            </JFXButton>
+                        </StackPane>
+                    </VBox>
+                </StackPane>
+            </center>
             <bottom>
                 <JFXButton text="Upload" fx:id="uploadButton" styleClass="button-raised"/>
             </bottom>

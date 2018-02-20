@@ -38,6 +38,8 @@ class RoomView(
     private val uploadProgress: JFXProgressBar by fxid()
     private val clients: JFXListView<String> by fxid()
     private val tracks: JFXListView<String> by fxid()
+    private val tracksQueue: JFXListView<String> by fxid()
+
     private val isRoomSet = SimpleBooleanProperty(false)
     private val isUploading = SimpleBooleanProperty(false)
     private var currentRoomName: String? = null
@@ -87,10 +89,13 @@ class RoomView(
     private fun JsonNode.onBroadCastMessage() {
         if (has("room")) {
             val roomName = get("room").asText()
-            when { //TODO what with room... can be not synchronized, timestamp?
-                has("clients") -> updateState(roomName, getStrings("clients"))
-                has("tracks") -> updateTracks(getStrings("tracks"))
-            }
+            if (has("clients"))
+                updateState(roomName, getStrings("clients"))
+            if (has("tracks"))
+                updateTracks(getStrings("tracks"))
+            if (has("tracksQueue"))
+                updateTracksQueue(getStrings("tracksQueue"))
+
         }
     }
 
@@ -149,6 +154,10 @@ class RoomView(
         launch(JavaFx) { this@RoomView.tracks.items.setAll(tracks) }
     }
 
+    private fun updateTracksQueue(tracksQueue: List<String> = listOf()) {
+        launch(JavaFx) { this@RoomView.tracksQueue.items.setAll(tracksQueue) }
+    }
+
     private fun updateState(roomName: String? = null, clients: List<String> = listOf()) {
         launch(JavaFx) {
             if (roomName != null) {
@@ -165,6 +174,7 @@ class RoomView(
     fun clean() {
         updateState()
         updateTracks()
+        updateTracksQueue()
         musicUploadService.cancelUpload()
     }
 }

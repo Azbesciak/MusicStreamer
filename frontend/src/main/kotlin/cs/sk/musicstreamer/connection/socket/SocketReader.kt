@@ -70,7 +70,7 @@ class SocketReader(
                 }
             }
             if (i >= message.length - 1 && startFlag > 0) {
-                message = socket.read()
+                message += socket.read()
             }
             i++
         }

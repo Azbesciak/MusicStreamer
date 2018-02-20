@@ -53,7 +53,7 @@ class MainView : View(), Initializable {
     private var isConnected = SimpleBooleanProperty(false)
 
     companion object : KLogging() {
-        const val MAX_STREAMER_ATTEMPTIONS = 10
+        const val MAX_STREAMER_ATTEMPTS = 10
     }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
@@ -140,7 +140,7 @@ class MainView : View(), Initializable {
                 onConnection = {
                     launch {
                         var attemption = 0
-                        while (attemption++ <MAX_STREAMER_ATTEMPTIONS) {
+                        while (attemption++ < MAX_STREAMER_ATTEMPTS) {
                             val port = streamingConnector.connect()
                             if (port != null) {
                                 val connected = suspendCoroutine<Boolean> { cont ->
