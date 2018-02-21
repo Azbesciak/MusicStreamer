@@ -99,28 +99,44 @@ bool MusicTrack::readTrackHeader() {
 }
 
 
+int MusicTrack::parseHeaderNumber(int start, int bytes) {
+
+    int number = 0;
+
+    for (int i = start; i < start + bytes; ++i) {
+
+        int byte = trackHeader[i];
+        byte <<= ((i - start) * 8);
+
+        number += byte;
+    }
+
+    return number;
+}
+
+
 int MusicTrack::getSampleRate() {
-    return trackHeader[24] + (trackHeader[25] << 8) + (trackHeader[26] << 16) + (trackHeader[27] << 24);
+    return parseHeaderNumber(24, 4);
 }
 
 
 int MusicTrack::getBitsPerSample() {
-    return trackHeader[34] + (trackHeader[35] << 8);
+    return parseHeaderNumber(34, 2);
 }
 
 
 int MusicTrack::getChannelsNum() {
-    return trackHeader[22] + (trackHeader[23] << 8);
+    return parseHeaderNumber(22, 2);
 }
 
 
 int MusicTrack::getByteRate() {
-    return trackHeader[28] + (trackHeader[29] << 8) + (trackHeader[30] << 16) + (trackHeader[31] << 24);
+    return parseHeaderNumber(28, 4);
 }
 
 
 int MusicTrack::getSoundSize() {
-    return trackHeader[40] + (trackHeader[41] << 8) + (trackHeader[42] << 16) + (trackHeader[43] << 24);
+    return parseHeaderNumber(40, 4);
 }
 
 

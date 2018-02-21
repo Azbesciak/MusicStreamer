@@ -23,6 +23,8 @@ private:
 
     bool readTrackHeader();
 
+    int parseHeaderNumber(int start, int bytes);
+
 public:
 
     static const int WAV_HEADER_SIZE = 44;
