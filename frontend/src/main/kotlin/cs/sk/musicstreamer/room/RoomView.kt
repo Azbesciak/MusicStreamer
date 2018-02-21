@@ -5,6 +5,7 @@ import com.jfoenix.controls.JFXButton
 import com.jfoenix.controls.JFXListView
 import com.jfoenix.controls.JFXProgressBar
 import cs.sk.musicstreamer.connection.ErrorResponse
+import cs.sk.musicstreamer.connection.NextTrackRequest
 import cs.sk.musicstreamer.connection.QueueTrackRequest
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
@@ -31,7 +32,8 @@ class RoomView(
         private val mainConnector: MainConnector,
         private val appLabel: AppLabel,
         private val musicUploadService: MusicUploadService,
-        private val infoService: InfoService
+        private val infoService: InfoService,
+        private val musicPlayer: MusicPlayer
 ) : View() {
     override val root: StackPane by fxml("/main/room_view.fxml")
     private val uploadButton: JFXButton by fxid()
@@ -60,7 +62,8 @@ class RoomView(
         )
         clients.decorate()
         tracks.decorate()
-
+        musicPlayer.registerControllers(playButton, nextButton)
+        musicPlayer.setRoom(this)
         initializeUploadButton()
         initializeTracksList()
     }
@@ -143,6 +146,14 @@ class RoomView(
         }
         infoService.showSnackBar(message)
         logger.error { "Error at file upload $errorResp" }
+    }
+
+    fun requestNextTrack() {
+        mainConnector.send(NextTrackRequest(), onResponse = {
+            launch(JavaFx) { infoService.showSnackBar("Track skipped!") }
+        }, onError = {
+            launch(JavaFx) { infoService.showSnackBar("Could not skip track: ${it.body}") }
+        })
     }
 
     private fun resetUpload() {

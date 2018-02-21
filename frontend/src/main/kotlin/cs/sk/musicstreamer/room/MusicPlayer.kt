@@ -1,38 +1,51 @@
 package cs.sk.musicstreamer.room
 
-import cs.sk.musicstreamer.connection.connectors.StreamingConnector
+import com.jfoenix.controls.JFXButton
 import cs.sk.musicstreamer.connection.connectors.StreamingListener
 import cs.sk.musicstreamer.connection.connectors.Switchable
+import cs.sk.musicstreamer.homepage.InfoService
+import cs.sk.musicstreamer.utils.SVGFactory
+import javafx.beans.property.SimpleBooleanProperty
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import org.springframework.stereotype.Service
-import javax.sound.sampled.AudioFormat
-import javax.swing.*
-import java.awt.*
-import java.awt.event.*
-import java.io.*
-import java.net.*
-import javax.sound.sampled.*
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.SourceDataLine
-import javax.sound.sampled.DataLine
-import javax.sound.sampled.AudioInputStream
+import tornadofx.*
 import java.io.ByteArrayInputStream
-import java.net.DatagramPacket
-import java.net.DatagramSocket
-import javax.sound.sampled.TargetDataLine
 import java.io.ByteArrayOutputStream
+import javax.sound.sampled.*
 
 
 @Service
-class MusicPlayer {
+class MusicPlayer(
+        private val infoService: InfoService
+) {
     private var audioFormat: AudioFormat? = null
     private var targetDataLine: TargetDataLine? = null
     private var byteOutputStream = ByteArrayOutputStream()
     private lateinit var provider: Switchable
-    fun play() {
+    private lateinit var room: RoomView
+
+    fun registerControllers(player: JFXButton, skipper: JFXButton) {
+        val isPlaying = SimpleBooleanProperty(false)
+        player.graphic = SVGFactory.play
+        isPlaying.onChange {
+            if (it) {
+                player.graphic = SVGFactory.stop
+                provider.start()
+            } else {
+                player.graphic = SVGFactory.play
+                provider.stop()
+            }
+        }
+        player.setOnMouseClicked {
+            isPlaying.set(isPlaying.get().not())
+        }
+        skipper.graphic = SVGFactory.next
+        skipper.setOnMouseClicked { room.requestNextTrack() }
     }
 
-    fun stop() {
-
+    fun setRoom(room: RoomView) {
+        this.room = room
     }
 
     fun getStreamingListener() = StreamingListener(
@@ -44,12 +57,10 @@ class MusicPlayer {
                 sourceLine.open(audioFormat)
                 sourceLine.start()
             },
-            onError = {},
+            onError = { launch(JavaFx) { infoService.showSnackBar(it.message?: "Unknown error with sound streaming") }},
             formatListener = { audioFormat = it },
             switch = { provider = it }
     )
-
-
 }
 
 //

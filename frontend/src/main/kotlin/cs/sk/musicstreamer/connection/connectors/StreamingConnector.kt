@@ -21,25 +21,29 @@ class StreamingConnector(
         @Value("\${server.host}") val host: String,
         @Value("\${server.streamer.attentions}") val attentions: Int
 ) : Switchable {
-    override fun stop() {
-        isListening.set(false)
-    }
 
-    override fun start() {
-        listen()
+    companion object : KLogging() {
+        val rand = Random()
     }
 
     private var port: Int? = null
     private val isConnected = AtomicBoolean(false)
     private var socket: DatagramChannel? = null
 
-    private var isListening = AtomicBoolean(false)
+    private val isListening = AtomicBoolean(false)
+    private val isRunning = AtomicBoolean(false)
 
     private lateinit var listener: StreamingListener
     private var receiveBuff = ByteBuffer.allocate(8096)
 
-    companion object : KLogging() {
-        val rand = Random()
+    override fun stop() {
+        isListening.set(false)
+        logger.info { "Requested Streaming connector to stop..." }
+    }
+
+    override fun start() {
+        listen()
+        logger.info { "Streaming connector is running!" }
     }
 
     @Synchronized
@@ -62,20 +66,35 @@ class StreamingConnector(
     }
 
     private fun listen() {
-        try {
-            launch {
-                if (!isListening.getAndSet(true)) {
-                    while (isListening.get()) {
-                        receiveBuff.clear()
-                        socket!!.receive(receiveBuff)
-                        if (isListening.get()) {
-                            listener.onNewData(receiveBuff.array())
+        launch {
+            try {
+                logger.info { "in listen..." }
+                when {
+                    isRunning.get() -> isListening.set(true)
+                    !isListening.getAndSet(true) -> {
+                        isRunning.set(true)
+                        while (isListening.get()) {
+                            receiveBuff.clear()
+                            socket?.receive(receiveBuff)?.let {
+                                logger.info { "data came!" }
+                                if (isListening.get()) {
+                                    listener.onNewData(receiveBuff.array())
+                                }
+                            } ?: let {
+                                isListening.set(false)
+                                listener.onError(ConnectionError("No Connection at streamer"))
+                            }
                         }
+                        isRunning.set(false)
+                        logger.info { "Streamer stopped working" }
                     }
+                    else -> { logger.info { "ELSE" }}
                 }
+            } catch (t: Throwable) {
+                listener.onError(t)
+                isRunning.set(false)
+                isListening.set(false)
             }
-        } catch (t: Throwable) {
-            listener.onError(t)
         }
     }
 

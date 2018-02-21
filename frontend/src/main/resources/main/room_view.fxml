@@ -36,8 +36,8 @@
                             <JFXListView fx:id="tracksQueue" style="-fx-background-color:rgba(255,255,255,0.5)"/>
                         </StackPane>
                         <StackPane style="-fx-background-radius: 0 0 5 5; -fx-background-color: rgb(255,255,255,0.87)" prefHeight="40">
-                            <JFXButton styleClass="player-button" style=" -fx-translate-x: 40" fx:id="playButton"/>
-                            <JFXButton styleClass="player-button" style="-fx-translate-x: -40" fx:id="nextButton"/>
+                            <JFXButton styleClass="player-button" style=" -fx-translate-x: -40" fx:id="playButton"/>
+                            <JFXButton styleClass="player-button" style="-fx-translate-x: 40" fx:id="nextButton"/>
                         </StackPane>
                     </VBox>
                 </StackPane>
