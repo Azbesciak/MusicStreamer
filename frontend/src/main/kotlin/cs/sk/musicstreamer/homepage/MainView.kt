@@ -7,10 +7,8 @@ import com.jfoenix.controls.JFXSnackbar
 import cs.sk.musicstreamer.authorization.AuthService
 import cs.sk.musicstreamer.connection.StreamSubscribeRequest
 import cs.sk.musicstreamer.connection.SubscribeRequest
-import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
-import cs.sk.musicstreamer.connection.connectors.ConnectionListener
-import cs.sk.musicstreamer.connection.connectors.MainConnector
-import cs.sk.musicstreamer.connection.connectors.StreamingConnector
+import cs.sk.musicstreamer.connection.connectors.*
+import cs.sk.musicstreamer.room.MusicPlayer
 import cs.sk.musicstreamer.room.RoomView
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.fxml.Initializable
@@ -44,6 +42,8 @@ class MainView : View(), Initializable {
 
     private val roomsView: RoomsView by di()
     private val roomView: RoomView by di()
+
+    private val musicPlayer: MusicPlayer by di()
 
     private val communicationServerConnector: MainConnector by di()
     private val broadCastServer: BroadCastConnector by di()
@@ -132,6 +132,9 @@ class MainView : View(), Initializable {
                     }
                 }
         ))
+
+        streamingConnector.registerListener(musicPlayer.getStreamingListener())
+
         connect()
     }
 

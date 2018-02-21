@@ -1,5 +1,6 @@
 package cs.sk.musicstreamer.connection.connectors
 
+import cs.sk.musicstreamer.connection.JsonResponse
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
@@ -94,13 +95,29 @@ class StreamingConnector(
     fun getFrameListener() = ResponseListener(
             onResponse = {
                 with(it.body) {
-                    if (has("frameHeader")) {
-//                        listener.formatListener(AudioFormat())
-                        logger.info { "Frame came: ${get("frameHeader").asText()}" }
-                    }
+                    var audioFormat = parseAudioFormat(it)
+                    if (audioFormat != null)
+                        listener.formatListener(audioFormat)
                 }
             }, onError = { logger.info { "error at broadcast..." } }
     )
+
+    private fun parseAudioFormat(json: JsonResponse): AudioFormat? {
+
+        with(json.body) {
+
+            if (has("sampleRate") and has("bitsPerSample") and has("channels")) {
+
+                val sampleRate = get("sampleRate").asInt()
+                val bitsPerSample = get("bitsPerSample").asInt()
+                val channels = get("channels").asInt()
+
+                return AudioFormat(sampleRate.toFloat(), bitsPerSample, channels, true, false)
+            }
+        }
+
+        return null
+    }
 
     fun registerListener(listener: StreamingListener) {
         this.listener = listener
