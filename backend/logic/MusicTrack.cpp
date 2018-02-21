@@ -99,8 +99,28 @@ bool MusicTrack::readTrackHeader() {
 }
 
 
-int MusicTrack::getTrackHeaderSize() {
-    return WAV_HEADER_SIZE;
+int MusicTrack::getSampleRate() {
+    return trackHeader[24] + (trackHeader[25] << 8) + (trackHeader[26] << 16) + (trackHeader[27] << 24);
+}
+
+
+int MusicTrack::getBitsPerSample() {
+    return trackHeader[34] + (trackHeader[35] << 8);
+}
+
+
+int MusicTrack::getChannelsNum() {
+    return trackHeader[22] + (trackHeader[23] << 8);
+}
+
+
+int MusicTrack::getByteRate() {
+    return trackHeader[28] + (trackHeader[29] << 8) + (trackHeader[30] << 16) + (trackHeader[31] << 24);
+}
+
+
+int MusicTrack::getSoundSize() {
+    return trackHeader[40] + (trackHeader[41] << 8) + (trackHeader[42] << 16) + (trackHeader[43] << 24);
 }
 
 
@@ -110,8 +130,8 @@ int MusicTrack::getChunkTimeGapMicrosec() {
         return -1;
     }
 
-    int soundSize = trackHeader[40] + (trackHeader[41] << 8) + (trackHeader[42] << 16) + (trackHeader[43] << 24);
-    int byteRate = trackHeader[28] + (trackHeader[29] << 8) + (trackHeader[30] << 16) + (trackHeader[31] << 24);
+    int soundSize = getSoundSize();
+    int byteRate = getByteRate();
 
     double seconds = (double) soundSize / byteRate;
     double chunks = (double) soundSize / SOUND_CHUNK_SIZE;
@@ -119,6 +139,11 @@ int MusicTrack::getChunkTimeGapMicrosec() {
     double result = seconds / chunks;
 
     return (int) (result * 1000000);
+}
+
+
+int MusicTrack::getTrackHeaderSize() {
+    return WAV_HEADER_SIZE;
 }
 
 

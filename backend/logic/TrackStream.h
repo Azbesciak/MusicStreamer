@@ -6,6 +6,7 @@
 #include <streamerClient/StreamerClient.h>
 #include <map>
 #include <atomic>
+#include <streamerClient/ClientResponse.h>
 
 class StreamerClient;
 class MusicStreamer;
@@ -25,6 +26,8 @@ private:
     std::thread * streamerThread;
     std::atomic<bool> isRunning;
     std::atomic<bool> hasFinished;
+
+    ClientResponse serializeTrackHeader(MusicTrack* track);
 
 public:
 

@@ -41,6 +41,12 @@ public:
     void openTrack();
     void closeTrack();
 
+    int getSampleRate();
+    int getBitsPerSample();
+    int getChannelsNum();
+    int getByteRate();
+    int getSoundSize();
+
     int getChunkTimeGapMicrosec();
 
     int getTrackHeaderSize();
