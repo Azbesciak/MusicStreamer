@@ -22,11 +22,11 @@ void MusicChannel::leaveStreamingSocket() {
     }
 }
 
-ssize_t MusicChannel::sendSound(char *soundBytes) {
+ssize_t MusicChannel::sendSound(SoundChunk* soundChunk) {
     synchronized(sockMut) {
         if (streamingSocket != nullptr) {
-            int bytes = strlen(soundBytes);
-            sendto(streamingSocket->get(), soundBytes, bytes, 0, (sockaddr *) &streamAddress, sizeof(streamAddress));
+            sendto(streamingSocket->get(), soundChunk->getContent(), soundChunk->getBytes(), 0,
+                   (sockaddr *) &streamAddress, sizeof(streamAddress));
         }
     }
 }

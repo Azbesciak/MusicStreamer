@@ -35,7 +35,7 @@ void TrackStream::start() {
             while (isRunning.load() && !track->isFinished()) {
                 synchronized(clientsMut) {
                     synchronized(streamMut) {
-                        char *soundChunk = track->nextSoundChunk();
+                        SoundChunk* soundChunk = track->nextSoundChunk();
                         for (auto client : clients) {
                             if (!frameSent[client]) {
                                 client->sendOnBroadCast(frameMes);
@@ -44,7 +44,7 @@ void TrackStream::start() {
                                 client->sendSound(soundChunk);
                             }
                         }
-                        delete[] soundChunk;
+                        delete soundChunk;
                     }
                 }
                 usleep(timeGapMicroseconds);

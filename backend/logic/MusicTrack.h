@@ -4,6 +4,7 @@
 
 #include <upload/UploadedFile.h>
 #include <mutex>
+#include "SoundChunk.h"
 
 class MusicTrack {
 
@@ -51,7 +52,7 @@ public:
 
     int getTrackHeaderSize();
     char* getTrackHeader();
-    char* nextSoundChunk();
+    SoundChunk* nextSoundChunk();
 
     ~MusicTrack();
 };

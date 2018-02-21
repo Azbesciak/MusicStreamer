@@ -156,7 +156,7 @@ char *MusicTrack::getTrackHeader() {
 }
 
 
-char *MusicTrack::nextSoundChunk() {
+SoundChunk* MusicTrack::nextSoundChunk() {
 
     if (!isOpened() || !headerProcessed)
         return nullptr;
@@ -164,12 +164,10 @@ char *MusicTrack::nextSoundChunk() {
     char *chunkBuffer = new char[SOUND_CHUNK_SIZE + 1];
     ssize_t bytes = read(openedTrackFile, chunkBuffer, SOUND_CHUNK_SIZE);
 
-    chunkBuffer[bytes] = '\0';
-
     if (bytes == 0)
         trackFinished = true;
 
-    return chunkBuffer;
+    return new SoundChunk(chunkBuffer, bytes);
 }
 
 

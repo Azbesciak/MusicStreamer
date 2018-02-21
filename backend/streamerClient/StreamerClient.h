@@ -6,6 +6,7 @@
 #include "Socket.h"
 
 #include <string>
+#include <logic/SoundChunk.h>
 
 using namespace std;
 
@@ -46,7 +47,7 @@ public:
     void finishUpload(int socket);
     void setStreamingSocket(Socket * socket);
     void leaveStreamingChannel();
-    void sendSound(char *soundBytes);
+    void sendSound(SoundChunk* soundChunk);
     string getAddr();
     bool hasRoomAssigned();
 

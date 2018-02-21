@@ -4,6 +4,7 @@
 #include <logic/MusicTrack.h>
 #include <streamerClient/Socket.h>
 #include <netinet/in.h>
+#include <logic/SoundChunk.h>
 
 
 class MusicChannel {
@@ -22,7 +23,7 @@ public:
 
     void leaveStreamingSocket();
 
-    ssize_t sendSound(char* soundBytes);
+    ssize_t sendSound(SoundChunk* soundChunk);
 
     int getPort();
 };

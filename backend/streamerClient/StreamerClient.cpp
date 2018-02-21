@@ -47,9 +47,9 @@ ssize_t StreamerClient::sendMessage(const string &mes, Socket *socket) {
     return 0;
 }
 
-void StreamerClient::sendSound(char *soundBytes) {
+void StreamerClient::sendSound(SoundChunk* soundChunk) {
     if (streamingChannel != nullptr)
-        streamingChannel->sendSound(soundBytes);
+        streamingChannel->sendSound(soundChunk);
 }
 
 
