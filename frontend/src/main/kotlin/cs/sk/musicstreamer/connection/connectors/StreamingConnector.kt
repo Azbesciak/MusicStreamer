@@ -1,11 +1,13 @@
 package cs.sk.musicstreamer.connection.connectors
 
+import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.net.DatagramPacket
 import java.net.InetSocketAddress
 import java.net.StandardProtocolFamily
+import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -32,8 +34,8 @@ class StreamingConnector(
 
     private var isListening = AtomicBoolean(false)
 
-    private lateinit var formatListener: (AudioFormat) -> Unit
-    private var tempBuffer = ByteArray(10000)
+    private lateinit var listener: StreamingListener
+    private var receiveBuff = ByteBuffer.allocate(8096)
 
     companion object : KLogging() {
         val rand = Random()
@@ -60,13 +62,19 @@ class StreamingConnector(
 
     private fun listen() {
         try {
-            if (!isListening.getAndSet(true)) {
-//                socket!!.
-//                val receivePacket = DatagramPacket(receiveData, receiveData.size)
-//                serverSocket.receive(receivePacket)
+            launch {
+                if (!isListening.getAndSet(true)) {
+                    while (isListening.get()) {
+                        receiveBuff.clear()
+                        socket!!.receive(receiveBuff)
+                        if (isListening.get()) {
+                            listener.onNewData(receiveBuff.array())
+                        }
+                    }
+                }
             }
         } catch (t: Throwable) {
-
+            listener.onError(t)
         }
     }
 
@@ -87,11 +95,17 @@ class StreamingConnector(
             onResponse = {
                 with(it.body) {
                     if (has("frameHeader")) {
+//                        listener.formatListener(AudioFormat())
                         logger.info { "Frame came: ${get("frameHeader").asText()}" }
                     }
                 }
             }, onError = { logger.info { "error at broadcast..." } }
     )
+
+    fun registerListener(listener: StreamingListener) {
+        this.listener = listener
+        listener.switch(this)
+    }
 }
 
 interface Switchable {
@@ -103,5 +117,5 @@ class StreamingListener(
         val formatListener: (AudioFormat) -> Unit,
         val switch: (Switchable) -> Unit,
         val onNewData: (ByteArray) -> Unit,
-        val onError: (Error) -> Unit
+        val onError: (Throwable) -> Unit
 )

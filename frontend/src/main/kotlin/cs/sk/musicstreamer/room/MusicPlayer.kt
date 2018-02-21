@@ -11,7 +11,6 @@ import java.awt.event.*
 import java.io.*
 import java.net.*
 import javax.sound.sampled.*
-import sun.plugin.navig.motif.Plugin.start
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.SourceDataLine
 import javax.sound.sampled.DataLine
