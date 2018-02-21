@@ -78,7 +78,6 @@ class StreamingConnector(
                         isRunning.set(true)
                         while (isListening.get()) {
                             receiveBuff.clear()
-                            print(channel!!.isConnected)
                             channel?.receive(receiveBuff)?.let {
                                 if (isListening.get()) {
                                     listener.onNewData(receiveBuff.array())
