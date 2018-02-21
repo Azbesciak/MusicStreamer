@@ -95,9 +95,9 @@ class StreamingConnector(
     fun getFrameListener() = ResponseListener(
             onResponse = {
                 with(it.body) {
-                    var audioFormat = parseAudioFormat(it)
-                    if (audioFormat != null)
-                        listener.formatListener(audioFormat)
+                    parseAudioFormat(it)?.let {
+                        listener.formatListener(it)
+                    }
                 }
             }, onError = { logger.info { "error at broadcast..." } }
     )
