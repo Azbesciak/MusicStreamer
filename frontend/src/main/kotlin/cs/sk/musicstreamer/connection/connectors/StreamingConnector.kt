@@ -80,25 +80,27 @@ class StreamingConnector(
                             receiveBuff.clear()
                             print(channel!!.isConnected)
                             channel?.receive(receiveBuff)?.let {
-                                logger.info { "data came!" }
                                 if (isListening.get()) {
                                     listener.onNewData(receiveBuff.array())
                                 }
                             } ?: let {
-                                isListening.set(false)
-                                listener.onError(ConnectionError("No Connection at streamer"))
+                                informIfStillListeningAndStop(ConnectionError("No Connection at streamer"))
                             }
                         }
                         isRunning.set(false)
-                        logger.info { "Streamer stopped working" }
                     }
-                    else -> { logger.info { "ELSE" }}
                 }
             } catch (t: Throwable) {
-                listener.onError(t)
+                informIfStillListeningAndStop(t)
                 isRunning.set(false)
-                isListening.set(false)
             }
+            logger.info { "Streamer stopped working" }
+        }
+    }
+
+    fun informIfStillListeningAndStop(t: Throwable) {
+        if (isListening.getAndSet(false)) {
+            listener.onError(t)
         }
     }
 

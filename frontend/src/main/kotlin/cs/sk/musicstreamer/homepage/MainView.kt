@@ -155,7 +155,6 @@ class MainView : View(), Initializable {
                                 }
                                 if (connected) {
                                     logger.info { "subscribed on stream" }
-                                    musicPlayer.play()
                                     return@launch
                                 } else {
                                     streamingConnector.close()
@@ -181,7 +180,8 @@ class MainView : View(), Initializable {
         drawer.closeToBack()
         isConnected.value = false
         broadCastServer.disconnect()
-        musicPlayer.stop()
+        musicPlayer.clear()
+        streamingConnector.close()
         authService.cleanUser()
         roomsView.clean()
         roomView.clean()
