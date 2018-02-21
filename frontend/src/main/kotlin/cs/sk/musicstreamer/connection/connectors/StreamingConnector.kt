@@ -5,7 +5,6 @@ import kotlinx.coroutines.experimental.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.net.DatagramPacket
 import java.net.InetSocketAddress
 import java.net.StandardProtocolFamily
 import java.nio.ByteBuffer
@@ -28,7 +27,7 @@ class StreamingConnector(
 
     private var port: Int? = null
     private val isConnected = AtomicBoolean(false)
-    private var socket: DatagramChannel? = null
+    private var channel: DatagramChannel? = null
 
     private val isListening = AtomicBoolean(false)
     private val isRunning = AtomicBoolean(false)
@@ -49,12 +48,12 @@ class StreamingConnector(
     @Synchronized
     fun connect(): Int? {
         if (!isConnected.get()) {
-            socket = DatagramChannel.open(StandardProtocolFamily.INET)
+            channel = DatagramChannel.open()
             var attentionsLeft = attentions
             while (attentionsLeft-- > 0) {
                 try {
                     port = rand.nextInt(maxPort - minPort) + minPort
-                    socket!!.connect(InetSocketAddress(host, port!!))
+                    channel!!.socket().bind(InetSocketAddress(host, port!!))
                     isConnected.set(true)
                     return port
                 } catch (t: Throwable) {
@@ -69,13 +68,18 @@ class StreamingConnector(
         launch {
             try {
                 logger.info { "in listen..." }
+                if (!isConnected.get()) {
+                    listener.onError(ConnectionError("Not connected"))
+                    return@launch
+                }
                 when {
                     isRunning.get() -> isListening.set(true)
                     !isListening.getAndSet(true) -> {
                         isRunning.set(true)
                         while (isListening.get()) {
                             receiveBuff.clear()
-                            socket?.receive(receiveBuff)?.let {
+                            print(channel!!.isConnected)
+                            channel?.receive(receiveBuff)?.let {
                                 logger.info { "data came!" }
                                 if (isListening.get()) {
                                     listener.onNewData(receiveBuff.array())
@@ -100,12 +104,12 @@ class StreamingConnector(
 
     @Synchronized
     fun close() {
-        if (socket != null) {
+        if (channel != null) {
             port = null
             isConnected.set(false)
             try {
-                socket?.close()
-                socket = null
+                channel?.close()
+                channel = null
             } catch (t: Throwable) {
             }
         }
@@ -155,3 +159,4 @@ class StreamingListener(
         val onNewData: (ByteArray) -> Unit,
         val onError: (Throwable) -> Unit
 )
+

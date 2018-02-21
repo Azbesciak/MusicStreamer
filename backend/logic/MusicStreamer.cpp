@@ -127,6 +127,7 @@ int MusicStreamer::createSocket() {
         port = dist(mt);
         socketFd = SocketFactory::createUdpSocket(host, port);
     } while (socketFd == -1);
+    return socketFd;
 }
 
 void MusicStreamer::setHost(const string &host) {
