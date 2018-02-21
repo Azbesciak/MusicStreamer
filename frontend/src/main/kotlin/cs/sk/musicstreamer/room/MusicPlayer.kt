@@ -8,10 +8,9 @@ import cs.sk.musicstreamer.utils.SVGFactory
 import javafx.beans.property.SimpleBooleanProperty
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
+import mu.KLogging
 import org.springframework.stereotype.Service
 import tornadofx.*
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import javax.sound.sampled.*
 
 
@@ -19,14 +18,14 @@ import javax.sound.sampled.*
 class MusicPlayer(
         private val infoService: InfoService
 ) {
-    private var audioFormat: AudioFormat? = null
-    private var targetDataLine: TargetDataLine? = null
-    private var byteOutputStream = ByteArrayOutputStream()
+    companion object: KLogging()
+
+    private var audioLine: SourceDataLine? = null
     private lateinit var provider: Switchable
     private lateinit var room: RoomView
+    private val isPlaying = SimpleBooleanProperty(false)
 
     fun registerControllers(player: JFXButton, skipper: JFXButton) {
-        val isPlaying = SimpleBooleanProperty(false)
         player.graphic = SVGFactory.play
         isPlaying.onChange {
             if (it) {
@@ -49,18 +48,42 @@ class MusicPlayer(
     }
 
     fun getStreamingListener() = StreamingListener(
-            onNewData = { audioData ->
-                val byteInputStream = ByteArrayInputStream(audioData)
-                val inputStream = AudioInputStream(byteInputStream, audioFormat, (audioData.size / audioFormat!!.frameSize).toLong())
-                val dataLineInfo = DataLine.Info(SourceDataLine::class.java, audioFormat)
-                val sourceLine = AudioSystem.getLine(dataLineInfo) as SourceDataLine
-                sourceLine.open(audioFormat)
-                sourceLine.start()
-            },
-            onError = { launch(JavaFx) { infoService.showSnackBar(it.message?: "Unknown error with sound streaming") }},
-            formatListener = { audioFormat = it },
-            switch = { provider = it }
+            formatListener = { audioFormat -> prepareNewTrack(audioFormat) },
+            onNewData = { audioData -> pushAudioData(audioData) },
+            switch = { provider = it },
+            onError = { launch(JavaFx) { infoService.showSnackBar(it.message?: "Unknown error with sound streaming") }}
     )
+
+
+    @Synchronized
+    fun prepareNewTrack(audioFormat: AudioFormat) {
+        logger.debug("Received audio format of a new track\n$audioFormat")
+        audioLine?.close()
+
+        audioLine = AudioSystem.getLine(
+                DataLine.Info(SourceDataLine::class.java, audioFormat)) as SourceDataLine
+        try {
+            audioLine!!.open(audioFormat)
+            audioLine!!.start()
+        } catch (t: Throwable) {
+            infoService.showSnackBar("Error with current track: ${t.message}")
+            audioLine?.close()
+            audioLine = null
+            isPlaying.set(false)
+        }
+    }
+
+    @Synchronized
+    fun pushAudioData(audioData: ByteArray) {
+
+        logger.debug("Received ${audioData.size} audio bytes...")
+        audioLine?.write(audioData, 0, audioData.size)
+    }
+
+    fun clear() {
+        audioLine?.close()
+        isPlaying.set(false)
+    }
 }
 
 //
