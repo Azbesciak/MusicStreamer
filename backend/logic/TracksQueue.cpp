@@ -22,12 +22,16 @@ MusicTrack* TracksQueue::nextTrack() {
     MusicTrack* nextTrack = nullptr;
 
     synchronized(mut) {
+        if (tracks.empty()) {
+            return nullptr;
+        }
         tracks.pop_front();
         trackListener->onQueueChange(tracks);
         if (!tracks.empty()) {
+            // undef beh otherwise...
             nextTrack = tracks.front();
-            trackListener->onNextTrack();
         }
+        trackListener->onNextTrack();
     }
 
     return nextTrack;
