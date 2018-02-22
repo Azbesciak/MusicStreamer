@@ -51,7 +51,9 @@ void MusicStreamer::onTrackFinished() {
 
 void MusicStreamer::onNextTrack() {
     synchronized(trackMut) {
-        trackStream->stop();
+        if (trackStream != nullptr) {
+            trackStream->stop();
+        }
         cleanTrackStream();
         playCurrentTrack();
     }
