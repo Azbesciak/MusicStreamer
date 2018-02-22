@@ -12,6 +12,8 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, cleanUp);
     // prevent dead sockets from throwing pipe errors on write
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGSEGV, cleanUp);
+    signal(SIGABRT, cleanUp);
     serverRef = new ServerManager();
     Container::initialize();
     string command;
