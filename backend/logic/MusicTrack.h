@@ -29,7 +29,7 @@ private:
 public:
 
     static const int WAV_HEADER_SIZE = 44;
-    static const int SOUND_CHUNK_SIZE = 512;
+    static const int SOUND_CHUNK_SIZE = 8192;
 
 
     explicit MusicTrack(const std::string& trackName);

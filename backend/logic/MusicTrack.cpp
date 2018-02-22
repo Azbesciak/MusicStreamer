@@ -84,14 +84,15 @@ bool MusicTrack::readTrackHeader() {
             if (bytes != WAV_HEADER_SIZE) {
                 lseek(openedTrackFile, 0, SEEK_SET);
                 cerr << "could not read header for track " << trackName << endl;
+                delete[] headerBuffer;
                 return false;
             } else {
                 headerProcessed = true;
                 trackHeader = TrackHeader(headerBuffer);
+                delete[] headerBuffer;
                 return true;
             }
 
-            delete[] headerBuffer;
         }
     }
     return true;
@@ -115,7 +116,7 @@ int MusicTrack::getChunkTimeGapMicrosec() {
 
     double result = seconds / chunks;
 
-    return (int) (result * 1000000);
+    return (int) (result * 1000000 * 0.99);
 }
 
 

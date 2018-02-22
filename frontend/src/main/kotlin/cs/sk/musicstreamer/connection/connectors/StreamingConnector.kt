@@ -33,7 +33,7 @@ class StreamingConnector(
     private val isRunning = AtomicBoolean(false)
 
     private lateinit var listener: StreamingListener
-    private var receiveBuff = ByteBuffer.allocate(8096)
+    private var receiveBuff = ByteBuffer.allocate(8192)
 
     override fun stop() {
         isListening.set(false)
@@ -78,9 +78,10 @@ class StreamingConnector(
                         isRunning.set(true)
                         while (isListening.get()) {
                             receiveBuff.clear()
-                            channel?.receive(receiveBuff)?.let {
+                            channel?.receive(receiveBuff)
+                                    ?.let {
                                 if (isListening.get()) {
-                                    listener.onNewData(receiveBuff.array())
+                            listener.onNewData(receiveBuff.array())
                                 }
                             } ?: let {
                                 informIfStillListeningAndStop(ConnectionError("No Connection at streamer"))

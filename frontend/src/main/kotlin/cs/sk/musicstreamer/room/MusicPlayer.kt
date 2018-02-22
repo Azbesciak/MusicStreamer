@@ -75,8 +75,6 @@ class MusicPlayer(
 
     @Synchronized
     fun pushAudioData(audioData: ByteArray) {
-
-        logger.debug("Received ${audioData.size} audio bytes...")
         audioLine?.write(audioData, 0, audioData.size)
     }
 
