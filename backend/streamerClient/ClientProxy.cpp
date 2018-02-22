@@ -164,7 +164,7 @@ ClientResponse ClientProxy::handleReorderTrack(int fromIndex, int toIndex) {
 
     return Container::withRoom(client, [&](Room* room) {
 
-        if (toIndex == 1 || fromIndex == 1)
+        if (toIndex <= 0 || fromIndex <= 0)
             return ClientResponse::error(400, "The played track cannot be moved. Try skipping it...");
 
         room->reorderTrack(fromIndex, toIndex);

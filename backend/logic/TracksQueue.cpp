@@ -53,10 +53,7 @@ void TracksQueue::reorderTrack(int from, int to) {
 
     synchronized(mut) {
 
-        from--;
-        to--;
-
-        if (max(from, to) >= tracks.size() || from != to)
+        if (max(from, to) >= tracks.size() || from == to)
             return;
 
         int direction = (from < to) ? 1 : -1;
