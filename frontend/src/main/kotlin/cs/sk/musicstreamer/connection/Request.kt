@@ -20,4 +20,5 @@ class UploadTokenRequest(val name: String, val token: String) : Request("UPLOAD_
 class StreamSubscribeRequest(val streamingPort: Int): Request("STREAM_SUBSCRIBE")
 class QueueTrackRequest(val trackName: String): Request("QUEUE_TRACK")
 class NextTrackRequest: Request("NEXT_TRACK")
+class ReorderTrackRequest(val fromIndex: Int, val toIndex: Int): Request("REORDER_TRACK")
 

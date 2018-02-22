@@ -7,6 +7,7 @@ import com.jfoenix.controls.JFXProgressBar
 import cs.sk.musicstreamer.connection.ErrorResponse
 import cs.sk.musicstreamer.connection.NextTrackRequest
 import cs.sk.musicstreamer.connection.QueueTrackRequest
+import cs.sk.musicstreamer.connection.ReorderTrackRequest
 import cs.sk.musicstreamer.connection.connectors.BroadCastConnector
 import cs.sk.musicstreamer.connection.connectors.MainConnector
 import cs.sk.musicstreamer.connection.connectors.ResponseListener
@@ -18,6 +19,7 @@ import cs.sk.musicstreamer.utils.getStrings
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.scene.layout.StackPane
 import javafx.stage.FileChooser
+import javafx.util.Callback
 import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
 import mu.KLogging
@@ -62,6 +64,13 @@ class RoomView(
         )
         clients.decorate()
         tracks.decorate()
+        tracksQueue.cellFactory = Callback {
+            TrackCell { from, to -> mainConnector.send(ReorderTrackRequest(from, to), onResponse = {
+                infoService.show("Reordered with success!")
+            }, onError = {
+                infoService.show("Could not reorder: ${it.body}")
+            })}
+        }
         musicPlayer.registerControllers(playButton, nextButton)
         musicPlayer.setRoom(this)
         initializeUploadButton()
@@ -150,9 +159,9 @@ class RoomView(
 
     fun requestNextTrack() {
         mainConnector.send(NextTrackRequest(), onResponse = {
-            launch(JavaFx) { infoService.showSnackBar("Track skipped!") }
+            infoService.show("Track skipped!")
         }, onError = {
-            launch(JavaFx) { infoService.showSnackBar("Could not skip track: ${it.body}") }
+            infoService.show("Could not skip track: ${it.body}")
         })
     }
 
