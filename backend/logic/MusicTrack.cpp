@@ -13,7 +13,6 @@ MusicTrack::MusicTrack(const string &trackName) {
     this->trackName = trackName;
     this->trackFile = nullptr;
     this->openedTrackFile = -1;
-    this->trackHeader = nullptr;
 }
 
 
@@ -70,8 +69,7 @@ void MusicTrack::closeTrack() {
 
         headerProcessed = false;
         trackFinished = false;
-        delete[] trackHeader;
-        trackHeader = nullptr;
+        trackHeader = TrackHeader();
     }
 }
 
@@ -86,58 +84,21 @@ bool MusicTrack::readTrackHeader() {
             if (bytes != WAV_HEADER_SIZE) {
                 lseek(openedTrackFile, 0, SEEK_SET);
                 cerr << "could not read header for track " << trackName << endl;
-                delete headerBuffer;
                 return false;
             } else {
                 headerProcessed = true;
-                trackHeader = headerBuffer;
+                trackHeader = TrackHeader(headerBuffer);
                 return true;
             }
+
+            delete[] headerBuffer;
         }
     }
     return true;
 }
 
 
-int MusicTrack::parseHeaderNumber(int start, int bytes) {
 
-    int number = 0;
-
-    for (int i = start; i < start + bytes; ++i) {
-
-        int byte = trackHeader[i];
-        byte <<= ((i - start) * 8);
-
-        number += byte;
-    }
-
-    return number;
-}
-
-
-int MusicTrack::getSampleRate() {
-    return parseHeaderNumber(24, 4);
-}
-
-
-int MusicTrack::getBitsPerSample() {
-    return parseHeaderNumber(34, 2);
-}
-
-
-int MusicTrack::getChannelsNum() {
-    return parseHeaderNumber(22, 2);
-}
-
-
-int MusicTrack::getByteRate() {
-    return parseHeaderNumber(28, 4);
-}
-
-
-int MusicTrack::getSoundSize() {
-    return parseHeaderNumber(40, 4);
-}
 
 
 int MusicTrack::getChunkTimeGapMicrosec() {
@@ -146,8 +107,8 @@ int MusicTrack::getChunkTimeGapMicrosec() {
         return -1;
     }
 
-    int soundSize = getSoundSize();
-    int byteRate = getByteRate();
+    int soundSize = trackHeader.getSoundSize();
+    int byteRate = trackHeader.getByteRate();
 
     double seconds = (double) soundSize / byteRate;
     double chunks = (double) soundSize / SOUND_CHUNK_SIZE;
@@ -158,15 +119,10 @@ int MusicTrack::getChunkTimeGapMicrosec() {
 }
 
 
-int MusicTrack::getTrackHeaderSize() {
-    return WAV_HEADER_SIZE;
-}
-
-
-char *MusicTrack::getTrackHeader() {
+TrackHeader MusicTrack::getTrackHeader() {
 
     if (!isOpened() || !readTrackHeader())
-        return nullptr;
+        return TrackHeader();
 
     return trackHeader;
 }
@@ -194,5 +150,4 @@ MusicTrack::~MusicTrack() {
         remove(trackFile->getFilePath().c_str());
         delete trackFile;
     }
-    delete[] trackHeader;
 }

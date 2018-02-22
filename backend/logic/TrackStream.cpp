@@ -29,7 +29,7 @@ void TrackStream::start() {
 
             int timeGapMicroseconds = track->getChunkTimeGapMicrosec();
 
-            ClientResponse headerJson = serializeTrackHeader(track);
+            ClientResponse headerJson = track->getTrackHeader().toJsonMessage();
             const string frameMes = headerJson.serialize();
 
             while (isRunning.load() && !track->isFinished()) {
@@ -64,20 +64,6 @@ void TrackStream::start() {
         });
         streamerThread->detach();
     }
-}
-
-
-ClientResponse TrackStream::serializeTrackHeader(MusicTrack* track) {
-
-    ClientResponse jsonHeader;
-
-    jsonHeader.addToBody("sampleRate", track->getSampleRate());
-    jsonHeader.addToBody("bitsPerSample", track->getBitsPerSample());
-    jsonHeader.addToBody("channels", track->getChannelsNum());
-
-    jsonHeader.setStatus(200);
-
-    return jsonHeader;
 }
 
 

@@ -5,6 +5,7 @@
 #include <upload/UploadedFile.h>
 #include <mutex>
 #include "SoundChunk.h"
+#include "TrackHeader.h"
 
 class MusicTrack {
 
@@ -15,7 +16,7 @@ private:
     UploadedFile* trackFile;
     std::string trackName;
 
-    char* trackHeader;
+    TrackHeader trackHeader;
 
     int openedTrackFile;
     bool headerProcessed;
@@ -23,7 +24,7 @@ private:
 
     bool readTrackHeader();
 
-    int parseHeaderNumber(int start, int bytes);
+
 
 public:
 
@@ -44,16 +45,9 @@ public:
     void openTrack();
     void closeTrack();
 
-    int getSampleRate();
-    int getBitsPerSample();
-    int getChannelsNum();
-    int getByteRate();
-    int getSoundSize();
-
     int getChunkTimeGapMicrosec();
 
-    int getTrackHeaderSize();
-    char* getTrackHeader();
+    TrackHeader getTrackHeader();
     SoundChunk* nextSoundChunk();
 
     ~MusicTrack();
