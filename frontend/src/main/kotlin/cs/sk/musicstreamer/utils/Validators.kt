@@ -2,8 +2,11 @@ package cs.sk.musicstreamer.utils
 
 import com.jfoenix.validation.base.ValidatorBase
 import javafx.scene.control.TextInputControl
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
-class InvalidFieldValueValidator (
+class InvalidFieldValueValidator(
         private val errorMessage: String = "That value can't be used",
         private val invalidValues: MutableSet<String> = mutableSetOf()
 ) : ValidatorBase() {
@@ -18,7 +21,20 @@ class InvalidFieldValueValidator (
 }
 
 class VetoValidator : ValidatorBase() {
-    fun setInvalid() = hasErrors.set(true)
+    private val wasBlocked = AtomicBoolean(false)
+    fun setInvalid() {
+        if (!wasBlocked.getAndSet(true)) {
+            hasErrors.set(true)
+            validate()
+            launch {
+                delay(5000)
+                wasBlocked.set(false)
+                hasErrors.set(false)
+                validate()
+            }
+        }
+    }
+
     override fun eval() {}
 
 }
